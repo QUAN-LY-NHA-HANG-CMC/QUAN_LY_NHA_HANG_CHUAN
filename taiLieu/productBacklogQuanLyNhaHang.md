@@ -1,0 +1,591 @@
+================================================================================
+                    PRODUCT BACKLOG - DỰ ÁN QUẢN LÝ NHÀ HÀNG
+                        (Hệ thống Gọi món QR & Quản trị)
+================================================================================
+
+BƯỚC 1. XÁC ĐỊNH MỤC TIÊU DỰ ÁN
+--------------------------------------------------------------------------------
+Hệ thống Quản lý Nhà hàng và Gọi món tại bàn (Goi-Mon / Quán Mộc) là nền tảng
+web giúp tối ưu hóa và tự động hóa quy trình vận hành nhà hàng. Hệ thống phục vụ
+3 nhóm đối tượng chính:
+1. Khách hàng: Quét mã QR tại bàn để xem thực đơn điện tử (E-Menu), đặt món
+   nhanh chóng và theo dõi trạng thái chế biến theo thời gian thực.
+2. Nhân viên (Bếp & Thu ngân/Phục vụ): Tiếp nhận đơn hàng tức thời, cập nhật
+   tiến độ chế biến, quản lý trạng thái bàn và xử lý thanh toán chuẩn xác.
+3. Quản lý (Chủ nhà hàng): Quản trị thực đơn, sơ đồ bàn, phân quyền nhân sự,
+   theo dõi lịch sử hóa đơn và thống kê doanh thu.
+
+
+BƯỚC 2. LIỆT KÊ TOÀN BỘ TÍNH NĂNG
+--------------------------------------------------------------------------------
+1. Đăng nhập và phân quyền người dùng (Quản lý, Thu ngân, Bếp).
+2. Quản lý sơ đồ bàn ăn và khởi tạo mã QR định danh cho từng bàn.
+3. Quản lý danh mục và món ăn (Thêm, sửa, xóa, cập nhật giá, ẩn/hiện món).
+4. Hiển thị thực đơn điện tử (E-Menu) khi khách quét mã QR tại bàn.
+5. Tìm kiếm và lọc món ăn theo danh mục trên giao diện khách hàng.
+6. Giỏ hàng, ghi chú khẩu vị và gửi yêu cầu đặt món (Order) tại bàn.
+7. Đồng bộ đơn hàng thời gian thực (Real-time) xuống màn hình Bếp.
+8. Cập nhật trạng thái món ăn tại Bếp (Đang chờ, Đang chế biến, Hoàn thành, Báo hết).
+9. Theo dõi trạng thái món ăn trực tiếp trên điện thoại của Khách hàng.
+10. Quản lý trạng thái bàn, kiểm tra hóa đơn, in phiếu tạm tính và thanh toán.
+11. Gửi đánh giá và phản hồi chất lượng dịch vụ sau bữa ăn.
+12. Quản lý hồ sơ nhân viên.
+13. Thống kê báo cáo doanh thu và tra cứu lịch sử hóa đơn.
+
+
+BƯỚC 3. CHIA THÀNH CÁC USER STORY
+--------------------------------------------------------------------------------
+* Phân hệ Quản lý:
+- US-01: Là một Quản lý, tôi muốn đăng nhập và phân quyền tài khoản theo vai trò
+  để bảo mật dữ liệu và giới hạn đúng chức năng cho từng bộ phận.
+- US-02: Là một Quản lý, tôi muốn thêm, sửa, xóa bàn ăn và xuất mã QR cho từng
+  bàn để khách hàng có thể quét mã gọi món đúng vị trí ngồi.
+- US-03: Là một Quản lý, tôi muốn quản lý danh mục và thông tin món ăn (tên, hình
+  ảnh, giá, trạng thái còn/hết) để thực đơn luôn được cập nhật chính xác.
+- US-04: Là một Quản lý, tôi muốn quản lý danh sách tài khoản nhân viên để kiểm
+  soát nhân sự làm việc tại nhà hàng.
+- US-05: Là một Quản lý, tôi muốn xem báo cáo doanh thu theo ngày/tháng và lịch
+  sử hóa đơn để nắm bắt tình hình kinh doanh của nhà hàng.
+
+* Phân hệ Khách hàng:
+- US-06: Là một Khách hàng, tôi muốn quét mã QR tại bàn để truy cập ngay vào thực
+  đơn của nhà hàng trên trình duyệt điện thoại mà không cần tải ứng dụng.
+- US-07: Là một Khách hàng, tôi muốn tìm kiếm theo tên và lọc món ăn theo danh
+  mục (Khai vị, Món chính, Đồ uống...) để nhanh chóng chọn được món yêu thích.
+- US-08: Là một Khách hàng, tôi muốn thêm món vào giỏ hàng, điền ghi chú riêng
+  (ít cay, không hành...) và gửi đơn đặt món để bếp bắt đầu chế biến.
+- US-09: Là một Khách hàng, tôi muốn xem trạng thái món ăn của mình theo thời
+  gian thực để biết món nào đang nấu hoặc sắp được mang ra.
+- US-10: Là một Khách hàng, tôi muốn gửi đánh giá sao và nhận xét sau bữa ăn để
+  góp ý chất lượng món ăn và dịch vụ cho nhà hàng.
+
+* Phân hệ Nhân viên (Bếp & Thu ngân):
+- US-11: Là một Nhân viên Bếp, tôi muốn nhận thông báo đơn hàng mới ngay lập tức
+  và cập nhật trạng thái chế biến để phục vụ khách đúng thứ tự và nhanh chóng.
+- US-12: Là một Nhân viên Bếp, tôi muốn chuyển trạng thái món ăn sang "Tạm hết"
+  ngay trên màn hình bếp để khách hàng không đặt nhầm món đã hết nguyên liệu.
+- US-13: Là một Thu ngân, tôi muốn theo dõi sơ đồ bàn trực quan (bàn trống, bàn
+  có khách, bàn chờ thanh toán) để điều phối chỗ ngồi và phục vụ kịp thời.
+- US-14: Là một Thu ngân, tôi muốn tổng hợp các lượt gọi món của bàn, xuất hóa
+  đơn thanh toán và giải phóng bàn về trạng thái trống để đón lượt khách mới.
+
+
+BƯỚC 4. GÁN THÔNG TIN CHO TỪNG CÔNG VIỆC (PRODUCT BACKLOG CHI TIẾT)
+--------------------------------------------------------------------------------
+
+[PB-01]
+- Epic/Feature       : Xác thực & Phân quyền (Auth)
+- User Story         : Là một Quản lý/Nhân viên, tôi muốn đăng nhập vào hệ thống
+                       với quyền hạn tương ứng để thực hiện công việc của bộ phận mình.
+- Priority           : High
+- Story Point        : 3
+- Acceptance Criteria:
+  + Đăng nhập thành công bằng tài khoản/mật khẩu hợp lệ (sử dụng JWT/Session).
+  + Phân quyền đúng truy cập: Quản lý (toàn quyền), Thu ngân (sơ đồ bàn, hóa đơn),
+    Bếp (màn hình điều phối món).
+  + Chặn truy cập trái phép vào các đường dẫn nội bộ khi chưa đăng nhập.
+- Status             : Backlog
+
+[PB-02]
+- Epic/Feature       : Quản lý Thực đơn (Menu Management)
+- User Story         : Là một Quản lý, tôi muốn quản lý danh mục và món ăn (CRUD)
+                       để cập nhật thực đơn hiển thị cho khách hàng.
+- Priority           : High
+- Story Point        : 5
+- Acceptance Criteria:
+  + Tạo, sửa, xóa được danh mục món ăn.
+  + Thêm, sửa, xóa món ăn gồm: Tên món, giá bán, ảnh minh họa, mô tả, danh mục,
+    trạng thái (Đang bán / Tạm hết).
+  + Dữ liệu thay đổi được cập nhật ngay trên giao diện E-Menu của khách.
+- Status             : Backlog
+
+[PB-03]
+- Epic/Feature       : Quản lý Bàn & Mã QR (Table & QR Management)
+- User Story         : Là một Quản lý, tôi muốn quản lý danh sách bàn và tạo mã
+                       QR gắn với ID của từng bàn để khách quét mã định danh bàn.
+- Priority           : High
+- Story Point        : 3
+- Acceptance Criteria:
+  + Thêm, sửa, xóa thông tin bàn (Tên bàn, khu vực/tầng, sức chứa).
+  + Tự động sinh đường dẫn URL kèm mã bàn (hoặc token bàn) và tạo ảnh QR Code.
+  + Cho phép tải xuống hoặc in mã QR của từng bàn.
+- Status             : Backlog
+
+[PB-04]
+- Epic/Feature       : Thực đơn điện tử (Customer E-Menu)
+- User Story         : Là một Khách hàng, tôi muốn quét mã QR để xem thực đơn,
+                       tìm kiếm và lọc món ăn trên điện thoại.
+- Priority           : High
+- Story Point        : 5
+- Acceptance Criteria:
+  + Quét QR hiển thị đúng giao diện gọi món kèm thông tin số bàn hiện tại.
+  + Hiển thị danh sách món ăn theo từng danh mục, đầy đủ hình ảnh và giá tiền.
+  + Tìm kiếm món ăn theo từ khóa và lọc theo danh mục mượt mà, giao diện chuẩn
+    Responsive trên thiết bị di động.
+  + Các món "Tạm hết" được làm mờ và khóa nút thêm vào giỏ.
+- Status             : Backlog
+
+[PB-05]
+- Epic/Feature       : Đặt món tại bàn (Customer Ordering)
+- User Story         : Là một Khách hàng, tôi muốn chọn số lượng món, thêm ghi
+                       chú và gửi yêu cầu đặt món từ bàn của mình.
+- Priority           : High
+- Story Point        : 5
+- Acceptance Criteria:
+  + Tăng/giảm số lượng món, xóa món trong giỏ hàng và tính tổng tiền tạm tính.
+  + Cho phép nhập ghi chú cho từng món hoặc toàn bộ đơn (VD: ít đá, không cay).
+  + Gửi đơn thành công, lưu vào CSDL và tự động mở phiên phục vụ cho bàn đó.
+  + Khách có thể gọi thêm món nhiều lần trong cùng một bữa ăn.
+- Status             : Backlog
+
+[PB-06]
+- Epic/Feature       : Điều phối Bếp thời gian thực (Real-time Kitchen Display)
+- User Story         : Là một Nhân viên Bếp, tôi muốn nhận đơn hàng mới theo thời
+                       gian thực và cập nhật trạng thái chế biến từng món.
+- Priority           : High
+- Story Point        : 8
+- Acceptance Criteria:
+  + Khi khách gửi đơn, màn hình Bếp nhận thông báo và hiển thị món mới ngay lập
+    tức qua WebSockets (Socket.io) hoặc Polling mà không cần tải lại trang.
+  + Hiển thị rõ số bàn, tên món, số lượng, ghi chú và thời gian đặt.
+  + Cho phép Bếp đổi trạng thái: Đang chờ -> Đang chế biến -> Hoàn thành (hoặc Từ chối/Hết món).
+- Status             : Backlog
+
+[PB-07]
+- Epic/Feature       : Theo dõi trạng thái đơn hàng (Order Tracking)
+- User Story         : Là một Khách hàng, tôi muốn theo dõi tiến độ chế biến các
+                       món đã gọi ngay trên điện thoại theo thời gian thực.
+- Priority           : Medium
+- Story Point        : 3
+- Acceptance Criteria:
+  + Khi Bếp cập nhật trạng thái món ăn, giao diện của khách tại bàn đó tự động
+    đồng bộ trạng thái tương ứng (Đang chờ / Đang nấu / Đã xong).
+  + Hiển thị rõ danh sách các lượt đã gọi và tổng số tiền tạm tính hiện tại.
+- Status             : Backlog
+
+[PB-08]
+- Epic/Feature       : Quản lý Sơ đồ bàn & Thanh toán (POS / Cashier)
+- User Story         : Là một Thu ngân, tôi muốn quản lý trạng thái bàn theo thời
+                       gian thực, kiểm tra danh sách món khách đã gọi và thanh toán.
+- Priority           : High
+- Story Point        : 8
+- Acceptance Criteria:
+  + Sơ đồ bàn hiển thị màu sắc trực quan theo trạng thái: Trống, Đang phục vụ,
+    Yêu cầu thanh toán.
+  + Xem chi tiết toàn bộ các lượt gọi món của một bàn, hỗ trợ hủy món (nếu bếp
+    chưa làm) hoặc thêm món giúp khách.
+  + Xác nhận thanh toán (Tiền mặt / Chuyển khoản), lưu hóa đơn hoàn tất và tự
+    động chuyển trạng thái bàn về "Trống".
+- Status             : Backlog
+
+[PB-09]
+- Epic/Feature       : Báo hết món nhanh từ Bếp (Quick Out-of-Stock)
+- User Story         : Là một Nhân viên Bếp, tôi muốn bật/tắt nhanh trạng thái
+                       "Hết món" để ngăn khách tiếp tục đặt món đã hết nguyên liệu.
+- Priority           : Medium
+- Story Point        : 2
+- Acceptance Criteria:
+  + Có nút gạt chuyển trạng thái Còn hàng / Tạm hết ngay trên giao diện Bếp.
+  + Ngay khi báo hết, E-Menu của khách hàng cập nhật trạng thái không thể đặt.
+- Status             : Backlog
+
+[PB-10]
+- Epic/Feature       : Quản lý Nhân sự (Staff Management)
+- User Story         : Là một Quản lý, tôi muốn quản lý danh sách tài khoản nhân
+                       viên để cấp quyền hoặc khóa tài khoản khi nhân viên nghỉ việc.
+- Priority           : Medium
+- Story Point        : 3
+- Acceptance Criteria:
+  + Xem danh sách nhân viên, thêm tài khoản mới, cập nhật vai trò, đổi mật khẩu.
+  + Khóa/mở khóa trạng thái hoạt động của tài khoản nhân viên.
+- Status             : Backlog
+
+[PB-11]
+- Epic/Feature       : Thống kê & Báo cáo doanh thu (Analytics & Reports)
+- User Story         : Là một Quản lý, tôi muốn xem thống kê doanh thu, số lượng
+                       đơn hàng và các món bán chạy để đánh giá hiệu quả kinh doanh.
+- Priority           : Medium
+- Story Point        : 5
+- Acceptance Criteria:
+  + Thống kê tổng doanh thu, tổng số hóa đơn theo ngày, tuần, tháng.
+  + Biểu đồ trực quan doanh thu và danh sách Top món ăn bán chạy nhất.
+  + Tra cứu lịch sử hóa đơn chi tiết theo ngày và bàn.
+- Status             : Backlog
+
+[PB-12]
+- Epic/Feature       : Đánh giá & Phản hồi (Customer Feedback)
+- User Story         : Là một Khách hàng, tôi muốn gửi đánh giá mức độ hài lòng
+                       và lời nhắn sau khi dùng bữa để nhà hàng cải thiện dịch vụ.
+- Priority           : Low
+- Story Point        : 2
+- Acceptance Criteria:
+  + Khách hàng chọn mức điểm (1 - 5 sao) và nhập nội dung góp ý trên web.
+  + Quản lý xem được danh sách phản hồi kèm thời gian và số bàn trong trang Admin.
+- Status             : Backlog
+
+
+BƯỚC 5. SẮP XẾP THỨ TỰ ƯU TIÊN (PHƯƠNG PHÁP MoSCoW)
+--------------------------------------------------------------------------------
+1. Must have (Bắt buộc phải có - Cốt lõi MVP):
+   - PB-01: Đăng nhập và phân quyền người dùng.
+   - PB-02: Quản lý danh mục và thực đơn (CRUD món ăn).
+   - PB-03: Quản lý sơ đồ bàn và tạo mã QR.
+   - PB-04: Hiển thị thực đơn điện tử (E-Menu) qua QR Code.
+   - PB-05: Giỏ hàng và đặt món tại bàn.
+   - PB-06: Nhận đơn và điều phối trạng thái món tại Bếp (Real-time).
+   - PB-08: Quản lý trạng thái bàn và xử lý thanh toán hóa đơn (Thu ngân).
+
+2. Should have (Nên có - Gia tăng trải nghiệm và quản trị):
+   - PB-07: Khách hàng theo dõi trạng thái món ăn thời gian thực.
+   - PB-09: Báo hết món nhanh trên màn hình Bếp.
+   - PB-10: Quản lý tài khoản nhân viên.
+   - PB-11: Thống kê báo cáo doanh thu và lịch sử hóa đơn.
+
+3. Could have (Có thì tốt - Thực hiện khi còn thời gian):
+   - PB-12: Khách hàng gửi đánh giá sao và phản hồi sau bữa ăn.
+   - Nút "Gọi nhân viên / Yêu cầu thanh toán" nhanh trên màn hình điện thoại khách.
+
+4. Won't have (Chưa thực hiện trong phiên bản hiện tại):
+   - Tích hợp cổng thanh toán trực tuyến tự động (VNPay, MoMo, VietQR động).
+   - Quản lý định lượng nguyên vật liệu và trừ kho tự động theo công thức món.
+   - Chương trình tích điểm thành viên (Loyalty Program) và mã giảm giá phức tạp.
+
+
+BƯỚC 6. CHIA CÔNG VIỆC VÀO SPRINT (SPRINT PLANNING DỰ KIẾN)
+--------------------------------------------------------------------------------
+Giả định dự án được chia làm 4 Sprint (mỗi Sprint kéo dài 1 - 2 tuần):
+
+================================================================================
+
+SPRINT 1: NỀN TẢNG, TÀI KHOẢN, PHÂN QUYỀN, SƠ ĐỒ BÀN VÀ THỰC ĐƠN
+
+Thời gian: Tuần 1
+
+1. Mục tiêu
+- Xây dựng cơ sở dữ liệu nền tảng cho hệ thống quản lý nhà hàng.
+- Hoàn thiện quản lý tài khoản nhân sự, đăng nhập, bảo mật và phân quyền theo vai trò.
+- Xây dựng chức năng thiết lập khu vực, quản lý sơ đồ bàn và khởi tạo mã QR định danh bàn.
+- Xây dựng chức năng quản lý danh mục món ăn và thực đơn (thêm, sửa, xóa, bật/tắt trạng thái món).
+- Hoàn thành ERD Sprint 1.
+
+2. User Story
+- Bảo mật nền tảng: US-001, US-002, US-003, US-004, US-005, US-006.
+- Tài khoản và hồ sơ nhân sự: US-007, US-008, US-009, US-010, US-011, US-012, US-013, US-014.
+- Vai trò và quyền hạn: US-015, US-016, US-017, US-018, US-019, US-020, US-021, US-022.
+- Khu vực và sơ đồ bàn: US-023, US-024, US-025, US-026, US-027, US-028, US-029, US-030.
+- Danh mục và thực đơn: US-031, US-032, US-033, US-034, US-035, US-036, US-037, US-038, US-039, US-040.
+- Quản trị nền tảng: US-041, US-042, US-043, US-044.
+
+3. ERD Sprint 1
+- Tài khoản và hồ sơ nhân viên.
+- Phiên đăng nhập và xác thực.
+- Vai trò và quyền hạn.
+- Liên kết tài khoản với vai trò.
+- Liên kết vai trò với quyền hạn.
+- Khu vực / Tầng phục vụ.
+- Bàn ăn và mã QR định danh bàn.
+- Danh mục thực đơn.
+- Món ăn và hình ảnh món ăn.
+- Tùy chọn đi kèm món ăn (Size, Topping, Mức đá/đường/độ cay).
+- Nhật ký hệ thống.
+- Cấu hình thông tin nhà hàng dùng chung.
+
+4. Kết quả bàn giao
+- ERD Sprint 1.
+- Cơ sở dữ liệu nền tảng.
+- Chức năng đăng nhập, đăng xuất, xác thực tài khoản và quản lý nhân sự.
+- Chức năng phân quyền và kiểm soát truy cập (Quản lý, Thu ngân, Bếp, Phục vụ).
+- Chức năng quản lý khu vực, sơ đồ bàn và xuất mã QR cho từng bàn.
+- Chức năng tạo, chỉnh sửa, xóa, tìm kiếm và công khai món ăn trên thực đơn.
+- Kiểm thử chéo, sửa lỗi và báo cáo Sprint 1.
+
+
+--------------------------------------------------------------------------------
+SPRINT 2: TRẢI NGHIỆM KHÁCH HÀNG (E-MENU QR), GIỎ HÀNG VÀ ĐẶT MÓN THỜI GIAN THỰC
+
+Thời gian: Tuần 2
+
+1. Mục tiêu
+- Xây dựng giao diện Web gọi món tại bàn (E-Menu) cho khách hàng khi quét mã QR.
+- Hoàn thiện cơ chế khởi tạo phiên phục vụ tại bàn (Table Session) và bảo mật phiên đặt món.
+- Xây dựng chức năng xem thực đơn, lọc theo danh mục, tìm kiếm món, thêm vào giỏ hàng và ghi chú khẩu vị.
+- Xây dựng quy trình gửi yêu cầu đặt món (Order), gọi thêm món và theo dõi trạng thái món ăn theo thời gian thực.
+- Hoàn thành ERD Sprint 2.
+
+2. User Story
+- Xác thực phiên bàn qua QR: US-045, US-046, US-047, US-048, US-049.
+- Tra cứu và duyệt thực đơn (E-Menu): US-050, US-051, US-052, US-053, US-054, US-055, US-056.
+- Giỏ hàng và tùy chỉnh món: US-057, US-058, US-059, US-060, US-061, US-062.
+- Đặt món và theo dõi tiến độ đơn hàng: US-063, US-064, US-065, US-066, US-067, US-068, US-069, US-070.
+- Tương tác hỗ trợ tại bàn (Gọi nhân viên / Yêu cầu thanh toán): US-071, US-072, US-073, US-074.
+- Đồng bộ thời gian thực (Real-time Sync): US-075, US-076, US-077, US-078.
+
+3. ERD Sprint 2
+- Phiên phục vụ tại bàn (Table Sessions).
+- Giỏ hàng tạm thời tại bàn.
+- Đơn đặt món (Orders).
+- Chi tiết món ăn trong đơn (Order Items).
+- Tùy chọn và ghi chú riêng cho từng món trong đơn.
+- Lịch sử cập nhật trạng thái đơn hàng.
+- Yêu cầu hỗ trợ tại bàn (Gọi phục vụ, xin thêm đồ, gọi thanh toán).
+- Thông báo thời gian thực (Real-time Notifications).
+
+4. Kết quả bàn giao
+- ERD Sprint 2.
+- Giao diện Web E-Menu tối ưu cho thiết bị di động khi quét mã QR.
+- Chức năng duyệt thực đơn, tìm kiếm, quản lý giỏ hàng và ghi chú món ăn.
+- Chức năng gửi đơn đặt món (Order), đặt thêm lượt món mới trong cùng phiên bàn.
+- Chức năng theo dõi trạng thái chế biến trực tiếp trên màn hình điện thoại của khách.
+- Kết nối WebSockets / Polling đồng bộ tức thời giữa bàn khách và hệ thống quản trị.
+- Kiểm thử chéo, sửa lỗi và báo cáo Sprint 2.
+
+
+--------------------------------------------------------------------------------
+SPRINT 3: ĐIỀU PHỐI BẾP (KDS), QUẢN LÝ BÀN PHỤC VỤ, THU NGÂN VÀ THANH TOÁN
+
+Thời gian: Tuần 3
+
+1. Mục tiêu
+- Xây dựng màn hình điều phối chế biến cho Bếp (Kitchen Display System - KDS) nhận đơn theo thời gian thực.
+- Hoàn thiện quy trình cập nhật trạng thái món ăn (Đang chờ, Đang chế biến, Hoàn thành, Đã phục vụ) và báo hết món.
+- Xây dựng phân hệ Thu ngân / Phục vụ theo dõi sơ đồ bàn trực quan, hỗ trợ mở bàn, chuyển bàn, ghép bàn và hủy/trả món.
+- Xây dựng chức năng tạm tính, áp dụng khuyến mãi, xuất hóa đơn và xử lý thanh toán (Tiền mặt, Chuyển khoản QR).
+- Hoàn thành ERD Sprint 3.
+
+2. User Story
+- Điều phối chế biến tại Bếp (KDS): US-079, US-080, US-081, US-082, US-083, US-084, US-085, US-086.
+- Kiểm soát hết món và xử lý hủy/trả món: US-087, US-088, US-089, US-090, US-091.
+- Vận hành sơ đồ bàn cho Thu ngân / Phục vụ: US-092, US-093, US-094, US-095, US-096, US-097, US-098.
+- Quản lý hóa đơn, phụ phí và khuyến mãi: US-099, US-100, US-101, US-102, US-103, US-104.
+- Thanh toán và đóng phiên bàn: US-105, US-106, US-107, US-108, US-109, US-110.
+
+3. ERD Sprint 3
+- Hàng đợi chế biến tại bếp.
+- Nhật ký cập nhật trạng thái món của bếp.
+- Phiếu yêu cầu hủy món / đổi trả món.
+- Lịch sử chuyển bàn và ghép bàn.
+- Chương trình khuyến mãi và mã giảm giá.
+- Hóa đơn thanh toán (Invoices).
+- Chi tiết dòng hóa đơn (Invoice Items).
+- Giao dịch thanh toán (Tiền mặt, Chuyển khoản VietQR).
+
+4. Kết quả bàn giao
+- ERD Sprint 3.
+- Phân hệ màn hình Bếp (KDS) nhận thông báo đơn mới, đổi trạng thái món và khóa nhanh món hết nguyên liệu.
+- Phân hệ Thu ngân quản lý sơ đồ bàn theo thời gian thực, hỗ trợ đặt món hộ khách, chuyển/ghép bàn.
+- Chức năng tổng hợp các lượt gọi món tại bàn, tính tiền, áp dụng giảm giá và in phiếu tạm tính / hóa đơn.
+- Chức năng xác nhận thanh toán, tự động đóng phiên phục vụ và đưa bàn về trạng thái trống.
+- Kiểm thử chéo, sửa lỗi và báo cáo Sprint 3.
+
+
+--------------------------------------------------------------------------------
+SPRINT 4: BÁO CÁO DOANH THU, ĐÁNH GIÁ KHÁCH HÀNG, CA LÀM VIỆC VÀ HOÀN THIỆN HỆ THỐNG
+
+Thời gian: Tuần 4
+
+1. Mục tiêu
+- Xây dựng chức năng gửi đánh giá, phản hồi chất lượng món ăn / dịch vụ của khách hàng và trang quản trị phản hồi.
+- Xây dựng chức năng quản lý ca làm việc và bàn giao ca thu ngân (kiểm kê tiền đầu ca, cuối ca).
+- Xây dựng Dashboard thống kê doanh thu theo ngày/tuần/tháng, báo cáo món bán chạy và tra cứu lịch sử hóa đơn.
+- Tối ưu hóa hiệu năng, bảo mật, triển khai hệ thống (Deploy) và kiểm thử tích hợp toàn diện.
+- Hoàn thành ERD Sprint 4 và hoàn thiện ERD tổng thể toàn hệ thống.
+
+2. User Story
+- Đánh giá và phản hồi khách hàng: US-111, US-112, US-113, US-114, US-115, US-116.
+- Quản lý ca làm việc và kết ca thu ngân: US-117, US-118, US-119, US-120, US-121, US-122.
+- Thống kê và báo cáo doanh thu: US-123, US-124, US-125, US-126, US-127, US-128, US-129, US-130.
+- Xuất dữ liệu và đối soát lịch sử: US-131, US-132, US-133, US-134.
+- Tối ưu hệ thống và triển khai (Deployment): US-135, US-136, US-137, US-138, US-139, US-140.
+
+3. ERD Sprint 4
+- Đánh giá chất lượng dịch vụ và món ăn từ khách hàng.
+- Phản hồi của quản lý đối với đánh giá khách hàng.
+- Ca làm việc của nhân viên.
+- Biên bản giao ca và đối soát quỹ tiền mặt thu ngân.
+- Bảng tổng hợp doanh thu theo ngày / tháng.
+- Bảng thống kê sản lượng và doanh thu theo từng món ăn.
+- Lịch sử xuất tệp báo cáo.
+
+4. Kết quả bàn giao
+- ERD Sprint 4 và ERD tổng thể hoàn chỉnh của toàn dự án.
+- Chức năng đánh giá sao / gửi góp ý sau bữa ăn cho khách hàng và công cụ tiếp nhận cho chủ nhà hàng.
+- Chức năng mở ca, đóng ca và chốt sổ thu ngân.
+- Dashboard thống kê doanh thu trực quan, biểu đồ tăng trưởng, xếp hạng món bán chạy và xuất báo cáo.
+- Hệ thống hoàn chỉnh được triển khai lên môi trường thực tế (Vercel / Cloud Server).
+- Kiểm thử tích hợp toàn luồng (End-to-End), sửa lỗi và báo cáo tổng kết dự án.
+
+
+================================================================================
+PHỤ LỤC: DANH MỤC MÃ USER STORY THAM CHIẾU (US-001 ĐẾN US-140)
+================================================================================
+
+[SPRINT 1: US-001 -> US-044]
+- Bảo mật nền tảng:
+  + US-001: Mã hóa mật khẩu người dùng bằng thuật toán băm an toàn.
+  + US-002: Xác thực phiên đăng nhập bằng JWT / Session Token.
+  + US-003: Tự động đăng xuất hoặc làm mới token khi hết hạn phiên làm việc.
+  + US-004: Chặn truy cập trái phép vào các route quản trị qua Middleware.
+  + US-005: Giới hạn tần suất gửi yêu cầu (Rate Limiting) chống spam API.
+  + US-006: Kiểm tra và làm sạch dữ liệu đầu vào (Input Validation & Sanitization).
+- Tài khoản và hồ sơ nhân sự:
+  + US-007: Đăng nhập hệ thống bằng tài khoản nhân viên / quản lý.
+  + US-008: Đăng xuất khỏi thiết bị đang sử dụng.
+  + US-009: Đổi mật khẩu cá nhân.
+  + US-010: Xem và cập nhật thông tin hồ sơ cá nhân.
+  + US-011: Quản lý tạo mới tài khoản cho nhân viên (Thu ngân, Bếp, Phục vụ).
+  + US-012: Quản lý xem danh sách và tìm kiếm hồ sơ nhân viên.
+  + US-013: Quản lý cập nhật thông tin hoặc đặt lại mật khẩu cho nhân viên.
+  + US-014: Quản lý khóa / mở khóa tài khoản nhân viên đã nghỉ việc.
+- Vai trò và quyền hạn:
+  + US-015: Xem danh sách các vai trò trong nhà hàng (Chủ quán, Thu ngân, Bếp, Phục vụ).
+  + US-016: Tạo mới hoặc chỉnh sửa mô tả vai trò.
+  + US-017: Gán vai trò cụ thể cho từng tài khoản nhân viên.
+  + US-018: Cấu hình quyền truy cập chức năng chi tiết cho từng vai trò.
+  + US-019: Kiểm soát quyền chỉ xem/xử lý đơn bếp đối với tài khoản Bếp.
+  + US-020: Kiểm soát quyền thu tiền và in hóa đơn đối với tài khoản Thu ngân.
+  + US-021: Kiểm soát quyền chỉnh sửa thực đơn và xem doanh thu chỉ dành cho Quản lý.
+  + US-022: Ghi nhận lịch sử thay đổi quyền hạn nhân sự.
+- Khu vực và sơ đồ bàn:
+  + US-023: Tạo mới, chỉnh sửa, xóa khu vực / tầng trong nhà hàng.
+  + US-024: Xem danh sách bàn ăn theo từng khu vực.
+  + US-025: Thêm bàn ăn mới với thông tin số bàn, sức chứa và khu vực.
+  + US-026: Chỉnh sửa thông tin bàn ăn hoặc tạm ngưng sử dụng bàn.
+  + US-027: Xóa bàn ăn chưa phát sinh dữ liệu giao dịch.
+  + US-028: Tự động sinh đường dẫn định danh và mã QR riêng cho từng bàn.
+  + US-029: Xem trước và tải xuống / in mã QR của từng bàn hoặc toàn bộ bàn.
+  + US-030: Làm mới mã bảo mật QR bàn khi cần thiết.
+- Danh mục và thực đơn:
+  + US-031: Tạo mới danh mục món ăn (Khai vị, Món chính, Lẩu, Đồ uống...).
+  + US-032: Chỉnh sửa tên, thứ tự ưu tiên hiển thị và xóa danh mục món ăn.
+  + US-033: Xem danh sách món ăn phía quản trị có phân trang và bộ lọc.
+  + US-034: Thêm món ăn mới (tên, giá, mô tả, hình ảnh, danh mục, đơn vị tính).
+  + US-035: Tải lên và tối ưu hiển thị hình ảnh món ăn.
+  + US-036: Chỉnh sửa thông tin chi tiết và cập nhật giá bán món ăn.
+  + US-037: Thiết lập các tùy chọn đi kèm món ăn (kích cỡ, món thêm/topping).
+  + US-038: Bật / tắt nhanh trạng thái "Đang bán" hoặc "Tạm hết" cho món ăn.
+  + US-039: Đánh dấu món ăn là "Món bán chạy / Đề xuất của quán".
+  + US-040: Xóa mềm (ẩn) món ăn không còn kinh doanh để bảo toàn lịch sử hóa đơn.
+- Quản trị nền tảng:
+  + US-041: Cấu hình thông tin chung của nhà hàng (tên quán, địa chỉ, hotline, wifi).
+  + US-042: Cấu hình tỷ lệ thuế VAT hoặc phí phục vụ mặc định.
+  + US-043: Cấu hình thông tin tài khoản ngân hàng nhận thanh toán VietQR.
+  + US-044: Xem nhật ký hoạt động hệ thống (System Logs).
+
+[SPRINT 2: US-045 -> US-078]
+- Xác thực phiên bàn qua QR:
+  + US-045: Quét mã QR tại bàn để truy cập thẳng vào giao diện gọi món của bàn đó.
+  + US-046: Tự động nhận diện số bàn và khu vực trên màn hình khách hàng.
+  + US-047: Khởi tạo phiên phục vụ bàn (Table Session) khi khách bắt đầu truy cập.
+  + US-048: Ngăn chặn đặt món nếu mã QR không hợp lệ hoặc bàn đang bị khóa.
+  + US-049: Cho phép nhiều khách ngồi cùng bàn quét QR cùng tham gia đặt món chung.
+- Tra cứu và duyệt thực đơn (E-Menu):
+  + US-050: Xem giao diện trang chủ E-Menu cùng thông tin bàn và banner nhà hàng.
+  + US-051: Duyệt danh sách món ăn theo từng tab danh mục mượt mà trên điện thoại.
+  + US-052: Xem danh sách các món đặc sắc / bán chạy được gợi ý.
+  + US-053: Tìm kiếm nhanh món ăn theo từ khóa tên món.
+  + US-054: Lọc món ăn theo khoảng giá hoặc phân loại.
+  + US-055: Xem chi tiết món ăn (hình ảnh lớn, mô tả thành phần, giá bán, đánh giá).
+  + US-056: Hiển thị rõ nhãn "Tạm hết hàng" và khóa nút chọn đối với món đã hết.
+- Giỏ hàng và tùy chỉnh món:
+  + US-057: Thêm món ăn vào giỏ hàng cùng các tùy chọn (size, topping).
+  + US-058: Tăng, giảm số lượng hoặc xóa món khỏi giỏ hàng trước khi gửi đơn.
+  + US-059: Nhập ghi chú riêng cho từng món (ví dụ: ít cay, không hành, mang ra trước).
+  + US-060: Nhập ghi chú chung cho cả lượt gọi món.
+  + US-061: Tự động tính và hiển thị tổng tiền tạm tính trong giỏ hàng.
+  + US-062: Lưu giữ trạng thái giỏ hàng khi khách tải lại trang trên trình duyệt.
+- Đặt món và theo dõi tiến độ đơn hàng:
+  + US-063: Xác nhận và gửi yêu cầu đặt món (Order) từ giỏ hàng xuống hệ thống.
+  + US-064: Nhận thông báo xác nhận đặt món thành công ngay trên màn hình.
+  + US-065: Xem danh sách toàn bộ các món đã gọi trong phiên ngồi tại bàn.
+  + US-066: Theo dõi trạng thái từng món ăn (Chờ xác nhận, Đang chế biến, Đã xong, Đã lên món).
+  + US-067: Đặt thêm lượt món mới (Order bổ sung) trong cùng một phiên ăn.
+  + US-068: Khách hàng yêu cầu hủy món khi món vẫn đang ở trạng thái "Chờ xác nhận".
+  + US-069: Nhận thông báo trên màn hình nếu Bếp từ chối món do vừa hết nguyên liệu.
+  + US-070: Xem tổng chi phí lũy kế của tất cả các lượt gọi món tại bàn.
+- Tương tác hỗ trợ tại bàn:
+  + US-071: Bấm nút "Gọi nhân viên" trên Web E-Menu khi cần hỗ trợ trực tiếp.
+  + US-072: Chọn nhanh lý do cần hỗ trợ (Xin thêm bát đũa, khăn giấy, thêm đá...).
+  + US-073: Bấm nút "Yêu cầu thanh toán" từ bàn khách kèm phương thức dự kiến.
+  + US-074: Nhận phản hồi trên màn hình khi nhân viên đã tiếp nhận yêu cầu hỗ trợ.
+- Đồng bộ thời gian thực (Real-time Sync):
+  + US-075: Đẩy đơn đặt món mới từ máy khách lên Server và xuống Bếp/Thu ngân tức thời.
+  + US-076: Đồng bộ trạng thái món ăn từ Bếp ngược về màn hình khách hàng theo thời gian thực.
+  + US-077: Đồng bộ tức thời khi Quản lý/Bếp báo hết món để khóa món trên E-Menu của khách.
+  + US-078: Phát âm thanh / chuông báo trên màn hình Bếp và Thu ngân khi có đơn hoặc yêu cầu mới.
+
+[SPRINT 3: US-079 -> US-110]
+- Điều phối chế biến tại Bếp (KDS):
+  + US-079: Xem danh sách các đơn đặt món mới chuyển xuống Bếp theo thứ tự thời gian (FIFO).
+  + US-080: Xem chi tiết món ăn, số lượng, số bàn và ghi chú khẩu vị nổi bật.
+  + US-081: Gom nhóm tổng số lượng món giống nhau từ nhiều bàn để chế biến cùng lúc.
+  + US-082: Chuyển trạng thái món ăn từ "Chờ chế biến" sang "Đang chế biến".
+  + US-083: Đánh dấu hoàn thành từng món ăn hoặc hoàn thành toàn bộ phiếu order.
+  + US-084: Thông báo cho bộ phận Phục vụ biết món ăn đã sẵn sàng để bưng ra bàn.
+  + US-085: Cảnh báo màu sắc đối với các đơn hàng chờ quá thời gian quy định.
+  + US-086: Xem lại lịch sử các món Bếp vừa hoàn thành trong ca.
+- Kiểm soát hết món và xử lý hủy/trả món:
+  + US-087: Nhân viên Bếp bật/tắt nhanh trạng thái "Hết món" ngay trên màn hình KDS.
+  + US-088: Bếp từ chối món trong đơn mới khi nguyên liệu vừa hết và gửi lý do về Thu ngân/Khách.
+  + US-089: Thu ngân / Quản lý thực hiện hủy món theo yêu cầu của khách (khi chưa nấu).
+  + US-090: Xử lý trả lại món hoặc đổi món kèm ghi nhận lý do (do lỗi chế biến hoặc khách đổi ý).
+  + US-091: Lưu lịch sử hủy/trả món để đối soát thất thoát nguyên liệu.
+- Vận hành sơ đồ bàn cho Thu ngân / Phục vụ:
+  + US-092: Xem sơ đồ bàn trực quan theo khu vực với màu sắc phân biệt trạng thái bàn.
+  + US-093: Xem nhanh thời gian khách bắt đầu ngồi và tổng tiền tạm tính trên từng ô bàn.
+  + US-094: Mở bàn thủ công và tạo đơn đặt món hộ khách ngay trên máy Thu ngân / Phục vụ.
+  + US-095: Chỉnh sửa số lượng món hoặc thêm món bổ sung cho bàn đang phục vụ.
+  + US-096: Xác nhận món ăn đã được bưng lên bàn cho khách ("Đã phục vụ").
+  + US-097: Chuyển toàn bộ đơn hàng từ bàn hiện tại sang một bàn trống khác (Chuyển bàn).
+  + US-098: Gộp đơn hàng của hai hoặc nhiều bàn vào chung một hóa đơn (Ghép bàn).
+- Quản lý hóa đơn, phụ phí và khuyến mãi:
+  + US-099: Tạo và quản lý các chương trình khuyến mãi / mã giảm giá (theo % hoặc số tiền).
+  + US-100: Kiểm tra điều kiện hợp lệ và áp dụng mã giảm giá vào hóa đơn của bàn.
+  + US-101: Tùy chỉnh chiết khấu trực tiếp hoặc cộng phụ phí (nếu có) theo quyền Quản lý.
+  + US-102: Tự động tổng hợp toàn bộ các lượt gọi món tại bàn thành một hóa đơn duy nhất.
+  + US-103: Tự động tính thành tiền, giảm giá, thuế VAT và tổng số tiền khách phải thanh toán.
+  + US-104: Xem trước và in phiếu tạm tính để nhân viên mang ra bàn cho khách kiểm tra.
+- Thanh toán và đóng phiên bàn:
+  + US-105: Xử lý thanh toán bằng phương thức Tiền mặt (nhập tiền khách đưa, tính tiền thừa).
+  + US-106: Tạo mã VietQR động chứa sẵn số tiền và nội dung chuyển khoản theo mã hóa đơn.
+  + US-107: Xác nhận hoàn tất giao dịch thanh toán và xuất hóa đơn chính thức.
+  + US-108: Hỗ trợ tách món trong bàn để thanh toán riêng theo nhu cầu của nhóm khách.
+  + US-109: Tự động đóng phiên phục vụ bàn (Table Session) ngay sau khi thanh toán xong.
+  + US-110: Tự động chuyển trạng thái bàn về "Bàn trống" để sẵn sàng đón lượt khách mới.
+
+[SPRINT 4: US-111 -> US-140]
+- Đánh giá và phản hồi khách hàng:
+  + US-111: Khách hàng chấm điểm sao (1-5 sao) cho chất lượng phục vụ sau khi dùng bữa.
+  + US-112: Khách hàng gửi nhận xét chi tiết và đánh giá từng món ăn đã thưởng thức.
+  + US-113: Quản lý xem danh sách toàn bộ đánh giá và phản hồi của khách hàng.
+  + US-114: Lọc đánh giá theo số sao, theo ngày hoặc theo các phản hồi tiêu cực cần xử lý gấp.
+  + US-115: Quản lý ghi chú xử lý hoặc phản hồi lại ý kiến đóng góp của khách hàng.
+  + US-116: Thống kê điểm đánh giá trung bình của nhà hàng và của từng món ăn.
+- Quản lý ca làm việc và kết ca thu ngân:
+  + US-117: Thiết lập danh sách ca làm việc trong ngày (Ca sáng, Ca chiều, Ca tối).
+  + US-118: Thu ngân thực hiện mở ca làm việc và nhập số tiền mặt đầu ca trong két.
+  + US-119: Ghi nhận các khoản thu/chi tiền mặt phát sinh trong ca làm việc.
+  + US-120: Tổng hợp doanh thu tiền mặt và chuyển khoản phát sinh trong ca hiện tại.
+  + US-121: Thu ngân thực hiện đóng ca, nhập tiền thực tế cuối ca và đối soát chênh lệch.
+  + US-122: Quản lý xem lịch sử bàn giao ca và biên bản kết ca của thu ngân.
+- Thống kê và báo cáo doanh thu:
+  + US-123: Xem Dashboard tổng quan trong ngày (Tổng doanh thu, số đơn, số bàn đang phục vụ).
+  + US-124: Xem biểu đồ doanh thu trực quan theo ngày, tuần, tháng hoặc khoảng thời gian tùy chọn.
+  + US-125: Thống kê tỷ trọng doanh thu theo phương thức thanh toán (Tiền mặt vs Chuyển khoản).
+  + US-126: Thống kê doanh thu theo từng danh mục thực đơn.
+  + US-127: Xem bảng xếp hạng Top món ăn bán chạy nhất (theo số lượng và theo doanh thu).
+  + US-128: Thống kê các món ăn ít người gọi để tối ưu thực đơn.
+  + US-129: Thống kê khung giờ cao điểm có lượng đặt món lớn nhất trong ngày.
+  + US-130: Thống kê tỷ lệ đơn hủy / món hủy và tổng giá trị hủy món.
+- Xuất dữ liệu và đối soát lịch sử:
+  + US-131: Tra cứu lịch sử toàn bộ hóa đơn đã thanh toán theo mã hóa đơn, ngày hoặc bàn.
+  + US-132: Xem lại chi tiết từng hóa đơn lịch sử (các món đã gọi, người thu ngân, giờ thanh toán).
+  + US-133: Xuất báo cáo doanh thu và danh sách hóa đơn ra tệp CSV / Excel.
+  + US-134: Xuất danh mục thực đơn để sao lưu hoặc nhập liệu hàng loạt.
+- Tối ưu hệ thống và triển khai (Deployment):
+  + US-135: Tối ưu tốc độ tải trang và trải nghiệm Responsive trên mọi kích thước màn hình điện thoại.
+  + US-136: Xử lý kết nối lại tự động (Auto-reconnect) cho WebSockets khi mạng chập chờn.
+  + US-137: Kiểm thử bảo mật phân quyền và chống giả mạo request đặt món.
+  + US-138: Thiết lập biến môi trường, CI/CD và triển khai Frontend lên Vercel (quanmoc.com).
+  + US-139: Triển khai Backend API và cơ sở dữ liệu lên Cloud Server.
+  + US-140: Kiểm thử End-to-End toàn bộ quy trình từ quét QR -> Bếp -> Thu ngân -> Báo cáo.
+================================================================================
