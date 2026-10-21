@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Nhà Hàng & Gọi Món QR (Quán Mộc)</title>
+    <!-- Giao diện stylesheet -->
+    <link rel="stylesheet" href="./tepGiaoDien.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍽️</text></svg>">
+</head>
+<body>
+    <div class="khung-ung-dung">
+        <!-- THANH ĐIỀU HƯỚNG DỌC (SIDEBAR) -->
+        <aside class="thanh-dieu-huong-doc">
+            <div class="dau-sidebar">
+                <div class="logo-quan">🍽️</div>
+                <div>
+                    <h1 class="ten-quan">QUÁN MỘC</h1>
+                    <p class="khau-hieu-quan">Hương vị truyền thống</p>
+                </div>
+            </div>
+
+            <ul class="danh-muc-menu">
+                <li class="nhan-phan-nhom">SPRINT 1 (PHẦN VIỆC CỦA QUÂN)</li>
+                <li>
+                    <a href="#ban-an" class="muc-menu kich-hoat" data-tab="quanLyBanQr">
+                        <span>🪑</span>
+                        <span>Quản lý Bàn & QR</span>
+                        <span class="badge-sprint">Sprint 1</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#thuc-don" class="muc-menu" data-tab="quanLyThucDon">
+                        <span>🍲</span>
+                        <span>Quản lý Thực đơn</span>
+                        <span class="badge-sprint">Sprint 1</span>
+                    </a>
+                </li>
+
+                <li class="nhan-phan-nhom">LỘ TRÌNH SPRINT TIẾP THEO</li>
+                <li>
+                    <a href="#e-menu" class="muc-menu" data-tab="eMenuKhachHang">
+                        <span>📱</span>
+                        <span>E-Menu Khách hàng</span>
+                        <span class="badge-sprint">Sprint 2</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#bep-kds" class="muc-menu" data-tab="dieuPhoiBep">
+                        <span>👨‍🍳</span>
+                        <span>Điều phối Bếp (KDS)</span>
+                        <span class="badge-sprint">Sprint 3</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#pos" class="muc-menu" data-tab="posThuNgan">
+                        <span>💵</span>
+                        <span>POS & Thu ngân</span>
+                        <span class="badge-sprint">Sprint 3</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#bao-cao" class="muc-menu" data-tab="baoCao">
+                        <span>📊</span>
+                        <span>Báo cáo doanh thu</span>
+                        <span class="badge-sprint">Sprint 4</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="duoi-sidebar">
+                <div class="anh-dai-dien-user">Q</div>
+                <div class="thong-tin-user">
+                    <div class="ten-user">Quân (Frontend)</div>
+                    <div class="vai-tro-user">Chuyên viên Giao diện</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- KHU VỰC HIỂN THỊ NỘI DUNG CHÍNH -->
+        <main class="vung-noi-dung-chinh">
+            <!-- Header trang -->
+            <header class="thanh-dau-trang">
+                <div class="thong-tin-nha-hang-head">
+                    <span>🏢 <strong>Quán Mộc - Chi nhánh 1</strong> (123 Đường Ẩm Thực, Q.1)</span>
+                    <span>📞 Hotline: <strong>028 1234 5678</strong></span>
+                    <span>📶 Wi-Fi: <strong>QuanMoc_KhachHang</strong> (quanmoc2026)</span>
+                </div>
+                <div>
+                    <a href="http://localhost:3001/api-docs" target="_blank" class="nut nut-phu" style="font-size: 12px; padding: 6px 12px;">
+                        📘 Tài liệu Swagger API
+                    </a>
+                </div>
+            </header>
+
+            <!-- Vùng Render động từ JavaScript -->
+            <div id="noi-dung-chinh" class="phan-than-chinh">
+                <!-- Nội dung được nạp tự động qua window.ungDung.chuyenTab() -->
+            </div>
+        </main>
+    </div>
+
+    <!-- KHUNG CHỨA MODAL TOÀN CỤC -->
+    <div id="khung-modal-toan-cuc" class="khung-modal-toan-cuc"></div>
+
+    <!-- KHUNG CHỨA TOAST NOTIFICATION -->
+    <div id="khung-thong-bao-toast" class="khung-thong-bao-toast"></div>
+
+    <!-- CÁC TỆP SCRIPT HỆ THỐNG -->
+    <script src="./dungChung/hangSo.js"></script>
+    <script src="./dungChung/dinhDang.js"></script>
+    <script src="./dungChung/taoQrClient.js"></script>
+    <script src="./dungChung/api.js"></script>
+    <script src="./dungChung/ketNoiSocket.js"></script>
+    <script src="./thanhPhan/thongBao.js"></script>
+    <script src="./trang/quanLyBanQr/quanLyBanQr.js"></script>
+    <script src="./trang/quanLyThucDon/quanLyThucDon.js"></script>
+    <script src="./ungDung.js"></script>
+</body>
+</html>
