@@ -7,6 +7,8 @@
 class ApiService {
     constructor() {
         this.baseUrl = window.HANG_SO ? window.HANG_SO.API_BASE_URL : 'http://localhost:3001/api';
+        this.daKiemTraServer = false;
+        this.serverDangChay = false;
         this.khoiTaoDuLieuMauBanDau();
     }
 
@@ -25,9 +27,45 @@ class ApiService {
     }
 
     /**
-     * Gọi HTTP Request chung
+     * Kiểm tra trạng thái máy chủ siêu tốc (Timeout 200ms)
+     */
+    async kiemTraKetNoiServer() {
+        // Nếu mở trực tiếp dạng file:/// hoặc protocol không phải http/https -> Chạy offline ngay
+        if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+            this.serverDangChay = false;
+            this.daKiemTraServer = true;
+            return false;
+        }
+
+        if (this.daKiemTraServer) {
+            return this.serverDangChay;
+        }
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 200); // 200ms tối đa
+            const phanHoi = await fetch(`${this.baseUrl}/kiem-tra-suc-khoe`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            this.serverDangChay = (phanHoi.status === 200);
+        } catch {
+            this.serverDangChay = false;
+        }
+
+        this.daKiemTraServer = true;
+        return this.serverDangChay;
+    }
+
+    /**
+     * Gọi HTTP Request chung (Tự động fallback LocalStorage 0ms nếu server không bật)
      */
     async yeuCau(duongDan, tuyChon = {}) {
+        const coServer = await this.kiemTraKetNoiServer();
+        if (!coServer) {
+            return null; // Không cần chờ timeout, trả về ngay lập tức để đọc LocalStorage
+        }
+
         const url = `${this.baseUrl}${duongDan}`;
         const headers = {
             'Content-Type': 'application/json',
@@ -40,11 +78,16 @@ class ApiService {
         }
 
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500);
+
             const phanHoi = await fetch(url, {
                 ...tuyChon,
                 headers,
+                signal: controller.signal,
                 body: tuyChon.body ? JSON.stringify(tuyChon.body) : undefined
             });
+            clearTimeout(timeoutId);
 
             const duLieuJson = await phanHoi.json().catch(() => null);
 
@@ -54,8 +97,8 @@ class ApiService {
 
             return duLieuJson || { ok: false, msg: 'Không thể giải mã dữ liệu từ máy chủ' };
         } catch (loi) {
-            console.warn(`Không kết nối được tới Backend API (${url}), sử dụng Kho dữ liệu cục bộ.`, loi.message);
-            return null; // Trả về null để chuyển sang chế độ LocalStorage
+            console.warn(`Không kết nối được tới Backend API (${url}), chuyển sang Kho dữ liệu cục bộ.`);
+            return null;
         }
     }
 

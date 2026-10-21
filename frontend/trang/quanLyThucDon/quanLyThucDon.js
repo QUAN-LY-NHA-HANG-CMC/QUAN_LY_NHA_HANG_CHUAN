@@ -179,9 +179,9 @@ class QuanLyThucDonModule {
         return `
             <div class="the-mon-an ${!laDangBan ? 'the-mon-tam-het' : ''}">
                 <div class="khung-anh-mon">
-                    <img src="${window.DinhDang.thoatHtml(mon.hinhAnh || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80')}" 
+                    <img src="${window.DinhDang.thoatHtml(mon.hinhAnh || window.DinhDang.layAnhMacDinh(mon.tenMon))}" 
                          alt="${window.DinhDang.thoatHtml(mon.tenMon)}" 
-                         onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'"
+                         onerror="this.onerror=null; this.src=window.DinhDang.layAnhMacDinh('${window.DinhDang.thoatHtml(mon.tenMon)}');"
                          loading="lazy" />
                     
                     <!-- Nút ghim Best Seller (US-039) -->
