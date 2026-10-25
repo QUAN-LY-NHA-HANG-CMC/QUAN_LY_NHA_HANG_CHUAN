@@ -305,6 +305,205 @@ class ApiService {
             ];
             localStorage.setItem(KHOA.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an', JSON.stringify(dsMonMau));
         }
+
+        // 5. Dữ liệu Vai Trò & Phân Quyền mẫu (Sprint 1 - US-015 -> US-021)
+        if (!localStorage.getItem(KHOA.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro')) {
+            const dsVaiTroMau = [
+                {
+                    ma: 'QUAN_LY',
+                    ten: 'Quản lý / Chủ nhà hàng',
+                    moTa: 'Toàn quyền điều hành hệ thống, nhân sự, thực đơn và tài chính',
+                    danhSachQuyen: [
+                        'BAN_XEM', 'BAN_SUA', 'BAN_IN_QR',
+                        'MON_XEM', 'MON_SUA', 'MON_TRANG_THAI',
+                        'THU_NGAN_XEM', 'THU_NGAN_THANH_TOAN', 'THU_NGAN_IN_BILL',
+                        'BEP_XEM', 'BEP_CAP_NHAT',
+                        'NHAN_VIEN_XEM', 'NHAN_VIEN_SUA', 'PHAN_QUYEN_SUA',
+                        'CAU_HINH_XEM', 'CAU_HINH_SUA'
+                    ]
+                },
+                {
+                    ma: 'THU_NGAN',
+                    ten: 'Thu ngân',
+                    moTa: 'Theo dõi sơ đồ bàn, in bill tạm tính và xử lý thanh toán hóa đơn',
+                    danhSachQuyen: [
+                        'BAN_XEM', 'MON_XEM',
+                        'THU_NGAN_XEM', 'THU_NGAN_THANH_TOAN', 'THU_NGAN_IN_BILL'
+                    ]
+                },
+                {
+                    ma: 'BEP',
+                    ten: 'Đầu bếp (KDS)',
+                    moTa: 'Xem danh sách gọi món, điều phối món ăn và bật tắt hết món',
+                    danhSachQuyen: [
+                        'MON_XEM', 'MON_TRANG_THAI',
+                        'BEP_XEM', 'BEP_CAP_NHAT'
+                    ]
+                },
+                {
+                    ma: 'PHUC_VU',
+                    ten: 'Nhân viên phục vụ',
+                    moTa: 'Xem bàn ăn, hỗ trợ khách gọi món và gửi yêu cầu',
+                    danhSachQuyen: [
+                        'BAN_XEM', 'MON_XEM', 'THU_NGAN_XEM'
+                    ]
+                }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro', JSON.stringify(dsVaiTroMau));
+        }
+
+        // 6. Dữ liệu Nhân Viên mẫu (Sprint 1 - US-007 -> US-014)
+        if (!localStorage.getItem(KHOA.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien')) {
+            const dsNhanVienMau = [
+                {
+                    id: 1,
+                    tenDangNhap: 'quanly',
+                    hoTen: 'Phong (Quản Lý Dự Án)',
+                    email: 'phong.admin@quanmoc.com',
+                    soDienThoai: '0908889999',
+                    vaiTro: 'QUAN_LY',
+                    matKhau: '123456',
+                    trangThai: 'DANG_LAM_VIEC',
+                    ngayTao: '2026-10-01 08:00:00'
+                },
+                {
+                    id: 2,
+                    tenDangNhap: 'thungan',
+                    hoTen: 'Trần Thị Thu Ngân',
+                    email: 'thungan@quanmoc.com',
+                    soDienThoai: '0912345678',
+                    vaiTro: 'THU_NGAN',
+                    matKhau: '123456',
+                    trangThai: 'DANG_LAM_VIEC',
+                    ngayTao: '2026-10-05 09:30:00'
+                },
+                {
+                    id: 3,
+                    tenDangNhap: 'bep',
+                    hoTen: 'Lê Văn Bếp Trưởng',
+                    email: 'bep@quanmoc.com',
+                    soDienThoai: '0923456789',
+                    vaiTro: 'BEP',
+                    matKhau: '123456',
+                    trangThai: 'DANG_LAM_VIEC',
+                    ngayTao: '2026-10-08 14:15:00'
+                },
+                {
+                    id: 4,
+                    tenDangNhap: 'phucvu',
+                    hoTen: 'Phạm Văn Phục Vụ',
+                    email: 'phucvu@quanmoc.com',
+                    soDienThoai: '0934567890',
+                    vaiTro: 'PHUC_VU',
+                    matKhau: '123456',
+                    trangThai: 'DANG_LAM_VIEC',
+                    ngayTao: '2026-10-10 10:00:00'
+                },
+                {
+                    id: 5,
+                    tenDangNhap: 'nhanvien_cu',
+                    hoTen: 'Nguyễn Văn Đã Nghỉ',
+                    email: 'nghi.viec@quanmoc.com',
+                    soDienThoai: '0945678901',
+                    vaiTro: 'PHUC_VU',
+                    matKhau: '123456',
+                    trangThai: 'DA_KHOA',
+                    ngayTao: '2026-09-15 08:30:00'
+                }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien', JSON.stringify(dsNhanVienMau));
+        }
+
+        // 7. Lịch sử thay đổi quyền hạn nhân sự (Sprint 1 - US-022)
+        if (!localStorage.getItem(KHOA.LICH_SU_PHAN_QUYEN || 'quanmoc_ls_phan_quyen')) {
+            const lsPhanQuyenMau = [
+                {
+                    id: 1,
+                    thoiGian: '2026-10-15 14:30:00',
+                    nguoiThucHien: 'Phong (Quản Lý)',
+                    vaiTro: 'BEP',
+                    hanhDong: 'Cập nhật quyền hạn vai trò',
+                    chiTiet: 'Bổ sung quyền [MON_TRANG_THAI] cho phép Đầu bếp bật/tắt trạng thái hết món'
+                },
+                {
+                    id: 2,
+                    thoiGian: '2026-10-12 09:10:00',
+                    nguoiThucHien: 'Phong (Quản Lý)',
+                    vaiTro: 'THU_NGAN',
+                    hanhDong: 'Khởi tạo vai trò Thu ngân',
+                    chiTiet: 'Gán các quyền xem sơ đồ bàn, thanh toán POS và in hóa đơn tạm tính'
+                }
+            ];
+            localStorage.setItem(KHOA.LICH_SU_PHAN_QUYEN || 'quanmoc_ls_phan_quyen', JSON.stringify(lsPhanQuyenMau));
+        }
+
+        // 8. Cấu hình thông tin nhà hàng & VietQR (Sprint 1 - US-041 -> US-043)
+        if (!localStorage.getItem(KHOA.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong')) {
+            const cauHinhMau = window.HANG_SO ? window.HANG_SO.NHA_HANG_MAC_DINH : {
+                ten: 'Nhà Hàng Quán Mộc',
+                chiNhanh: 'Chi nhánh 1 (Quận 1)',
+                diaChi: '123 Đường Ẩm Thực, Quận 1, TP. Hồ Chí Minh',
+                hotline: '028 1234 5678',
+                email: 'lienhe@quanmoc.com',
+                wifiTen: 'QuanMoc_KhachHang',
+                wifiMatKhau: 'quanmoc2026',
+                khauHieu: 'Hương vị truyền thống, đậm đà tình thân',
+                gioHoatDong: '09:00 - 22:30',
+                thueVat: 8,
+                phiPhucVu: 0,
+                nganHang: {
+                    maNganHang: 'VCB',
+                    tenNganHang: 'Vietcombank - Ngoại Thương Việt Nam',
+                    soTaiKhoan: '9988776655',
+                    chuTaiKhoan: 'NHA HANG QUAN MOC',
+                    cuPhapChuyenKhoan: 'QUANMOC {SO_BAN}'
+                }
+            };
+            localStorage.setItem(KHOA.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong', JSON.stringify(cauHinhMau));
+        }
+
+        // 9. Nhật ký hoạt động hệ thống (Sprint 1 - US-044)
+        if (!localStorage.getItem(KHOA.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong')) {
+            const nhatKyMau = [
+                {
+                    id: 1,
+                    thoiGian: '2026-10-25 08:30:15',
+                    loai: 'INFO',
+                    hanhDong: 'Đăng nhập hệ thống',
+                    nguoiThucHien: 'Phong (Quản Lý)',
+                    diaChiIp: '192.168.1.10',
+                    chiTiet: 'Đăng nhập thành công từ trình duyệt Chrome / Windows'
+                },
+                {
+                    id: 2,
+                    thoiGian: '2026-10-25 09:12:04',
+                    loai: 'INFO',
+                    hanhDong: 'Cập nhật sơ đồ bàn',
+                    nguoiThucHien: 'Quân (Frontend)',
+                    diaChiIp: '192.168.1.15',
+                    chiTiet: 'Thêm bàn mới T1-06 sức chứa 2 chỗ tại Tầng 1'
+                },
+                {
+                    id: 3,
+                    thoiGian: '2026-10-25 10:05:42',
+                    loai: 'WARN',
+                    hanhDong: 'Khóa tài khoản nhân viên',
+                    nguoiThucHien: 'Phong (Quản Lý)',
+                    diaChiIp: '192.168.1.10',
+                    chiTiet: 'Khóa tài khoản [nhanvien_cu] do đã nghỉ việc'
+                },
+                {
+                    id: 4,
+                    thoiGian: '2026-10-25 10:45:19',
+                    loai: 'INFO',
+                    hanhDong: 'Cập nhật cấu hình nhà hàng',
+                    nguoiThucHien: 'Phong (Quản Lý)',
+                    diaChiIp: '192.168.1.10',
+                    chiTiet: 'Cập nhật mật khẩu Wi-Fi khách và tỷ lệ thuế VAT 8%'
+                }
+            ];
+            localStorage.setItem(KHOA.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong', JSON.stringify(nhatKyMau));
+        }
     }
 
     // =========================================================================
@@ -321,6 +520,7 @@ class ApiService {
 
     async luuDanhSachKhuVuc(ds) {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc', JSON.stringify(ds));
+        this.ghiNhatKy('Cập nhật khu vực bàn', 'INFO', `Cập nhật danh sách khu vực phục vụ (${ds.length} khu vực).`);
     }
 
     async layDanhSachBan() {
@@ -334,6 +534,7 @@ class ApiService {
 
     async luuDanhSachBan(ds) {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban', JSON.stringify(ds));
+        this.ghiNhatKy('Cập nhật sơ đồ bàn', 'INFO', `Cập nhật sơ đồ bàn ăn (${ds.length} bàn).`);
     }
 
     // =========================================================================
@@ -350,6 +551,7 @@ class ApiService {
 
     async luuDanhSachDanhMuc(ds) {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc', JSON.stringify(ds));
+        this.ghiNhatKy('Cập nhật danh mục thực đơn', 'INFO', `Cập nhật danh mục thực đơn (${ds.length} danh mục).`);
     }
 
     async layDanhSachMonAn() {
@@ -363,6 +565,426 @@ class ApiService {
 
     async luuDanhSachMonAn(ds) {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an', JSON.stringify(ds));
+        this.ghiNhatKy('Cập nhật món ăn thực đơn', 'INFO', `Cập nhật danh sách món ăn (${ds.length} món).`);
+    }
+
+    // =========================================================================
+    // XÁC THỰC & HỒ SƠ CÁ NHÂN (Sprint 1 - US-003, US-007 -> US-010)
+    // Phụ trách: Phong (Frontend Admin & Auth)
+    // =========================================================================
+
+    /**
+     * Đăng nhập hệ thống (US-007)
+     */
+    async dangNhap(tenDangNhap, matKhau) {
+        // Thử kết nối Backend API trước
+        const phanHoi = await this.yeuCau('/tai-khoan/dang-nhap', {
+            method: 'POST',
+            body: { tenDangNhap, matKhau }
+        });
+
+        if (phanHoi && phanHoi.ok) {
+            this.luuAccessToken(phanHoi.data.token);
+            localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.THONG_TIN_NGUOI_DUNG || 'quanmoc_nguoi_dung', JSON.stringify(phanHoi.data.nguoiDung));
+            this.ghiNhatKy('Đăng nhập hệ thống (API)', 'INFO', `Người dùng [${phanHoi.data.nguoiDung.hoTen}] đăng nhập thành công.`);
+            return phanHoi;
+        }
+
+        // Fallback LocalStorage Authentication
+        const dsNhanVien = await this.layDanhSachNhanVien();
+        const timThay = dsNhanVien.find(nv => 
+            (nv.tenDangNhap.toLowerCase() === tenDangNhap.trim().toLowerCase() || 
+             nv.email.toLowerCase() === tenDangNhap.trim().toLowerCase()) &&
+            nv.matKhau === matKhau
+        );
+
+        if (!timThay) {
+            return { ok: false, msg: 'Tên đăng nhập hoặc mật khẩu không chính xác.' };
+        }
+
+        if (timThay.trangThai === 'DA_KHOA') {
+            return { ok: false, msg: 'Tài khoản của bạn đã bị khóa hoặc ngừng hoạt động. Vui lòng liên hệ Quản lý.' };
+        }
+
+        const tokenGia = 'jwt_token_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+        const duLieuNguoiDung = {
+            id: timThay.id,
+            tenDangNhap: timThay.tenDangNhap,
+            hoTen: timThay.hoTen,
+            email: timThay.email,
+            soDienThoai: timThay.soDienThoai,
+            vaiTro: timThay.vaiTro,
+            ngayTao: timThay.ngayTao,
+            thoiGianDangNhap: new Date().toISOString()
+        };
+
+        this.luuAccessToken(tokenGia);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.THONG_TIN_NGUOI_DUNG || 'quanmoc_nguoi_dung', JSON.stringify(duLieuNguoiDung));
+        this.ghiNhatKy('Đăng nhập hệ thống', 'INFO', `Người dùng [${timThay.hoTen}] đăng nhập thành công với vai trò ${timThay.vaiTro}.`);
+
+        return {
+            ok: true,
+            data: {
+                token: tokenGia,
+                nguoiDung: duLieuNguoiDung
+            },
+            msg: `Chào mừng ${timThay.hoTen} quay trở lại làm việc!`
+        };
+    }
+
+    /**
+     * Đăng xuất hệ thống (US-008)
+     */
+    async dangXuat() {
+        const user = this.layThongTinNguoiDung();
+        if (user) {
+            this.ghiNhatKy('Đăng xuất hệ thống', 'INFO', `Người dùng [${user.hoTen}] đã đăng xuất.`);
+        }
+        localStorage.removeItem(window.HANG_SO?.KHOA_LUU_TRU?.ACCESS_TOKEN || 'quanmoc_access_token');
+        localStorage.removeItem(window.HANG_SO?.KHOA_LUU_TRU?.THONG_TIN_NGUOI_DUNG || 'quanmoc_nguoi_dung');
+        return { ok: true, msg: 'Đã đăng xuất thành công.' };
+    }
+
+    /**
+     * Lấy thông tin tài khoản đang đăng nhập
+     */
+    layThongTinNguoiDung() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.THONG_TIN_NGUOI_DUNG || 'quanmoc_nguoi_dung');
+        try {
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Cập nhật thông tin hồ sơ cá nhân (US-010)
+     */
+    async capNhatHoSo(thongTin) {
+        const user = this.layThongTinNguoiDung();
+        if (!user) return { ok: false, msg: 'Chưa đăng nhập.' };
+
+        const ds = await this.layDanhSachNhanVien();
+        const index = ds.findIndex(nv => nv.id === user.id);
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy hồ sơ nhân viên.' };
+
+        ds[index].hoTen = thongTin.hoTen || ds[index].hoTen;
+        ds[index].email = thongTin.email || ds[index].email;
+        ds[index].soDienThoai = thongTin.soDienThoai || ds[index].soDienThoai;
+        await this.luuDanhSachNhanVien(ds);
+
+        // Đồng bộ lại session người dùng hiện tại
+        const userMoi = { ...user, hoTen: ds[index].hoTen, email: ds[index].email, soDienThoai: ds[index].soDienThoai };
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.THONG_TIN_NGUOI_DUNG || 'quanmoc_nguoi_dung', JSON.stringify(userMoi));
+
+        this.ghiNhatKy('Cập nhật hồ sơ cá nhân', 'INFO', `Người dùng [${user.hoTen}] cập nhật thông tin cá nhân.`);
+        return { ok: true, data: userMoi, msg: 'Cập nhật thông tin hồ sơ thành công!' };
+    }
+
+    /**
+     * Đổi mật khẩu cá nhân (US-009)
+     */
+    async doiMatKhau(matKhauCu, matKhauMoi) {
+        const user = this.layThongTinNguoiDung();
+        if (!user) return { ok: false, msg: 'Chưa đăng nhập.' };
+
+        const ds = await this.layDanhSachNhanVien();
+        const index = ds.findIndex(nv => nv.id === user.id);
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy tài khoản.' };
+
+        if (ds[index].matKhau !== matKhauCu) {
+            return { ok: false, msg: 'Mật khẩu hiện tại không chính xác.' };
+        }
+
+        if (!matKhauMoi || matKhauMoi.length < 6) {
+            return { ok: false, msg: 'Mật khẩu mới phải có ít nhất 6 ký tự.' };
+        }
+
+        ds[index].matKhau = matKhauMoi;
+        await this.luuDanhSachNhanVien(ds);
+
+        this.ghiNhatKy('Đổi mật khẩu', 'INFO', `Người dùng [${user.hoTen}] đã thay đổi mật khẩu thành công.`);
+        return { ok: true, msg: 'Đổi mật khẩu thành công! Vui lòng sử dụng mật khẩu mới cho lần đăng nhập tiếp theo.' };
+    }
+
+    // =========================================================================
+    // QUẢN LÝ NHÂN SỰ (Sprint 1 - US-011 -> US-014)
+    // Phụ trách: Phong (Frontend Admin)
+    // =========================================================================
+
+    async layDanhSachNhanVien() {
+        const kq = await this.yeuCau('/nhan-vien');
+        if (kq && kq.ok) return kq.data;
+
+        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
+        return data ? JSON.parse(data) : [];
+    }
+
+    async luuDanhSachNhanVien(ds) {
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien', JSON.stringify(ds));
+    }
+
+    /**
+     * Thêm nhân viên mới (US-011)
+     */
+    async themNhanVien(nv) {
+        const ds = await this.layDanhSachNhanVien();
+        
+        // Kiểm tra trùng username hoặc email
+        if (ds.some(item => item.tenDangNhap.toLowerCase() === nv.tenDangNhap.trim().toLowerCase())) {
+            return { ok: false, msg: `Tên đăng nhập "${nv.tenDangNhap}" đã tồn tại trên hệ thống.` };
+        }
+        if (nv.email && ds.some(item => item.email.toLowerCase() === nv.email.trim().toLowerCase())) {
+            return { ok: false, msg: `Email "${nv.email}" đã được đăng ký cho tài khoản khác.` };
+        }
+
+        const idMoi = ds.length > 0 ? Math.max(...ds.map(d => d.id || 0)) + 1 : 1;
+        const nhanVienMoi = {
+            id: idMoi,
+            tenDangNhap: nv.tenDangNhap.trim().toLowerCase(),
+            hoTen: nv.hoTen.trim(),
+            email: nv.email ? nv.email.trim() : '',
+            soDienThoai: nv.soDienThoai ? nv.soDienThoai.trim() : '',
+            vaiTro: nv.vaiTro || 'PHUC_VU',
+            matKhau: nv.matKhau || '123456',
+            trangThai: 'DANG_LAM_VIEC',
+            ngayTao: new Date().toISOString().replace('T', ' ').substring(0, 19)
+        };
+
+        ds.push(nhanVienMoi);
+        await this.luuDanhSachNhanVien(ds);
+
+        this.ghiNhatKy('Tạo tài khoản nhân viên', 'INFO', `Tạo mới nhân viên [${nhanVienMoi.hoTen}] (${nhanVienMoi.tenDangNhap}) vai trò ${nhanVienMoi.vaiTro}.`);
+        return { ok: true, data: nhanVienMoi, msg: `Tạo tài khoản cho nhân viên "${nhanVienMoi.hoTen}" thành công!` };
+    }
+
+    /**
+     * Cập nhật thông tin nhân viên (US-013)
+     */
+    async capNhatNhanVien(id, thongTin) {
+        const ds = await this.layDanhSachNhanVien();
+        const index = ds.findIndex(item => item.id === Number(id));
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy nhân viên cần cập nhật.' };
+
+        // Kiểm tra trùng email nếu sửa email
+        if (thongTin.email && ds.some(item => item.id !== Number(id) && item.email.toLowerCase() === thongTin.email.trim().toLowerCase())) {
+            return { ok: false, msg: `Email "${thongTin.email}" đã được sử dụng bởi nhân viên khác.` };
+        }
+
+        ds[index] = {
+            ...ds[index],
+            hoTen: thongTin.hoTen !== undefined ? thongTin.hoTen.trim() : ds[index].hoTen,
+            email: thongTin.email !== undefined ? thongTin.email.trim() : ds[index].email,
+            soDienThoai: thongTin.soDienThoai !== undefined ? thongTin.soDienThoai.trim() : ds[index].soDienThoai,
+            vaiTro: thongTin.vaiTro !== undefined ? thongTin.vaiTro : ds[index].vaiTro
+        };
+
+        await this.luuDanhSachNhanVien(ds);
+        this.ghiNhatKy('Cập nhật nhân viên', 'INFO', `Cập nhật thông tin nhân viên [${ds[index].hoTen}].`);
+        return { ok: true, data: ds[index], msg: 'Cập nhật thông tin nhân viên thành công!' };
+    }
+
+    /**
+     * Đổi trạng thái Khóa / Mở khóa tài khoản (US-014)
+     */
+    async doiTrangThaiNhanVien(id, trangThaiMoi) {
+        const ds = await this.layDanhSachNhanVien();
+        const index = ds.findIndex(item => item.id === Number(id));
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy nhân viên.' };
+
+        // Không cho phép tự khóa tài khoản quản trị chính đang thao tác
+        const userHienTai = this.layThongTinNguoiDung();
+        if (userHienTai && userHienTai.id === Number(id) && trangThaiMoi === 'DA_KHOA') {
+            return { ok: false, msg: 'Bạn không thể tự khóa tài khoản đang đăng nhập của chính mình!' };
+        }
+
+        ds[index].trangThai = trangThaiMoi;
+        await this.luuDanhSachNhanVien(ds);
+
+        const tenTrangThai = trangThaiMoi === 'DA_KHOA' ? 'Khóa' : 'Kích hoạt mở lại';
+        this.ghiNhatKy(`${tenTrangThai} tài khoản`, trangThaiMoi === 'DA_KHOA' ? 'WARN' : 'INFO', `${tenTrangThai} tài khoản nhân viên [${ds[index].hoTen}].`);
+        return { ok: true, data: ds[index], msg: `${tenTrangThai} tài khoản "${ds[index].hoTen}" thành công!` };
+    }
+
+    /**
+     * Đặt lại mật khẩu cho nhân viên (US-013)
+     */
+    async datLaiMatKhau(id, matKhauMoi) {
+        const ds = await this.layDanhSachNhanVien();
+        const index = ds.findIndex(item => item.id === Number(id));
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy nhân viên.' };
+
+        ds[index].matKhau = matKhauMoi;
+        await this.luuDanhSachNhanVien(ds);
+
+        this.ghiNhatKy('Đặt lại mật khẩu', 'WARN', `Đặt lại mật khẩu cho nhân viên [${ds[index].hoTen}].`);
+        return { ok: true, msg: `Đặt lại mật khẩu cho "${ds[index].hoTen}" thành công! Mật khẩu mới: ${matKhauMoi}` };
+    }
+
+    // =========================================================================
+    // VAI TRÒ & PHÂN QUYỀN RBAC (Sprint 1 - US-015 -> US-018, US-022)
+    // Phụ trách: Phong (Frontend Admin)
+    // =========================================================================
+
+    async layDanhSachVaiTro() {
+        const kq = await this.yeuCau('/vai-tro');
+        if (kq && kq.ok) return kq.data;
+
+        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro');
+        return data ? JSON.parse(data) : [];
+    }
+
+    async luuDanhSachVaiTro(ds) {
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro', JSON.stringify(ds));
+    }
+
+    /**
+     * Cập nhật danh sách quyền cho vai trò (US-018 & US-022)
+     */
+    async capNhatQuyenVaiTro(maVaiTro, dsQuyenMoi, nguoiThucHien = 'Phong (Quản Lý)') {
+        const ds = await this.layDanhSachVaiTro();
+        const index = ds.findIndex(item => item.ma === maVaiTro);
+        if (index === -1) return { ok: false, msg: 'Không tìm thấy vai trò cần phân quyền.' };
+
+        const soQuyenCu = ds[index].danhSachQuyen ? ds[index].danhSachQuyen.length : 0;
+        ds[index].danhSachQuyen = dsQuyenMoi;
+        await this.luuDanhSachVaiTro(ds);
+
+        // Ghi nhận nhật ký lịch sử phân quyền (US-022)
+        await this.ghiLichSuPhanQuyen({
+            nguoiThucHien,
+            vaiTro: maVaiTro,
+            hanhDong: 'Cập nhật ma trận quyền',
+            chiTiet: `Thay đổi cấu hình quyền cho vai trò [${ds[index].ten}]: ${soQuyenCu} quyền -> ${dsQuyenMoi.length} quyền.`
+        });
+
+        this.ghiNhatKy('Cập nhật quyền hạn vai trò', 'WARN', `Cập nhật quyền hạn cho vai trò [${ds[index].ten}].`);
+        return { ok: true, data: ds[index], msg: `Lưu cấu hình quyền cho vai trò "${ds[index].ten}" thành công!` };
+    }
+
+    /**
+     * Thêm vai trò mới (US-016)
+     */
+    async themVaiTro(vt) {
+        const ds = await this.layDanhSachVaiTro();
+        if (ds.some(item => item.ma.toUpperCase() === vt.ma.trim().toUpperCase())) {
+            return { ok: false, msg: `Mã vai trò "${vt.ma}" đã tồn tại.` };
+        }
+
+        const vaiTroMoi = {
+            ma: vt.ma.trim().toUpperCase(),
+            ten: vt.ten.trim(),
+            moTa: vt.moTa ? vt.moTa.trim() : '',
+            danhSachQuyen: vt.danhSachQuyen || []
+        };
+
+        ds.push(vaiTroMoi);
+        await this.luuDanhSachVaiTro(ds);
+
+        await this.ghiLichSuPhanQuyen({
+            nguoiThucHien: 'Phong (Quản Lý)',
+            vaiTro: vaiTroMoi.ma,
+            hanhDong: 'Tạo vai trò mới',
+            chiTiet: `Khởi tạo vai trò [${vaiTroMoi.ten}] với ${vaiTroMoi.danhSachQuyen.length} quyền ban đầu.`
+        });
+
+        this.ghiNhatKy('Tạo vai trò mới', 'INFO', `Tạo mới vai trò [${vaiTroMoi.ten}].`);
+        return { ok: true, data: vaiTroMoi, msg: `Tạo vai trò "${vaiTroMoi.ten}" thành công!` };
+    }
+
+    /**
+     * Tra cứu lịch sử phân quyền (US-022)
+     */
+    async layLichSuPhanQuyen() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_PHAN_QUYEN || 'quanmoc_ls_phan_quyen');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    async ghiLichSuPhanQuyen(item) {
+        const ls = await this.layLichSuPhanQuyen();
+        const idMoi = ls.length > 0 ? Math.max(...ls.map(l => l.id || 0)) + 1 : 1;
+        const banGhi = {
+            id: idMoi,
+            thoiGian: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            nguoiThucHien: item.nguoiThucHien || 'Hệ thống',
+            vaiTro: item.vaiTro || 'CHUNG',
+            hanhDong: item.hanhDong || 'Thay đổi quyền',
+            chiTiet: item.chiTiet || ''
+        };
+        ls.unshift(banGhi); // Thêm lên đầu danh sách
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_PHAN_QUYEN || 'quanmoc_ls_phan_quyen', JSON.stringify(ls));
+        return banGhi;
+    }
+
+    // =========================================================================
+    // CẤU HÌNH NỀN TẢNG & SYSTEM LOGS (Sprint 1 - US-041 -> US-044)
+    // Phụ trách: Phong (Frontend Admin)
+    // =========================================================================
+
+    async layCauHinhHeThong() {
+        const kq = await this.yeuCau('/cau-hinh');
+        if (kq && kq.ok) return kq.data;
+
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong');
+        return raw ? JSON.parse(raw) : (window.HANG_SO ? window.HANG_SO.NHA_HANG_MAC_DINH : {});
+    }
+
+    async luuCauHinhHeThong(cauHinhMoi) {
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong', JSON.stringify(cauHinhMoi));
+        localStorage.setItem('quanmoc_cau_hinh_quan', JSON.stringify(cauHinhMoi));
+        if (window.HANG_SO && window.HANG_SO.NHA_HANG_MAC_DINH) {
+            Object.assign(window.HANG_SO.NHA_HANG_MAC_DINH, cauHinhMoi);
+        }
+        this.ghiNhatKy('Cập nhật cấu hình nhà hàng', 'INFO', 'Lưu thay đổi thông tin nhà hàng, thuế VAT hoặc tài khoản VietQR.');
+        if (window.ungDung && typeof window.ungDung.dongBoThongTinNhaHangToanCuc === 'function') {
+            window.ungDung.dongBoThongTinNhaHangToanCuc(cauHinhMoi);
+        }
+        return { ok: true, data: cauHinhMoi, msg: 'Lưu thông tin cấu hình nhà hàng thành công!' };
+    }
+
+    async layNhatKyHeThong(boLoc = {}) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong');
+        let logs = raw ? JSON.parse(raw) : [];
+
+        if (boLoc.loai && boLoc.loai !== 'ALL') {
+            logs = logs.filter(l => l.loai === boLoc.loai);
+        }
+        if (boLoc.tuKhoa) {
+            const tk = boLoc.tuKhoa.toLowerCase();
+            logs = logs.filter(l => 
+                (l.hanhDong && l.hanhDong.toLowerCase().includes(tk)) ||
+                (l.chiTiet && l.chiTiet.toLowerCase().includes(tk)) ||
+                (l.nguoiThucHien && l.nguoiThucHien.toLowerCase().includes(tk))
+            );
+        }
+
+        return logs;
+    }
+
+    ghiNhatKy(hanhDong, loai = 'INFO', chiTiet = '') {
+        try {
+            const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong');
+            const logs = raw ? JSON.parse(raw) : [];
+            const user = this.layThongTinNguoiDung();
+            const idMoi = logs.length > 0 ? Math.max(...logs.map(l => l.id || 0)) + 1 : 1;
+
+            logs.unshift({
+                id: idMoi,
+                thoiGian: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                loai: loai.toUpperCase(),
+                hanhDong,
+                nguoiThucHien: user ? `${user.hoTen} (${user.vaiTro})` : 'Hệ thống',
+                diaChiIp: '127.0.0.1 (Local Client)',
+                chiTiet
+            });
+
+            // Giữ tối đa 200 bản ghi log
+            if (logs.length > 200) logs.pop();
+
+            localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong', JSON.stringify(logs));
+        } catch (e) {
+            console.error('Không thể ghi nhật ký hệ thống:', e);
+        }
     }
 }
 

@@ -663,6 +663,14 @@ Bảng 5.9. Đối chiếu tiêu chí nghiệm thu của phần Frontend Sprint 
 Khắc phục vấn đề tải mạng: Trong phiên bản thử nghiệm ban đầu, việc gọi API QuickChart bên ngoài để tạo QR và không có timeout trong fetch() khiến trang web bị treo "load mãi không xong" khi mạng yếu hoặc backend chưa bật. Vấn đề đã được Quân giải quyết triệt để bằng cách tích hợp thuật toán sinh mã QR SVG thuần JS offline và cơ chế AbortController timeout 200ms.
 Tích hợp API Backend chính thức: Hiện tại frontend đã sẵn sàng các hàm gọi API RESTful (/api/khu-vuc, /api/ban-an, /api/danh-muc-mon, /api/thuc-don) khớp với endpoint của Minh. Khi backend kết nối CSDL chính thức và triển khai máy chủ, chỉ cần đổi biến cấu hình API_BASE_URL là hệ thống sẽ tự động chuyển sang luồng mạng thực tế mà không cần sửa code giao diện.
 Phân quyền nâng cao: Sẵn sàng gắn thêm kiểm tra quyền từ JWT token của Nhật/Phong khi hệ thống đăng nhập Admin hoàn thiện.
+
+Giải trình phương án hợp nhất (Merge Strategy) và xử lý xung đột code giữa Quân và Phong:
+- Vấn đề phát sinh: Trong quá trình phát triển song song các User Story của Sprint 1, cả hai thành viên Frontend (Quân phụ trách US-023 → US-040 về Sơ đồ bàn & Thực đơn; Phong phụ trách US-003, US-004, US-007 → US-022, US-041 → US-044 về Xác thực, Admin Layout, Nhân sự, Phân quyền RBAC và Cấu hình) đều có nhu cầu xây dựng trên các tệp dùng chung gồm index.html, ungDung.js, tepGiaoDien.css, và api.js. Quân triển khai giải pháp lưu trữ LocalStorage dự phòng và thuật toán sinh QR SVG offline để đảm bảo tốc độ phản hồi < 50ms khi Backend chưa bật; trong khi Phong xây dựng cơ chế Client-side Route Guard, JWT Token phiên làm việc, ma trận phân quyền và bộ dữ liệu kiểm thử quản trị.
+- Giải pháp hợp nhất (Merge & Integration) đã thống nhất và triển khai thực tế:
+  1. Về khung giao diện (Layout & Điều hướng SPA): Thống nhất sử dụng khung Admin Layout của Phong trong index.html và ungDung.js, tái cấu trúc Sidebar thành 2 khối nghiệp vụ rõ ràng: "Vận hành nhà hàng (Sprint 1 - Quân)" và "Quản trị & Hệ thống (Sprint 1 - Phong)". Tích hợp thanh Quick Role Switcher trên Header cho phép kiểm thử chuyển đổi nhanh giữa các vai trò (Quản lý, Thu ngân, Bếp, Phục vụ) để kiểm chứng phân quyền RBAC.
+  2. Về tầng dịch vụ dữ liệu dùng chung (api.js & hangSo.js): Tích hợp toàn bộ thuật toán sinh QR SVG offline, cơ chế AbortController timeout 200ms của Quân và các hàm xử lý API Xác thực, Nhân sự, Phân quyền, Cấu hình nhà hàng của Phong vào chung một tệp api.js thống nhất, tuân thủ nghiêm ngặt chuẩn phản hồi {ok, data, msg}.
+  3. Cơ chế đồng bộ dữ liệu hai chiều: Tầng api.js tự động đồng bộ cấu hình nhà hàng (Wi-Fi, Hotline, tên quán) sang cả hai khóa LocalStorage (quanmoc_cau_hinh_he_thong và quanmoc_cau_hinh_quan) để Standee QR của Quân luôn nhận thông tin mới nhất; đồng thời tự động ghi vết mọi hành vi thêm/sửa bàn ăn hoặc đổi trạng thái món ăn của Quân vào Nhật ký kiểm toán hệ thống (System Logs - US-044) của Phong.
+  4. Quy trình Git và Kiểm thử: Hai thành viên tạo Pull Request trên nhánh tính năng riêng (fe-quan-sprint1 và fe-phong-sprint1), tiến hành rebase, giải quyết xung đột cẩn trọng và kiểm thử tích hợp chéo (Cross-Testing) đạt 100% kịch bản trước khi tích hợp vào nhánh develop.
 5.3.7. Kế hoạch Sprint 2 của thành viên Quân
 Bảng 5.10. Kế hoạch Sprint 2 của thành viên Quân
 | Nhóm   | Mã US   | Nội dung   | Phụ thuộc   |
@@ -698,6 +706,7 @@ Bảng 5.12. Đánh giá theo mục tiêu
 | Quy trình   | Issues, PR, Milestones, Releases đầy đủ   | Quản lý minh bạch trên nhánh tính năng và PR GitHub   |
 
 5.6. Những hạn chế
+Xung đột tệp khung Frontend giữa hai thành viên: Do cả Quân và Phong cùng phát triển tính năng trong Sprint 1 trên các tệp dùng chung (index.html, ungDung.js, tepGiaoDien.css, api.js), nhóm đã xử lý bằng cách thống nhất dùng Layout và Route Guard của Phong, đồng thời tích hợp toàn bộ hàm sinh mã QR offline và xử lý API của Quân vào tệp api.js chung, đảm bảo cả hai phân hệ hoạt động liền mạch 100% (chi tiết tại Mục 5.3.6).
 Không tự động xác nhận giao dịch qua cổng thanh toán trực tuyến; thu ngân đối chiếu VietQR thủ công.
 Chưa quản lý kho nguyên vật liệu, công thức món, tích điểm thành viên.
 Phần Backend Sprint 1 hiện lưu dữ liệu trong bộ nhớ, chưa nối CSDL chính thức; kiểm thử mới bao phủ luồng thành công chính (Mục 5.2).

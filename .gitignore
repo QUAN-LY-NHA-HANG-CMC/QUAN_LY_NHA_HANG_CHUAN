@@ -8,3 +8,6 @@ build/
 *.log
 tepTaiLen/*
 !tepTaiLen/.gitkeep
+
+*.zip
+
