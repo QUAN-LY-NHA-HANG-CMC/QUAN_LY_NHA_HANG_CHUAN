@@ -8,10 +8,3 @@ build/
 *.log
 tepTaiLen/*
 !tepTaiLen/.gitkeep
-<<<<<<< fe-phong-sprint1
-
-*.zip
-
-=======
-.DS_Store
->>>>>>> main
