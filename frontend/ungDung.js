@@ -1,16 +1,32 @@
 /**
  * ỨNG DỤNG FRONTEND CHÍNH (ungDung.js)
  * Điều phối các Module và Luồng điều hướng Single Page Application (SPA)
- * Phụ trách: Quân (Frontend Lead - Client & POS)
+ * Tích hợp & đồng bộ toàn diện giữa các phân hệ của Quân (Bàn & Thực đơn) và Phong (Admin Core, Auth, Nhân sự, Phân quyền, Cấu hình)
  */
 
 class UngDungFrontend {
     constructor() {
-        this.tabHienTai = 'quanLyBanQr'; // Mặc định mở Sơ đồ bàn & QR
+        this.tabHienTai = 'quanLyNhanVien'; // Mặc định mở Quản lý Nhân sự
     }
 
     async khoiDong() {
-        console.log('🚀 Khởi động Giao diện Quản Lý Nhà Hàng & Gọi Món QR (Quán Mộc)');
+        console.log('🚀 Khởi động Hệ thống Quản Lý Nhà Hàng & Gọi Món QR (Quán Mộc)');
+
+        // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
+        if (window.api && !window.api.layAccessToken()) {
+            await window.api.dangNhap('quanly', '123456');
+        }
+
+        // Đồng bộ cấu hình thương hiệu nhà hàng toàn cục lên Header, Sidebar và Tiêu đề trang
+        if (window.api) {
+            const cauHinh = await window.api.layCauHinhHeThong();
+            this.dongBoThongTinNhaHangToanCuc(cauHinh);
+        }
+
+        // Cập nhật giao diện theo quyền đăng nhập
+        if (window.boDieuHuong) {
+            window.boDieuHuong.capNhatGiaoDienTheoQuyen();
+        }
 
         // Lắng nghe sự kiện click trên Sidebar Menu
         this.ganSuKienDieuHuong();
@@ -21,9 +37,49 @@ class UngDungFrontend {
         // Thông báo chào mừng
         setTimeout(() => {
             if (window.thongBao) {
-                window.thongBao.thongTin('Xin chào Quân (Frontend Lead)!', 'Sprint 1: Quản lý Bàn & Mã QR và Quản lý Thực đơn đã sẵn sàng.');
+                const user = window.api ? window.api.layThongTinNguoiDung() : null;
+                const ten = user ? user.hoTen : 'Quản trị viên';
+                window.thongBao.thongTin(
+                    `Xin chào ${ten}!`,
+                    'Sprint 1 hoàn chỉnh: Nhân sự, Phân quyền, Cấu hình, Quản lý Bàn & Thực đơn đã đồng bộ.'
+                );
             }
-        }, 600);
+        }, 500);
+    }
+
+    /**
+     * Đồng bộ thông tin thương hiệu nhà hàng toàn hệ thống
+     * (Header, Sidebar, Tiêu đề trình duyệt và các phân hệ của Quân)
+     */
+    dongBoThongTinNhaHangToanCuc(cauHinh) {
+        if (!cauHinh) return;
+
+        // 1. Cập nhật Sidebar Brand
+        const tenQuanSidebar = document.querySelector('.ten-quan');
+        const khauHieuSidebar = document.querySelector('.khau-hieu-quan');
+        if (tenQuanSidebar && cauHinh.ten) tenQuanSidebar.textContent = cauHinh.ten.toUpperCase();
+        if (khauHieuSidebar && cauHinh.khauHieu) khauHieuSidebar.textContent = cauHinh.khauHieu;
+
+        // 2. Cập nhật Header
+        const hTen = document.getElementById('header-ten-quan');
+        const hDiaChi = document.getElementById('header-dia-chi');
+        const hHotline = document.getElementById('header-hotline');
+        const hWifi = document.getElementById('header-wifi');
+        const hWifiPass = document.getElementById('header-wifi-pass');
+
+        if (hTen) hTen.textContent = `${cauHinh.ten} - ${cauHinh.chiNhanh || ''}`;
+        if (hDiaChi) hDiaChi.textContent = cauHinh.diaChi || '';
+        if (hHotline) hHotline.textContent = cauHinh.hotline || '';
+        if (hWifi) hWifi.textContent = cauHinh.wifiTen || '';
+        if (hWifiPass) hWifiPass.textContent = cauHinh.wifiMatKhau || '';
+
+        // 3. Cập nhật Tiêu đề trang
+        document.title = `${cauHinh.ten} - Hệ Thống Quản Lý Nhà Hàng & Gọi Món QR`;
+
+        // 4. Đồng bộ sang HANG_SO dùng chung cho các phân hệ khác (Quân)
+        if (window.HANG_SO && window.HANG_SO.NHA_HANG_MAC_DINH) {
+            Object.assign(window.HANG_SO.NHA_HANG_MAC_DINH, cauHinh);
+        }
     }
 
     ganSuKienDieuHuong() {
@@ -38,6 +94,18 @@ class UngDungFrontend {
     }
 
     chuyenTab(tab) {
+        // Đóng các modal đang mở nếu có
+        const modal = document.getElementById('khung-modal-toan-cuc');
+        if (modal) {
+            modal.classList.remove('mo');
+            modal.innerHTML = '';
+        }
+
+        // Kiểm tra Auth Guard & Quyền truy cập qua Router Guard (US-004 & US-019 -> US-021)
+        if (window.boDieuHuong && !window.boDieuHuong.kiemTraQuyenTruyCapTab(tab)) {
+            return;
+        }
+
         this.tabHienTai = tab;
 
         // Cập nhật trạng thái active trên sidebar
@@ -49,12 +117,37 @@ class UngDungFrontend {
             }
         });
 
-        // Điều phối render nội dung tương ứng
-        if (tab === 'quanLyBanQr') {
+        // Điều phối render nội dung tương ứng theo module
+        if (tab === 'dangNhap') {
+            if (window.dangNhapModule) {
+                window.dangNhapModule.khoiTao();
+            }
+        } else if (tab === 'hoSoCaNhan') {
+            if (window.hoSoCaNhanModule) {
+                window.hoSoCaNhanModule.khoiTao();
+            }
+        } else if (tab === 'quanLyNhanVien') {
+            // US-011 -> US-014 (Phong)
+            if (window.quanLyNhanVien) {
+                window.quanLyNhanVien.khoiTao();
+            }
+        } else if (tab === 'phanQuyen') {
+            // US-015 -> US-018, US-022 (Phong)
+            if (window.phanQuyenModule) {
+                window.phanQuyenModule.khoiTao();
+            }
+        } else if (tab === 'cauHinhHeThong') {
+            // US-041 -> US-044 (Phong)
+            if (window.cauHinhHeThongModule) {
+                window.cauHinhHeThongModule.khoiTao();
+            }
+        } else if (tab === 'quanLyBanQr') {
+            // US-023 -> US-030 (Quân)
             if (window.quanLyBanQr) {
                 window.quanLyBanQr.khoiTao();
             }
         } else if (tab === 'quanLyThucDon') {
+            // US-031 -> US-040 (Quân)
             if (window.quanLyThucDon) {
                 window.quanLyThucDon.khoiTao();
             }
@@ -104,12 +197,18 @@ class UngDungFrontend {
                 <p style="max-width: 600px; margin: 12px auto 24px; line-height: 1.6; color: var(--mau-chu-phu);">
                     ${thongTinTab.moTa}
                 </p>
-                <div style="display: flex; gap: 12px; justify-content: center;">
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button class="nut nut-chinh" onclick="window.ungDung.chuyenTab('quanLyBanQr')">
-                        🪑 Về Quản lý Bàn & QR (Sprint 1)
+                        🪑 Về Quản lý Bàn & QR (Sprint 1 - Quân)
                     </button>
                     <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('quanLyThucDon')">
-                        🍲 Về Quản lý Thực đơn (Sprint 1)
+                        🍲 Về Quản lý Thực đơn (Sprint 1 - Quân)
+                    </button>
+                    <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('quanLyNhanVien')">
+                        👥 Về Quản lý Nhân sự (Sprint 1 - Phong)
+                    </button>
+                    <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('phanQuyen')">
+                        🛡️ Về Phân quyền RBAC (Sprint 1 - Phong)
                     </button>
                 </div>
             </div>
