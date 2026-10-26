@@ -58,6 +58,10 @@ class UngDungFrontend {
             if (window.quanLyThucDon) {
                 window.quanLyThucDon.khoiTao();
             }
+        } else if (tab === 'eMenuKhachHang') {
+            if (window.thucDonQr) {
+                window.thucDonQr.khoiTao();
+            }
         } else {
             // Các tab thuộc Sprint 2, 3, 4
             this.veTrangChoSprint(tab);
