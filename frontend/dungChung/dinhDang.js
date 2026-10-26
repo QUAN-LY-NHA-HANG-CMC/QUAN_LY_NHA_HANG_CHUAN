@@ -80,6 +80,15 @@ const DinhDang = {
             "'": '&#039;'
         };
         return String(chuoi).replace(/[&<>"']/g, (m) => map[m]);
+    },
+
+    /**
+     * Sinh ảnh đại diện SVG mặc định khi mạng chậm hoặc ảnh lỗi (0ms)
+     */
+    layAnhMacDinh(tenMon = 'Món Quán Mộc') {
+        const chuoiTen = this.rutGonVanBan(tenMon, 22);
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="#FBF8F5"/><circle cx="200" cy="120" r="52" fill="#F0E5DA"/><text x="200" y="135" font-size="44" text-anchor="middle">🍲</text><text x="200" y="210" font-family="sans-serif" font-size="16" font-weight="bold" fill="#8F440F" text-anchor="middle">${chuoiTen}</text><text x="200" y="235" font-family="sans-serif" font-size="12" fill="#9CA3AF" text-anchor="middle">Quán Mộc</text></svg>`;
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
 };
 

@@ -199,6 +199,54 @@ body {
     color: var(--mau-chinh-dam);
 }
 
+.khung-tai-khoan-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.nhom-chuyen-vai-tro-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #FAF7F2;
+    padding: 3px 6px;
+    border-radius: 20px;
+    border: 1px solid var(--mau-vien);
+}
+
+.nhan-vai-tro-head {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--mau-chu-phu);
+    margin: 0 4px;
+}
+
+.nut-vai-tro-pill {
+    background: #FFF;
+    border: 1px solid var(--mau-vien);
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mau-chu);
+    cursor: pointer;
+    transition: var(--chuyen-dong);
+    white-space: nowrap;
+}
+
+.nut-vai-tro-pill:hover {
+    border-color: var(--mau-chinh);
+    color: var(--mau-chinh);
+}
+
+.nut-vai-tro-pill.kich-hoat {
+    background: var(--mau-chinh);
+    color: #FFF;
+    border-color: var(--mau-chinh);
+    box-shadow: 0 2px 6px rgba(184, 93, 25, 0.25);
+}
+
 .phan-than-chinh {
     padding: 32px;
     flex: 1;
@@ -1386,3 +1434,521 @@ input:checked + .con-lan-switch:before {
         gap: 20px !important;
     }
 }
+
+/* =========================================================================
+   GIAO DIỆN PHẦN VIỆC SPRINT 1 - PHONG (FRONTEND ADMIN & AUTH LEAD)
+   Bao gồm: Bảng dữ liệu, Form xác thực, Quản lý Nhân sự, Phân quyền RBAC,
+   Hồ sơ cá nhân và Quản trị nền tảng (US-003, 004, 007-014, 015-022, 041-044)
+   ========================================================================= */
+
+/* 1. BẢNG DỮ LIỆU CHUNG (TABLES) */
+.hop-bang-du-lieu {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    overflow-x: auto;
+}
+
+.bang-du-lieu {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+}
+
+.bang-du-lieu thead tr {
+    background: #FAF7F2;
+    border-bottom: 2px solid var(--mau-vien);
+}
+
+.bang-du-lieu th {
+    padding: 14px 16px;
+    font-weight: 700;
+    color: #2C1810;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.bang-du-lieu td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F3F4F6;
+    color: var(--mau-chu);
+    vertical-align: middle;
+}
+
+.bang-du-lieu tbody tr:hover {
+    background-color: #FDFBF8;
+}
+
+.bang-du-lieu tr.hang-da-khoa {
+    background-color: #F9FAFB;
+    opacity: 0.75;
+}
+
+.nut-nho {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.avatar-nho {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--mau-chinh);
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.avatar-khoa {
+    background: #9CA3AF !important;
+}
+
+.nut-mo-khoa {
+    color: var(--mau-phu);
+    border-color: #A7F3D0;
+    background: #ECFDF5;
+}
+
+.nut-mo-khoa:hover {
+    background: #D1FAE5;
+}
+
+/* 2. MÀN HÌNH ĐĂNG NHẬP (AUTH SCREEN - US-007, US-008) */
+.khung-dang-nhap-bao-ngoai {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 120px);
+    padding: 20px;
+}
+
+.the-dang-nhap {
+    width: 100%;
+    max-width: 480px;
+    background: #FFF;
+    border-radius: var(--bo-goc-lon);
+    border: 1px solid var(--mau-vien);
+    box-shadow: 0 15px 35px rgba(44, 24, 16, 0.1);
+    padding: 36px 32px;
+    text-align: center;
+}
+
+.dau-the-dang-nhap {
+    margin-bottom: 24px;
+}
+
+.logo-dang-nhap {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.dau-the-dang-nhap h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #2C1810;
+    letter-spacing: 0.5px;
+}
+
+.khau-hieu-dang-nhap {
+    font-size: 12px;
+    color: var(--mau-chu-phu);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-sprint-login {
+    display: inline-block;
+    background: var(--mau-chinh-nhat);
+    color: var(--mau-chinh);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 12px;
+    margin-top: 10px;
+    border: 1px solid rgba(184, 93, 25, 0.2);
+}
+
+.bieu-mau-dang-nhap {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.khung-mat-khau {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.khung-mat-khau input {
+    padding-right: 44px;
+}
+
+.nut-hien-mat-khau {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--mau-chu-phu);
+}
+
+.hang-tuy-chon-dang-nhap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 14px 0 20px;
+    font-size: 13px;
+}
+
+.link-quen-mat-khau {
+    color: var(--mau-chinh);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.link-quen-mat-khau:hover {
+    text-decoration: underline;
+}
+
+.nut-dang-nhap-to {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.hop-tai-khoan-mau {
+    margin-top: 28px;
+    padding: 16px;
+    background: #FAF7F2;
+    border-radius: var(--bo-goc);
+    border: 1px dashed #D7CCC8;
+    text-align: left;
+}
+
+.tieu-de-tai-khoan-mau {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mau-chinh-dam);
+    margin-bottom: 10px;
+}
+
+.danh-sach-nut-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.nut-demo {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--mau-vien);
+    background: #FFF;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: var(--chuyen-dong);
+    color: var(--mau-chu);
+}
+
+.nut-demo:hover {
+    background: #FFF;
+    border-color: var(--mau-chinh);
+    transform: translateX(4px);
+}
+
+.duoi-the-dang-nhap {
+    margin-top: 20px;
+    font-size: 11px;
+    color: #9CA3AF;
+}
+
+/* 3. HỒ SƠ CÁ NHÂN (PROFILE SCREEN - US-009, US-010) */
+.the-tong-quan-ho-so {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    padding: 28px 24px;
+    text-align: center;
+}
+
+.anh-dai-dien-ho-so {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--mau-chinh);
+    color: #FFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 auto 16px;
+    box-shadow: 0 4px 14px rgba(184, 93, 25, 0.3);
+}
+
+.ho-ten-ho-so {
+    font-size: 20px;
+    font-weight: 800;
+    color: #2C1810;
+}
+
+.username-ho-so {
+    font-size: 13px;
+    color: var(--mau-chu-phu);
+    margin-top: 2px;
+}
+
+.bang-thong-tin-nhanh {
+    text-align: left;
+    border-top: 1px solid var(--mau-vien);
+    margin-top: 18px;
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.dong-tt-nhanh {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nhan-tt {
+    color: var(--mau-chu-phu);
+}
+
+.gia-tri-tt {
+    font-weight: 600;
+    color: var(--mau-chu);
+}
+
+.hop-luu-y-bao-mat {
+    margin-top: 20px;
+    padding: 12px;
+    background: #FEF3C7;
+    border-radius: 8px;
+    border-left: 4px solid var(--mau-vang);
+    font-size: 12px;
+    color: #92400E;
+    text-align: left;
+    line-height: 1.5;
+}
+
+.hop-form-con {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    padding: 24px;
+}
+
+.dau-hop-form {
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--mau-vien);
+    padding-bottom: 12px;
+}
+
+.dau-hop-form h4 {
+    font-size: 16px;
+    color: #2C1810;
+}
+
+/* 4. VAI TRÒ & PHÂN QUYỀN RBAC (US-015 -> US-022) */
+.luoi-danh-sach-vai-tro {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.the-vai-tro {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 2px solid var(--mau-vien);
+    padding: 18px;
+    cursor: pointer;
+    transition: var(--chuyen-dong);
+    display: flex;
+    flex-direction: column;
+}
+
+.the-vai-tro:hover {
+    transform: translateY(-2px);
+    border-color: #D7CCC8;
+    box-shadow: var(--do-bong);
+}
+
+.the-vai-tro-dang-chon {
+    border-color: var(--mau-chinh);
+    background: #FFFBF7;
+    box-shadow: 0 4px 14px rgba(184, 93, 25, 0.15);
+}
+
+.dau-the-vai-tro {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.bieu-tuong-vt {
+    font-size: 26px;
+}
+
+.ten-vt {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2C1810;
+}
+
+.ma-vt {
+    font-size: 11px;
+    color: var(--mau-chu-phu);
+}
+
+.mo-ta-vt {
+    font-size: 12px;
+    color: var(--mau-chu-phu);
+    line-height: 1.5;
+    flex: 1;
+    margin-bottom: 12px;
+}
+
+.chan-the-vai-tro {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px dashed var(--mau-vien);
+    padding-top: 10px;
+}
+
+.khung-bang-ma-tran {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.nhom-quyen-hop {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    overflow: hidden;
+}
+
+.tieu-de-nhom-quyen {
+    background: #FAF7F2;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--mau-vien);
+}
+
+.tieu-de-nhom-quyen h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mau-chinh-dam);
+}
+
+.luoi-checkbox-quyen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    padding: 16px;
+}
+
+.the-item-quyen {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--mau-vien);
+    background: #FFF;
+    cursor: pointer;
+    transition: var(--chuyen-dong);
+}
+
+.the-item-quyen:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.the-item-quyen input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--mau-chinh);
+    cursor: pointer;
+}
+
+.the-item-quyen.quyen-da-bat {
+    background: #FDF6F0;
+    border-color: var(--mau-chinh);
+}
+
+.noi-dung-item-quyen {
+    flex: 1;
+}
+
+.ten-quyen-item {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2C1810;
+}
+
+.ma-quyen-item code {
+    font-size: 10px;
+    background: #F3F4F6;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: var(--mau-chu-phu);
+}
+
+.mo-ta-quyen-item {
+    font-size: 11px;
+    color: var(--mau-chu-phu);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* 5. CẤU HÌNH THÔNG TIN CHUNG (US-041 -> US-044) */
+.the-the-noi-dung-cau-hinh {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    padding: 28px;
+}
+
+.dau-the-cau-hinh {
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--mau-vien);
+    padding-bottom: 14px;
+}
+
+.dau-the-cau-hinh h3, .dau-the-cau-hinh h4 {
+    font-size: 18px;
+    color: #2C1810;
+}
+
+.dau-the-cau-hinh p {
+    font-size: 13px;
+    color: var(--mau-chu-phu);
+    margin-top: 4px;
+}
+
