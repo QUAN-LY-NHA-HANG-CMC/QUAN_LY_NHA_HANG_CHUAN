@@ -251,6 +251,9 @@ class QuanLyBanQrModule {
                 </div>
 
                 <div class="duoi-modal">
+                    <button class="nut" style="background: #10B981; color: #FFF;" onclick="window.quanLyBanQr.dongModal(); window.ungDung.chuyenTab('eMenuKhachHang'); window.thucDonQr.khoiTao(${ban.id}, '${ban.qrToken}')" title="Mô phỏng khách quét QR mở E-Menu bàn này">
+                        📱 Mở E-Menu Khách
+                    </button>
                     <button class="nut nut-canh-bao" onclick="window.quanLyBanQr.lamMoiTokenQr(${ban.id})" title="Tạo mã bảo mật mới ngăn khách cũ đặt từ xa">
                         🔄 Làm mới mã bảo mật (US-030)
                     </button>
