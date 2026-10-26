@@ -13,11 +13,16 @@ const khuVucModule = require('./modules/khuVuc');
 const banAnModule = require('./modules/banAn');
 const nhanVienModule = require('./modules/nhanVien');
 
+// Nạp các module phụ trách của Minh (Sprint 2)
+const thucDonPublicRoutes = require('./modules/thucDon/thucDonPublic.routes');
+const gioHangModule = require('./modules/gioHang');
+const yeuCauHoTroModule = require('./modules/yeuCauHoTro');
+
 const ungDung = express();
 
 // Middleware cơ bản
 ungDung.use(cors({
-    origin: '*', // Trong môi trường phát triển cho phép frontend kết nối
+    origin: '*',
     credentials: true
 }));
 ungDung.use(express.json());
@@ -32,16 +37,22 @@ ungDung.get('/api/kiem-tra-he-thong', (req, res) => {
         ok: true,
         thoiGian: new Date().toISOString(),
         duAn: 'Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM)',
-        tacGia: 'Minh - Backend API'
+        tacGia: 'Minh - Backend API',
+        sprint: 'Sprint 2 (E-Menu QR, Giỏ hàng & Hỗ trợ)'
     });
 });
 
-// Gắn các API Routes của Sprint 1
+// API Sprint 1
 ungDung.use('/api/danh-muc-mon', danhMucModule.router);
 ungDung.use('/api/thuc-don', thucDonModule.router);
 ungDung.use('/api/khu-vuc', khuVucModule.router);
 ungDung.use('/api/ban-an', banAnModule.router);
 ungDung.use('/api/nhan-vien', nhanVienModule.router);
+
+// API Sprint 2 (Mới bổ sung)
+ungDung.use('/api/public/e-menu', thucDonPublicRoutes);
+ungDung.use('/api/gio-hang', gioHangModule.router);
+ungDung.use('/api/yeu-cau-ho-tro', yeuCauHoTroModule.router);
 
 // Xử lý tuyến đường không tồn tại (404)
 ungDung.use((req, res) => {

@@ -9,3 +9,4 @@ build/
 tepTaiLen/*
 !tepTaiLen/.gitkeep
 .DS_Store
+.vs/
