@@ -106,7 +106,7 @@ class BoDieuHuong {
      */
     kiemTraQuyenTruyCapTab(tab) {
         // Tab công khai không cần đăng nhập
-        if (tab === 'dangNhap' || tab === 'eMenuKhachHang') {
+        if (tab === 'dangNhap' || tab === 'eMenuKhachHang' || tab === 'theoDoiDonMon') {
             return true;
         }
 

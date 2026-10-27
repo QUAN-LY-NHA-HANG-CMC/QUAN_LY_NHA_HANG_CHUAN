@@ -1952,3 +1952,843 @@ input:checked + .con-lan-switch:before {
     margin-top: 4px;
 }
 
+/* ==========================================================================
+   SPRINT 2: ĐẶT MÓN, THEO DÕI TIẾN ĐỘ THỜI GIAN THỰC & HỖ TRỢ TẠI BÀN
+   Phụ trách: Phong (Sprint 2 - US-063 -> US-078)
+   ========================================================================== */
+
+/* 1. KHUNG CHÍNH THEO DÕI ĐƠN MÓN */
+.trang-theo-doi-don-mon {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 60px;
+}
+
+.thanh-tieu-de-trang-s2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FFF;
+    padding: 18px 24px;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.thong-tin-ban-s2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.bieu-tuong-ban-s2 {
+    width: 48px;
+    height: 48px;
+    background: #FEF3C7;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.ten-ban-tieu-de {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2C1810;
+    margin: 0;
+}
+
+.mo-ta-phien-ban {
+    font-size: 13px;
+    color: var(--mau-chu-phu);
+    margin-top: 4px;
+}
+
+.nhom-thao-tac-dau-trang-s2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hop-chon-ban-test {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #F9FAFB;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--mau-vien);
+}
+
+.nut-select-ban {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 13px;
+    color: #2C1810;
+    cursor: pointer;
+    outline: none;
+}
+
+/* 2. BẢNG ĐIỀU KHIỂN GIẢ LẬP REAL-TIME (TEST SIMULATOR) */
+.bang-dieu-khien-gia-lap-s2 {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 1px solid #FCD34D;
+    border-radius: var(--bo-goc);
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tieu-de-gia-lap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.cac-nut-gia-lap {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.nut-mini-test {
+    background: #FFF;
+    border: 1px solid #D1D5DB;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nut-mini-test:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.nut-test-nau { color: #2563EB; border-color: #BFDBFE; }
+.nut-test-nau:hover { background: #EFF6FF; }
+
+.nut-test-xong { color: #7C3AED; border-color: #DDD6FE; }
+.nut-test-xong:hover { background: #F5F3FF; }
+
+.nut-test-phuc-vu { color: #059669; border-color: #A7F3D0; }
+.nut-test-phuc-vu:hover { background: #ECFDF5; }
+
+.nut-test-tu-choi { color: #DC2626; border-color: #FECACA; }
+.nut-test-tu-choi:hover { background: #FEF2F2; }
+
+.nut-test-chuong { color: #B45309; border-color: #FDE68A; }
+.nut-test-chuong:hover { background: #FFFBEB; }
+
+.nut-test-nhan-vien { color: #0284C7; border-color: #BAE6FD; }
+.nut-test-nhan-vien:hover { background: #F0F9FF; }
+
+/* 3. THÔNG BÁO YÊU CẦU HỖ TRỢ ĐANG CHỜ */
+.khung-thong-bao-yeu-cau-ho-tro {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: var(--bo-goc);
+    padding: 14px 18px;
+}
+
+.dau-thong-bao-yc {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #1E40AF;
+}
+
+.danh-sach-yc-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.item-yeu-cau-cho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #FFF;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #DBEAFE;
+    font-size: 13px;
+}
+
+.item-yeu-cau-cho.da-tiep-nhan {
+    border-color: #A7F3D0;
+    background: #F0FDF4;
+}
+
+/* 4. THẺ THỐNG KÊ TIẾN ĐỘ & TỔNG TIỀN (US-070) */
+.luoi-the-thong-ke-s2 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 1024px) {
+    .luoi-the-thong-ke-s2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .luoi-the-thong-ke-s2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.the-tk-s2 {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--do-bong);
+}
+
+.the-tk-tien {
+    background: linear-gradient(135deg, #FFFDF8 0%, #FEF3C7 100%);
+    border-color: #FCD34D;
+}
+
+.icon-tk-s2 {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #F3F4F6;
+    flex-shrink: 0;
+}
+
+.icon-cho { background: #FEF3C7; }
+.icon-nau { background: #DBEAFE; }
+.icon-xong { background: #EDE9FE; }
+.icon-phuc-vu { background: #D1FAE5; }
+
+.nhan-tk-s2 {
+    font-size: 12px;
+    color: var(--mau-chu-phu);
+    display: block;
+    font-weight: 500;
+}
+
+.gia-tri-tk-s2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2C1810;
+    margin: 2px 0;
+}
+
+.gia-tri-tien {
+    color: #B85D19;
+    font-size: 22px;
+}
+
+.dvt {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--mau-chu-phu);
+}
+
+.chu-thich-tk {
+    font-size: 11px;
+    color: #6B7280;
+}
+
+/* 5. THANH LỌC TRẠNG THÁI MÓN */
+.thanh-loc-trang-thai-s2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.nhom-nut-loc-s2 {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.nut-loc-pill {
+    background: #FFF;
+    border: 1px solid var(--mau-vien);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--mau-chu-phu);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nut-loc-pill:hover {
+    background: #F3F4F6;
+    color: #2C1810;
+}
+
+.nut-loc-pill.kich-hoat {
+    background: #2C1810;
+    color: #FFF;
+    border-color: #2C1810;
+}
+
+.nhom-nut-ho-tro-nhanh {
+    display: flex;
+    gap: 8px;
+}
+
+/* 6. THẺ LƯỢT GỌI MÓN (ROUND - US-067) */
+.danh-sach-cac-luot-goi-mon {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.the-luot-goi-mon {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    overflow: hidden;
+}
+
+.dau-the-luot-goi {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F9FAFB;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--mau-vien);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.thong-tin-luot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badge-luot-goi {
+    background: #2C1810;
+    color: #FFF;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.ma-don-hang {
+    font-size: 13px;
+    color: #4B5563;
+}
+
+.thoi-gian-don {
+    font-size: 12px;
+    color: #9CA3AF;
+}
+
+.tong-tien-luot {
+    font-size: 14px;
+    color: #2C1810;
+}
+
+.ghi-chu-chung-don {
+    background: #FFFBEB;
+    border-bottom: 1px solid #FEF3C7;
+    padding: 8px 20px;
+    font-size: 12px;
+    color: #92400E;
+}
+
+/* 7. DÒNG MÓN ĂN & STEPPER TIẾN ĐỘ 4 BƯỚC (US-066) */
+.danh-sach-mon-trong-luot {
+    display: flex;
+    flex-direction: column;
+}
+
+.dong-mon-an-s2 {
+    display: grid;
+    grid-template-columns: 2fr 3fr 1.2fr;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #F3F4F6;
+    gap: 16px;
+    transition: background 0.2s ease;
+}
+
+.dong-mon-an-s2:last-child {
+    border-bottom: none;
+}
+
+.dong-mon-an-s2:hover {
+    background: #FAFAFA;
+}
+
+.dong-mon-an-s2.mon-bi-huy {
+    background: #FEF2F2;
+    opacity: 0.75;
+}
+
+.cot-thong-tin-mon {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ten-va-so-luong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.so-luong-badge {
+    background: #E5E7EB;
+    color: #1F2937;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ten-mon-an-txt {
+    font-size: 15px;
+    color: #1F2937;
+}
+
+.badge-size-topping {
+    background: #F3F4F6;
+    color: #4B5563;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #E5E7EB;
+}
+
+.ghi-chu-khau-vi-s2 {
+    font-size: 12px;
+    color: #B45309;
+    background: #FEF3C7;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    max-width: fit-content;
+    margin-top: 2px;
+}
+
+.canh-bao-bep-tu-choi-box {
+    font-size: 12px;
+    color: #DC2626;
+    background: #FEE2E2;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #FCA5A5;
+    margin-top: 4px;
+}
+
+.canh-bao-huy-box {
+    font-size: 12px;
+    color: #6B7280;
+    background: #F3F4F6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+/* STEPPER 4 BƯỚC */
+.cot-tien-do-stepper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.thanh-stepper-4-buoc {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 420px;
+    justify-content: space-between;
+}
+
+.buoc-stepper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 2;
+}
+
+.dau-cham-buoc {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #E5E7EB;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.nhan-buoc {
+    font-size: 11px;
+    color: #9CA3AF;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.duong-noi-buoc {
+    flex: 1;
+    height: 3px;
+    background: #E5E7EB;
+    margin: 0 4px;
+    margin-bottom: 18px;
+    transition: all 0.3s ease;
+}
+
+.buoc-stepper.hoan-thanh .dau-cham-buoc {
+    background: #D1FAE5;
+    color: #059669;
+}
+
+.buoc-stepper.hien-tai .dau-cham-buoc {
+    background: #DBEAFE;
+    color: #2563EB;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+    animation: nhip-buoc 1.5s infinite;
+}
+
+@keyframes nhip-buoc {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.buoc-stepper.hoan-thanh .nhan-buoc,
+.buoc-stepper.hien-tai .nhan-buoc {
+    color: #1F2937;
+    font-weight: 600;
+}
+
+.duong-noi-buoc.da-qua {
+    background: #10B981;
+}
+
+/* CỘT GIÁ & NÚT HỦY MÓN */
+.cot-gia-va-thao-tac {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.gia-mon-txt {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2C1810;
+}
+
+.gia-mon-txt.gach-gia {
+    text-decoration: line-through;
+    color: #9CA3AF;
+}
+
+.nut-huy-mon-mini {
+    background: #FFF;
+    border: 1px solid #FCA5A5;
+    color: #DC2626;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nut-huy-mon-mini:hover {
+    background: #FEE2E2;
+}
+
+@media (max-width: 900px) {
+    .dong-mon-an-s2 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .cot-gia-va-thao-tac {
+        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+/* 8. NÚT NỔI HỖ TRỢ TẠI BÀN (FLOATING ACTION BUTTON - US-071) */
+.khung-nut-noi-ho-tro {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.nut-noi-chinh {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #B85D19 0%, #D97706 100%);
+    border: none;
+    color: #FFF;
+    font-size: 26px;
+    box-shadow: 0 6px 16px rgba(184, 93, 25, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.nut-noi-chinh:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 20px rgba(184, 93, 25, 0.5);
+}
+
+.nut-noi-chinh.dang-mo {
+    transform: rotate(45deg);
+    background: #374151;
+}
+
+.badge-so-yeu-cau {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #EF4444;
+    color: #FFF;
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #FFF;
+}
+
+.menu-ho-tro-noi-cac-nut {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(15px);
+    transition: all 0.25s ease;
+}
+
+.menu-ho-tro-noi-cac-nut.hien-thi {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.nut-noi-con {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF;
+    border: 1px solid var(--mau-vien);
+    border-radius: 30px;
+    padding: 8px 16px;
+    box-shadow: var(--do-bong);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1F2937;
+    transition: all 0.2s ease;
+}
+
+.nut-noi-con:hover {
+    background: #F3F4F6;
+    transform: translateX(-4px);
+}
+
+.nut-noi-goi-phuc-vu .icon-noi { font-size: 18px; }
+.nut-noi-thanh-toan .icon-noi { font-size: 18px; }
+
+/* 9. MODAL HỖ TRỢ TẠI BÀN (US-072) */
+.luoi-ly-do-ho-tro {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 500px) {
+    .luoi-ly-do-ho-tro {
+        grid-template-columns: 1fr;
+    }
+}
+
+.the-ly-do-ho-tro {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--mau-vien);
+    border-radius: 8px;
+    cursor: pointer;
+    background: #FFF;
+    transition: all 0.2s ease;
+}
+
+.the-ly-do-ho-tro:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.the-ly-do-ho-tro.da-chon {
+    background: #FFFBEB;
+    border-color: #F59E0B;
+    box-shadow: 0 0 0 1px #F59E0B;
+}
+
+.the-ly-do-ho-tro input {
+    cursor: pointer;
+}
+
+.ten-ly-do {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1F2937;
+}
+
+/* 10. MODAL YÊU CẦU THANH TOÁN (US-073) */
+.hop-tong-tien-thanh-toan {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border: 1px solid #FCD34D;
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.nhan-tong {
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400E;
+}
+
+.so-tien-tong {
+    font-size: 22px;
+    font-weight: 800;
+    color: #B85D19;
+}
+
+.luoi-phuong-thuc-thanh-toan {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.the-phuong-thuc {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid var(--mau-vien);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    background: #FFF;
+    transition: all 0.2s ease;
+}
+
+.the-phuong-thuc.da-chon {
+    border-color: #2563EB;
+    background: #EFF6FF;
+    box-shadow: 0 0 0 1px #2563EB;
+}
+
+.icon-pt {
+    font-size: 24px;
+}
+
+.tt-pt strong {
+    display: block;
+    font-size: 13px;
+    color: #1F2937;
+}
+
+.tt-pt small {
+    display: block;
+    font-size: 11px;
+    color: var(--mau-chu-phu);
+    margin-top: 2px;
+}
+
+/* 11. MODAL GỌI THÊM MÓN (US-067) */
+.luoi-mon-an-goi-them {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+@media (max-width: 600px) {
+    .luoi-mon-an-goi-them {
+        grid-template-columns: 1fr;
+    }
+}
+
+.the-mon-goi-them-item {
+    border: 1px solid var(--mau-vien);
+    border-radius: 8px;
+    padding: 10px;
+    background: #FFF;
+}
+
+.gia-mon-them {
+    font-size: 12px;
+    font-weight: 700;
+    color: #B85D19;
+}
+
+.nhap-du-lieu-mini {
+    padding: 4px 8px;
+    font-size: 11px;
+    border: 1px solid var(--mau-vien);
+    border-radius: 4px;
+    outline: none;
+}
+
+

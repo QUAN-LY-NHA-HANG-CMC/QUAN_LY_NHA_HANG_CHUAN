@@ -31,6 +31,11 @@ class UngDungFrontend {
         // Lắng nghe sự kiện click trên Sidebar Menu
         this.ganSuKienDieuHuong();
 
+        // Khởi tạo thành phần Hỗ trợ & Thanh toán tại bàn (Sprint 2 - Phong)
+        if (window.hoTroTaiBan) {
+            window.hoTroTaiBan.khoiTao(3);
+        }
+
         // Nạp trang mặc định
         this.chuyenTab(this.tabHienTai);
 
@@ -150,6 +155,11 @@ class UngDungFrontend {
             // US-031 -> US-040 (Quân)
             if (window.quanLyThucDon) {
                 window.quanLyThucDon.khoiTao();
+            }
+        } else if (tab === 'theoDoiDonMon') {
+            // US-063 -> US-078 (Sprint 2 - Phong: Đặt món, Theo dõi đơn & Real-time)
+            if (window.theoDoiDonMonModule) {
+                window.theoDoiDonMonModule.khoiTao();
             }
         } else {
             // Các tab thuộc Sprint 2, 3, 4
