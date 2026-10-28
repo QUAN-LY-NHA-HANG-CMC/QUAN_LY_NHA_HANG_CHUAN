@@ -780,7 +780,7 @@ class SoDoBanPosModule {
             const tamHet = (m.trangThai === 0);
             danhSachMonHtml += `
                 <div class="the-mon-goi-ho ${tamHet ? 'mon-tam-het' : ''}" data-danh-muc="${m.danhMucId}" data-ten="${m.tenMon.toLowerCase()}">
-                    <img src="${m.hinhAnh || ''}" alt="${m.tenMon}" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
+                    <img src="${m.hinhAnh || ''}" alt="${m.tenMon}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'">
                     <div class="thong-tin-mon-goi-ho">
                         <div class="ten-mon-gh">${m.tenMon}</div>
                         <div class="gia-mon-gh">${(m.giaBan || 0).toLocaleString()} đ</div>

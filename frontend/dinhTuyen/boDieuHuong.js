@@ -184,6 +184,16 @@ class BoDieuHuong {
             }
         }
 
+        // 7. Đánh giá & Phản hồi dịch vụ (Quân - Sprint 4): QUAN_LY, THU_NGAN, PHUC_VU
+        if (tab === 'danhGiaDichVu') {
+            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN' && vaiTro !== 'PHUC_VU') {
+                if (window.thongBao) {
+                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Đánh giá dịch vụ dành cho Quản lý, Thu ngân hoặc Phục vụ!');
+                }
+                return false;
+            }
+        }
+
         return true;
     }
 

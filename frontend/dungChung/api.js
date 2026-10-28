@@ -1549,7 +1549,6 @@ class ApiService {
 
         return { ok: true, msg: 'Đã hoàn tất hỗ trợ khách hàng!' };
     }
-}
 
     // =========================================================================
     // PHẦN 1: BỘ API THỰC ĐƠN ĐIỆN TỬ E-MENU (THEO ĐẶC TẢ SPRINT 2 CỦA MINH)
@@ -1850,7 +1849,6 @@ class ApiService {
             msg: 'Yêu cầu của quý khách đã được gửi tới nhân viên! (chế độ dự phòng)'
         };
     }
-}
 }
 
 // Khởi tạo đối tượng toàn cục

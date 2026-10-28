@@ -14,7 +14,10 @@ class UngDungFrontend {
 
         // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
         if (window.api && !window.api.layAccessToken()) {
-            await window.api.dangNhap('quanly', '123456');
+            const kq = await window.api.dangNhap('quanly', '123456');
+            if (kq && kq.ok && window.boDieuHuong) {
+                window.boDieuHuong.capNhatNguoiDung(kq.data.nguoiDung);
+            }
         }
 
         // Đồng bộ cấu hình thương hiệu nhà hàng toàn cục lên Header, Sidebar và Tiêu đề trang
@@ -39,6 +42,7 @@ class UngDungFrontend {
         // Đọc tab từ URL hash nếu có (ví dụ: #so-do-ban-pos hoặc #pos)
         const hash = window.location.hash.replace('#', '');
         const banDoHash = {
+            'danh-gia': 'danhGiaDichVu',
             'so-do-ban-pos': 'soDoBanPos',
             'pos': 'thanhToanPos',
             'e-menu': 'eMenuKhachHang',
@@ -190,6 +194,11 @@ class UngDungFrontend {
             // US-099 -> US-110 (Quân - Sprint 3: POS Thu ngân & Thanh toán)
             if (window.thanhToanPos) {
                 window.thanhToanPos.khoiTao();
+            }
+        } else if (tab === 'danhGiaDichVu') {
+            // US-111 -> US-116 (Quân - Sprint 4: Đánh giá & Phản hồi dịch vụ)
+            if (window.quanLyDanhGia) {
+                window.quanLyDanhGia.khoiTao();
             }
         } else {
             // Các tab thuộc Sprint 2, 3, 4

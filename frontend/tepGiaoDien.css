@@ -4675,3 +4675,181 @@ input:checked + .con-lan-switch:before {
         box-shadow: none !important;
     }
 }
+
+
+/* =========================================================================
+   PHÂN HỆ ĐÁNH GIÁ KHÁCH HÀNG & PHẢN HỒI (SPRINT 4 - QUÂN)
+   Đáp ứng US-111 -> US-116
+   ========================================================================= */
+
+.trang-quan-ly-danh-gia {
+    animation: fadeIn 0.3s ease;
+}
+
+.thanh-thong-ke-danh-gia {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+    .thanh-thong-ke-danh-gia {
+        grid-template-columns: 1fr;
+    }
+}
+
+.the-diem-trung-binh-lon {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 2px solid #FCD34D;
+    border-radius: var(--bo-goc);
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--do-bong);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.so-diem-to {
+    font-size: 56px;
+    font-weight: 900;
+    color: #B45309;
+    line-height: 1;
+}
+
+.hang-ngoi-sao-vang {
+    font-size: 24px;
+    margin: 8px 0;
+}
+
+.nhan-diem-tb {
+    font-size: 13px;
+    font-weight: 800;
+    color: #92400E;
+    letter-spacing: 0.8px;
+}
+
+.luoi-chi-so-danh-gia {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 600px) {
+    .luoi-chi-so-danh-gia {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nut-pill-tieu-cuc {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid #FCA5A5;
+    background: #FFF1F2;
+    color: #BE123C;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--chuyen-dong);
+}
+
+.nut-pill-tieu-cuc:hover {
+    background: #FFE4E6;
+}
+
+.nut-pill-tieu-cuc.kich-hoat {
+    background: #E11D48;
+    color: #FFF;
+    border-color: #BE123C;
+    box-shadow: 0 0 10px rgba(225, 29, 72, 0.4);
+}
+
+.danh-sach-the-danh-gia {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.the-danh-gia-item {
+    background: #FFF;
+    border-radius: var(--bo-goc);
+    border: 1.5px solid var(--mau-vien);
+    box-shadow: var(--do-bong);
+    padding: 20px;
+    transition: var(--chuyen-dong);
+}
+
+.the-danh-gia-item:hover {
+    box-shadow: var(--do-bong-noi);
+}
+
+.the-danh-gia-item.the-danh-gia-tieu-cuc {
+    border-color: #F87171;
+    background: #FFFBFB;
+    border-left: 6px solid #EF4444;
+}
+
+.dau-the-danh-gia {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--mau-vien);
+    margin-bottom: 12px;
+}
+
+.badge-ban-dg {
+    font-size: 11.5px;
+    font-weight: 700;
+    background: #E2E8F0;
+    color: #334155;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.noi-dung-nhan-xet-chinh {
+    font-size: 14.5px;
+    color: var(--mau-chu);
+    line-height: 1.6;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.hop-danh-gia-mon-kem {
+    background: #F8FAFC;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px dashed var(--mau-vien);
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dong-danh-gia-mon-item {
+    font-size: 13px;
+    color: var(--mau-chu);
+}
+
+.hop-phan-hoi-quan-ly-da-gui {
+    background: #EFF6FF;
+    border-left: 4px solid #3B82F6;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.chan-the-danh-gia {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dong-danh-gia-mon-form {
+    padding: 10px 12px;
+    background: #F8FAFC;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--mau-vien);
+}
