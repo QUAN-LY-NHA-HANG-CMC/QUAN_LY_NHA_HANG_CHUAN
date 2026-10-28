@@ -89,6 +89,20 @@ const DinhDang = {
         const chuoiTen = this.rutGonVanBan(tenMon, 22);
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="100%" height="100%" fill="#FBF8F5"/><circle cx="200" cy="120" r="52" fill="#F0E5DA"/><text x="200" y="135" font-size="44" text-anchor="middle">🍲</text><text x="200" y="210" font-family="sans-serif" font-size="16" font-weight="bold" fill="#8F440F" text-anchor="middle">${chuoiTen}</text><text x="200" y="235" font-family="sans-serif" font-size="12" fill="#9CA3AF" text-anchor="middle">Quán Mộc</text></svg>`;
         return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    },
+
+    /**
+     * Chuẩn hóa URL hình ảnh món ăn theo quy định của Backend (Minh)
+     */
+    chuanHoaUrlHinhAnh(hinhAnh, tenMon = 'Món Quán Mộc') {
+        if (!hinhAnh) return this.layAnhMacDinh(tenMon);
+        if (hinhAnh.startsWith('http://') || hinhAnh.startsWith('https://') || hinhAnh.startsWith('data:')) {
+            return hinhAnh;
+        }
+        const baseUrl = (typeof window !== 'undefined' && window.HANG_SO && window.HANG_SO.BACKEND_URL) 
+            ? window.HANG_SO.BACKEND_URL 
+            : 'http://localhost:3001';
+        return `${baseUrl}${hinhAnh.startsWith('/') ? hinhAnh : '/' + hinhAnh}`;
     }
 };
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ỨNG DỤNG FRONTEND CHÍNH (ungDung.js)
  * Điều phối các Module và Luồng điều hướng Single Page Application (SPA)
  * Tích hợp & đồng bộ toàn diện giữa các phân hệ của Quân (Bàn & Thực đơn) và Phong (Admin Core, Auth, Nhân sự, Phân quyền, Cấu hình)
@@ -160,6 +160,10 @@ class UngDungFrontend {
             // US-063 -> US-078 (Sprint 2 - Phong: Đặt món, Theo dõi đơn & Real-time)
             if (window.theoDoiDonMonModule) {
                 window.theoDoiDonMonModule.khoiTao();
+            }
+        } else if (tab === 'eMenuKhachHang') {
+            if (window.thucDonQr) {
+                window.thucDonQr.khoiTao();
             }
         } else {
             // Các tab thuộc Sprint 2, 3, 4

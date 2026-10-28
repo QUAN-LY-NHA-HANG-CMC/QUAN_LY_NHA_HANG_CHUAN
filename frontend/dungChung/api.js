@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LỚP GIAO TIẾP VỚI MÁY CHỦ API & QUẢN LÝ DỮ LIỆU CỤC BỘ (api.js)
  * Cung cấp cơ chế kết nối RESTful API và Kho lưu trữ dữ liệu ngoại tuyến (Offline Repository)
  * Đảm bảo các màn hình của Quân (Sprint 1) hoạt động trơn tru ngay cả khi độc lập hoặc tích hợp Backend.
@@ -1549,6 +1549,308 @@ class ApiService {
 
         return { ok: true, msg: 'Đã hoàn tất hỗ trợ khách hàng!' };
     }
+}
+
+    // =========================================================================
+    // PHẦN 1: BỘ API THỰC ĐƠN ĐIỆN TỬ E-MENU (THEO ĐẶC TẢ SPRINT 2 CỦA MINH)
+    // =========================================================================
+
+    /**
+     * 1. Khởi tạo / Xem trang chủ E-Menu (US-050)
+     * URL: GET /api/public/e-menu?banId=...&token=...
+     */
+    async layThongTinEMenu(banId = 1, token = 'a405d1729525dfb8e91350df4e32b0da') {
+        const kq = await this.yeuCau(`/public/e-menu?banId=${encodeURIComponent(banId)}&token=${encodeURIComponent(token)}`);
+        if (kq && kq.ok) return kq;
+
+        // Fallback LocalStorage / Dữ liệu chuẩn theo đặc tả Minh
+        const dsBan = await this.layDanhSachBan();
+        const ban = dsBan.find(b => b.id == banId || b.maBan == banId) || dsBan[0] || {
+            id: 1, maBan: 'B101', soBan: 'Bàn 01', khuVucId: 1
+        };
+
+        const dsKhuVuc = await this.layDanhSachKhuVuc();
+        const kv = dsKhuVuc.find(k => k.id == ban.khuVucId);
+        const tenKhuVuc = ban.tenKhuVuc || (kv ? kv.ten : 'Tầng 1 - Sảnh chính');
+
+        const dsDanhMuc = await this.layDanhSachDanhMuc();
+        const dsMon = await this.layDanhSachMonAn();
+        const monBanChay = dsMon.filter(m => (m.laBanChay === 1 || m.laMonBanChay === true) && (m.trangThai === 1 || m.trangThai === 'DangBan'));
+
+        return {
+            ok: true,
+            data: {
+                nhaHang: {
+                    tenQuan: 'Nhà Hàng Quán Mộc',
+                    diaChi: '123 Đường Ẩm Thực, Quận 1, TP.HCM',
+                    hotline: '1900 6868',
+                    banner: '/tepTaiLen/banner-quanmoc.jpg'
+                },
+                thongTinBan: {
+                    banId: ban.id,
+                    maBan: ban.maBan,
+                    tenBan: ban.soBan || ban.tenBan || 'Bàn 01',
+                    tenKhuVuc: tenKhuVuc
+                },
+                danhMuc: dsDanhMuc.map(d => ({
+                    id: d.id,
+                    tenDanhMuc: d.ten || d.tenDanhMuc,
+                    thuTuHienThi: d.thuTu || 1
+                })),
+                monBanChay: monBanChay.map(m => ({
+                    id: m.id,
+                    tenMon: m.tenMon,
+                    giaBan: m.giaBan || m.gia,
+                    donViTinh: m.donViTinh || 'Đĩa',
+                    hinhAnh: m.hinhAnh,
+                    trangThai: (m.trangThai === 0 || m.trangThai === 'TamHet') ? 'TamHet' : 'DangBan',
+                    laMonBanChay: true
+                }))
+            },
+            msg: 'Lấy thông tin E-Menu thành công (chế độ dự phòng)'
+        };
+    }
+
+    /**
+     * 2. Danh sách món ăn (Lọc & Tìm kiếm) (US-051, US-053, US-054, US-056)
+     * URL: GET /api/public/e-menu/mon-an?danhMucId=...&tuKhoa=...&giaMin=...&giaMax=...
+     */
+    async layDanhSachMonAnEMenu({ danhMucId, tuKhoa, giaMin, giaMax } = {}) {
+        const params = new URLSearchParams();
+        if (danhMucId && danhMucId !== 'TAT_CA') params.append('danhMucId', danhMucId);
+        if (tuKhoa) params.append('tuKhoa', tuKhoa);
+        if (giaMin !== undefined && giaMin !== null && giaMin !== '') params.append('giaMin', giaMin);
+        if (giaMax !== undefined && giaMax !== null && giaMax !== '') params.append('giaMax', giaMax);
+
+        const queryStr = params.toString() ? `?${params.toString()}` : '';
+        const kq = await this.yeuCau(`/public/e-menu/mon-an${queryStr}`);
+        if (kq && kq.ok) return kq;
+
+        // Fallback LocalStorage
+        const dsMon = await this.layDanhSachMonAn();
+        const dsLoc = dsMon.filter(mon => {
+            if (mon.trangThai === -1 || mon.trangThai === 'DaAn') return false;
+
+            if (danhMucId && danhMucId !== 'TAT_CA' && mon.danhMucId != danhMucId) {
+                return false;
+            }
+
+            if (tuKhoa) {
+                const kw = tuKhoa.toLowerCase().trim();
+                const ten = (mon.tenMon || '').toLowerCase();
+                const moTa = (mon.moTa || '').toLowerCase();
+                if (!ten.includes(kw) && !moTa.includes(kw)) return false;
+            }
+
+            const gia = Number(mon.giaBan || mon.gia) || 0;
+            if (giaMin !== undefined && giaMin !== null && giaMin !== '' && gia < Number(giaMin)) return false;
+            if (giaMax !== undefined && giaMax !== null && giaMax !== '' && gia > Number(giaMax)) return false;
+
+            return true;
+        }).map(m => ({
+            id: m.id,
+            tenMon: m.tenMon,
+            danhMucId: m.danhMucId,
+            giaBan: m.giaBan || m.gia,
+            donViTinh: m.donViTinh || 'Phần',
+            hinhAnh: m.hinhAnh,
+            moTa: m.moTa || 'Món ngon đậm vị Quán Mộc',
+            trangThai: (m.trangThai === 0 || m.trangThai === 'TamHet') ? 'TamHet' : 'DangBan',
+            laMonBanChay: !!(m.laBanChay === 1 || m.laMonBanChay)
+        }));
+
+        return {
+            ok: true,
+            data: dsLoc,
+            msg: 'Lấy danh sách món ăn thành công (chế độ dự phòng)'
+        };
+    }
+
+    /**
+     * 3. Chi tiết món ăn & Tùy chọn (Size / Topping) (US-055, US-057)
+     * URL: GET /api/public/e-menu/mon-an/:id
+     */
+    async layChiTietMonAnEMenu(id) {
+        const kq = await this.yeuCau(`/public/e-menu/mon-an/${id}`);
+        if (kq && kq.ok) return kq;
+
+        // Fallback LocalStorage
+        const dsMon = await this.layDanhSachMonAn();
+        const m = dsMon.find(mon => mon.id == id);
+        if (!m) return { ok: false, data: null, msg: 'Không tìm thấy món ăn' };
+
+        const tuyChonSize = (m.tuyChonSize && m.tuyChonSize.length > 0) ? m.tuyChonSize.map(s => ({
+            ten: s.ten,
+            giaThem: s.giaThem !== undefined ? s.giaThem : (s.giaCongThem || 0)
+        })) : [
+            { ten: 'Phần vừa (tiêu chuẩn)', giaThem: 0 },
+            { ten: 'Phần lớn (+30%)', giaThem: Math.round(Number(m.giaBan || m.gia || 0) * 0.3 / 1000) * 1000 }
+        ];
+
+        const tuyChonTopping = (m.tuyChonTopping && m.tuyChonTopping.length > 0) ? m.tuyChonTopping.map(t => ({
+            ten: t.ten,
+            giaThem: Number(t.gia || t.giaThem || 0)
+        })) : [
+            { ten: 'Thêm rau rừng Tây Ninh', giaThem: 20000 },
+            { ten: 'Thêm bánh tráng', giaThem: 10000 }
+        ];
+
+        return {
+            ok: true,
+            data: {
+                id: m.id,
+                tenMon: m.tenMon,
+                danhMucId: m.danhMucId,
+                giaBan: m.giaBan || m.gia,
+                donViTinh: m.donViTinh || 'Phần',
+                hinhAnh: m.hinhAnh,
+                moTa: m.moTa || 'Món ngon đậm vị Quán Mộc',
+                trangThai: (m.trangThai === 0 || m.trangThai === 'TamHet') ? 'TamHet' : 'DangBan',
+                tuyChon: [
+                    {
+                        tenNhom: 'Kích cỡ',
+                        batBuoc: true,
+                        loai: 'ChonMot',
+                        danhSach: tuyChonSize
+                    },
+                    {
+                        tenNhom: 'Món thêm',
+                        batBuoc: false,
+                        loai: 'ChonNhieu',
+                        danhSach: tuyChonTopping
+                    }
+                ]
+            },
+            msg: 'Lấy chi tiết món ăn thành công (chế độ dự phòng)'
+        };
+    }
+
+    // =========================================================================
+    // PHẦN 2: BỘ API KIỂM TRA GIỎ HÀNG & TÍNH TIỀN (THEO ĐẶC TẢ MINH)
+    // =========================================================================
+
+    /**
+     * 4. Kiểm tra tính hợp lệ & Tính tổng tiền giỏ hàng (Server-side) (US-057 -> US-062)
+     * URL: POST /api/gio-hang/kiem-tra-va-tinh-tien
+     */
+    async kiemTraVaTinhTienGioHang({ banId, token, danhSachMon }) {
+        const kq = await this.yeuCau('/gio-hang/kiem-tra-va-tinh-tien', {
+            method: 'POST',
+            body: { banId, token, danhSachMon }
+        });
+        if (kq) return kq;
+
+        // Fallback LocalStorage: Kiểm tra và tính toán chuẩn xác
+        const dsMon = await this.layDanhSachMonAn();
+        const danhSachHopLe = [];
+        const danhSachMonHetHang = [];
+        let tongSoLuongMon = 0;
+        let tongTienTamTinh = 0;
+
+        for (const item of danhSachMon) {
+            const mon = dsMon.find(m => m.id == item.monAnId);
+            if (!mon || mon.trangThai === 0 || mon.trangThai === 'TamHet') {
+                danhSachMonHetHang.push({
+                    monAnId: item.monAnId,
+                    tenMon: mon ? mon.tenMon : 'Món không tồn tại'
+                });
+                continue;
+            }
+
+            const donGiaGoc = Number(mon.giaBan || mon.gia) || 0;
+            let tienTuyChon = 0;
+
+            // Tính tiền tùy chọn size / topping
+            if (Array.isArray(item.tuyChonChon)) {
+                item.tuyChonChon.forEach(tc => {
+                    tienTuyChon += Number(tc.giaThem || tc.giaCongThem || 0);
+                });
+            }
+
+            const donGiaTong = donGiaGoc + tienTuyChon;
+            const sl = Number(item.soLuong) || 1;
+            const thanhTien = donGiaTong * sl;
+
+            tongSoLuongMon += sl;
+            tongTienTamTinh += thanhTien;
+
+            danhSachHopLe.push({
+                monAnId: mon.id,
+                tenMon: mon.tenMon,
+                donGiaGoc: donGiaGoc,
+                tienTuyChon: tienTuyChon,
+                donGiaTong: donGiaTong,
+                soLuong: sl,
+                thanhTien: thanhTien,
+                tuyChonChon: item.tuyChonChon || [],
+                ghiChu: item.ghiChu || ''
+            });
+        }
+
+        if (danhSachMonHetHang.length > 0) {
+            return {
+                ok: false,
+                data: { danhSachMonHetHang },
+                msg: `Món '${danhSachMonHetHang[0].tenMon}' vừa hết hàng. Vui lòng xóa khỏi giỏ để tiếp tục.`
+            };
+        }
+
+        return {
+            ok: true,
+            data: {
+                danhSachHopLe,
+                tongSoLuongMon,
+                tongTienTamTinh
+            },
+            msg: 'Giỏ hàng hợp lệ'
+        };
+    }
+
+    // =========================================================================
+    // PHẦN 3: BỘ API YÊU CẦU HỖ TRỢ TẠI BÀN (US-071 -> US-073)
+    // =========================================================================
+
+    /**
+     * 5. Gửi yêu cầu hỗ trợ (Khách gọi phục vụ / gọi tính tiền)
+     * URL: POST /api/yeu-cau-ho-tro
+     */
+    async guiYeuCauHoTro({ banId, token, loaiYeuCau, lyDo, phuongThucThanhToan, ghiChu }) {
+        const body = { banId, token, loaiYeuCau, ghiChu };
+        if (loaiYeuCau === 'GoiNhanVien') {
+            body.lyDo = lyDo || 'Xin hỗ trợ tại bàn';
+        } else if (loaiYeuCau === 'YeuCauThanhToan') {
+            body.phuongThucThanhToan = phuongThucThanhToan || 'TienMat';
+        }
+
+        const kq = await this.yeuCau('/yeu-cau-ho-tro', {
+            method: 'POST',
+            body: body
+        });
+        if (kq && kq.ok) return kq;
+
+        // Fallback LocalStorage
+        const key = 'quanmoc_yeu_cau_ho_tro';
+        const dsCu = JSON.parse(localStorage.getItem(key) || '[]');
+        const ycMoi = {
+            id: Date.now(),
+            banId: banId,
+            loaiYeuCau: loaiYeuCau,
+            lyDo: body.lyDo || '',
+            phuongThucThanhToan: body.phuongThucThanhToan || '',
+            ghiChu: ghiChu || '',
+            trangThai: 'ChoXuLy',
+            thoiGianTao: new Date().toISOString()
+        };
+        dsCu.push(ycMoi);
+        localStorage.setItem(key, JSON.stringify(dsCu));
+
+        return {
+            ok: true,
+            data: ycMoi,
+            msg: 'Yêu cầu của quý khách đã được gửi tới nhân viên! (chế độ dự phòng)'
+        };
+    }
+}
 }
 
 // Khởi tạo đối tượng toàn cục
