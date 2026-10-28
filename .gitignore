@@ -8,3 +8,6 @@ build/
 *.log
 tepTaiLen/*
 !tepTaiLen/.gitkeep
+.DS_Store
+.idea/
+.vscode/
