@@ -164,8 +164,18 @@ class BoDieuHuong {
             }
         }
 
-        // 5. Thu ngân & Hóa đơn POS: QUAN_LY hoặc THU_NGAN
-        if (tab === 'posThuNgan') {
+        // 5. Sơ đồ bàn POS (Quân - Sprint 3): QUAN_LY, THU_NGAN hoặc PHUC_VU
+        if (tab === 'soDoBanPos') {
+            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN' && vaiTro !== 'PHUC_VU') {
+                if (window.thongBao) {
+                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Sơ đồ bàn chỉ dành cho Phục vụ, Thu ngân hoặc Quản lý!');
+                }
+                return false;
+            }
+        }
+
+        // 6. Thu ngân & Hóa đơn POS (Quân - Sprint 3): QUAN_LY hoặc THU_NGAN
+        if (tab === 'posThuNgan' || tab === 'thanhToanPos') {
             if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN') {
                 if (window.thongBao) {
                     window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Thu ngân & Thanh toán chỉ dành cho Thu ngân hoặc Quản lý!');
