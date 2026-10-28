@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Stack Slide - Quán Mộc</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: #f8fafc;
+      width: 1600px;
+      height: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+    .slide-container {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 48px 56px;
+    }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 36px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 24px;
+    }
+    .badge {
+      display: inline-block;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      border: 1px solid #bfdbfe;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .team-tag {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      background: #f1f5f9;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 24px;
+      flex: 1;
+    }
+    .tech-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px 28px;
+      border: 1.5px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .icon-box {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .box-fe { background: #e0f2fe; color: #0284c7; }
+    .box-be { background: #dcfce7; color: #16a34a; }
+    .box-db { background: #fef3c7; color: #d97706; }
+    .box-rt { background: #f3e8ff; color: #9333ea; }
+    .box-qr { background: #ecfdf5; color: #059669; }
+    .box-git { background: #f1f5f9; color: #334155; }
+
+    .card-title-group h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .card-title-group span {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-body {
+      font-size: 14px;
+      color: #334155;
+      line-height: 1.55;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12.5px;
+    }
+    .pill-role {
+      font-weight: 600;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+    .pill-adv {
+      color: #059669;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="header-section">
+      <div>
+        <div class="badge">Công nghệ & Công cụ chủ đạo</div>
+        <h1 class="title">CÔNG CỤ NỀN TẢNG PHÁT TRIỂN HỆ THỐNG</h1>
+        <p class="subtitle">Đề tài: Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM) — Nhóm 1 (Lớp N07)</p>
+      </div>
+      <div class="team-tag">
+        Agile / Scrum • 4 Sprints • 140 User Stories
+      </div>
+    </div>
+
+    <div class="grid-container">
+      <!-- 1. Frontend -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-fe">FE</div>
+            <div class="card-title-group">
+              <h3>HTML5, CSS3 & Vanilla JS</h3>
+              <span>Giao diện người dùng SPA</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Xây dựng E-Menu Mobile-first cho khách quét QR và màn hình POS Thu ngân/Quản lý. Không dùng framework nặng giúp tải tức thì, nhẹ và mượt mà trên điện thoại.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Quân, Phong</span>
+          <span class="pill-adv">✓ Tốc độ tải tức thì</span>
+        </div>
+      </div>
+
+      <!-- 2. Backend -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-be">BE</div>
+            <div class="card-title-group">
+              <h3>Node.js & Express.js</h3>
+              <span>Máy chủ & RESTful API</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Kiến trúc Modular Monolith phân tầng (Routes → Controller → Service → Model). Xử lý tác vụ bất đồng bộ I/O non-blocking, đồng nhất chuẩn dữ liệu {ok, data, msg}.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Nhật, Minh</span>
+          <span class="pill-adv">✓ Kiến trúc rõ ràng</span>
+        </div>
+      </div>
+
+      <!-- 3. Database -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-db">DB</div>
+            <div class="card-title-group">
+              <h3>SQLite / MySQL & DBeaver</h3>
+              <span>Cơ sở dữ liệu quan hệ ACID</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Lưu trữ bàn ăn, thực đơn, phiên bàn và đơn hàng. Quản lý toàn vẹn dữ liệu, chỉ mục tìm kiếm và xử lý Transaction nhiều bước an toàn chống sai lệch hóa đơn.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Phát (DBA)</span>
+          <span class="pill-adv">✓ Giao dịch Transaction an toàn</span>
+        </div>
+      </div>
+
+      <!-- 4. Real-time -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-rt">RT</div>
+            <div class="card-title-group">
+              <h3>Socket.io</h3>
+              <span>Giao tiếp thời gian thực</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Đồng bộ dữ liệu tức thời: Khách đặt món ➔ Màn hình Bếp (KDS) nhận đơn ➔ Thu ngân cập nhật trạng thái bàn. Chia Room độc lập và tự động kết nối lại khi rớt mạng.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Nhật, Phong</span>
+          <span class="pill-adv">✓ Phản hồi tức thì &lt; 100ms</span>
+        </div>
+      </div>
+
+      <!-- 5. QR Code -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-qr">QR</div>
+            <div class="card-title-group">
+              <h3>SVG QR Thuần Client</h3>
+              <span>Tạo mã QR Offline 100%</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Thuật toán tạo mã QR trực tiếp tại trình duyệt (taoQrClient.js) chuẩn vector SVG. Hoạt động độc lập không cần internet/server ngoài, hỗ trợ in Standee A5/A6 sắc nét.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Quân</span>
+          <span class="pill-adv">✓ 100% Offline, In ấn chuẩn nét</span>
+        </div>
+      </div>
+
+      <!-- 6. Management & AI -->
+      <div class="tech-card">
+        <div>
+          <div class="card-top">
+            <div class="icon-box box-git">GIT</div>
+            <div class="card-title-group">
+              <h3>Git, GitHub & DeepMind AI</h3>
+              <span>Quản trị quy trình & Trợ lý</span>
+            </div>
+          </div>
+          <p class="card-body">
+            Quản trị 140 User Stories qua GitHub Issues/Milestones, quy trình phân nhánh PR nghiêm ngặt. Ứng dụng trợ lý AI giải quyết xung đột mã nguồn và tối ưu giải thuật.
+          </p>
+        </div>
+        <div class="card-footer">
+          <span class="pill-role">Phụ trách: Toàn đội ngũ</span>
+          <span class="pill-adv">✓ GitHub Flow minh bạch</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
