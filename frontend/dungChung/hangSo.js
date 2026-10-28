@@ -22,7 +22,12 @@ const HANG_SO = {
         DANH_SACH_VAI_TRO: 'quanmoc_ds_vai_tro',
         LICH_SU_PHAN_QUYEN: 'quanmoc_ls_phan_quyen',
         NHAT_KY_HE_THONG: 'quanmoc_nhat_ky_he_thong',
-        CAU_HINH_HE_THONG: 'quanmoc_cau_hinh_he_thong'
+        CAU_HINH_HE_THONG: 'quanmoc_cau_hinh_he_thong',
+        // Sprint 2 - Phần việc của Phong (Đặt món, Theo dõi đơn, Hỗ trợ tại bàn & Real-time)
+        DANH_SACH_DON_GOI: 'quanmoc_ds_don_goi',
+        PHIEN_BAN_HIEN_TAI: 'quanmoc_phien_ban_hien_tai',
+        DANH_SACH_YEU_CAU_HO_TRO: 'quanmoc_ds_yeu_cau_ho_tro',
+        GIO_HANG_TEMPORARY: 'quanmoc_gio_hang_tam'
     },
 
     // Trạng thái bàn ăn (Rule 2: Tiếng Việt rõ nghĩa)
@@ -39,6 +44,32 @@ const HANG_SO = {
         DANG_BAN: { ma: 'DANG_BAN', ten: 'Đang bán', giaTri: 1, lopBadge: 'badge-xanh-la' },
         TAM_HET: { ma: 'TAM_HET', ten: 'Tạm hết hàng', giaTri: 0, lopBadge: 'badge-cam' },
         DA_AN: { ma: 'DA_AN', ten: 'Đã ẩn (Ngừng bán)', giaTri: -1, lopBadge: 'badge-xam' }
+    },
+
+    // Trạng thái món đã gọi trong đơn (Sprint 2 - US-066, US-068, US-069)
+    TRANG_THAI_MON_GOI: {
+        CHO_XAC_NHAN: { ma: 'CHO_XAC_NHAN', ten: 'Chờ xác nhận', mau: '#F59E0B', icon: '⏳', lopBadge: 'badge-vang', moTa: 'Đơn mới gửi, đang chờ Bếp/Thu ngân tiếp nhận' },
+        DANG_CHE_BIEN: { ma: 'DANG_CHE_BIEN', ten: 'Đang chế biến', mau: '#3B82F6', icon: '👨‍🍳', lopBadge: 'badge-xanh-duong', moTa: 'Bếp đang chế biến món ăn' },
+        DA_XONG: { ma: 'DA_XONG', ten: 'Đã nấu xong', mau: '#8B5CF6', icon: '🔔', lopBadge: 'badge-tim', moTa: 'Món ăn đã xong, chờ nhân viên bưng lên bàn' },
+        DA_LEN_MON: { ma: 'DA_LEN_MON', ten: 'Đã lên món', mau: '#10B981', icon: '✅', lopBadge: 'badge-xanh-la', moTa: 'Món ăn đã được phục vụ tại bàn' },
+        DA_HUY: { ma: 'DA_HUY', ten: 'Đã hủy', mau: '#EF4444', icon: '❌', lopBadge: 'badge-do', moTa: 'Khách yêu cầu hủy khi chưa nấu' },
+        TU_CHOI: { ma: 'TU_CHOI', ten: 'Bếp từ chối (Hết món)', mau: '#DC2626', icon: '🚫', lopBadge: 'badge-do', moTa: 'Bếp từ chối do vừa hết nguyên liệu' }
+    },
+
+    // Lý do gọi nhân viên hỗ trợ tại bàn (Sprint 2 - US-071, US-072)
+    LY_DO_HO_TRO: [
+        { ma: 'THEM_BAT_DUA', ten: '🥢 Xin thêm bát, đĩa, đũa, thìa' },
+        { ma: 'THEM_KHAN_GIAY', ten: '🧻 Xin thêm khăn giấy, tăm tiệt trùng' },
+        { ma: 'THEM_DA_LANH', ten: '🧊 Xin thêm đá lạnh / nước lọc' },
+        { ma: 'THEM_GIA_VI', ten: '🌶️ Xin thêm nước chấm, ớt, chanh, tỏi' },
+        { ma: 'DON_BAN', ten: '🧹 Yêu cầu dọn bàn / lau bàn sạch' },
+        { ma: 'GAP_NHAN_VIEN', ten: '🙋 Khách cần nhân viên hỗ trợ trực tiếp' }
+    ],
+
+    // Phương thức thanh toán yêu cầu (Sprint 2 - US-073)
+    HINH_THUC_THANH_TOAN_YEU_CAU: {
+        TIEN_MAT: { ma: 'TIEN_MAT', ten: '💵 Tiền mặt', moTa: 'Thanh toán trực tiếp bằng tiền mặt tại bàn' },
+        CHUYEN_KHOAN: { ma: 'CHUYEN_KHOAN', ten: '💳 Chuyển khoản (VietQR)', moTa: 'Quét mã VietQR chuyển khoản ngân hàng' }
     },
 
     // Trạng thái nhân viên (Sprint 1 - US-011 -> US-014)

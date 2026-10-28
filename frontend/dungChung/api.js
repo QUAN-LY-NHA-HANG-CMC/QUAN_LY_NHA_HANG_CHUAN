@@ -1,4 +1,4 @@
-/**
+﻿/**
  * LỚP GIAO TIẾP VỚI MÁY CHỦ API & QUẢN LÝ DỮ LIỆU CỤC BỘ (api.js)
  * Cung cấp cơ chế kết nối RESTful API và Kho lưu trữ dữ liệu ngoại tuyến (Offline Repository)
  * Đảm bảo các màn hình của Quân (Sprint 1) hoạt động trơn tru ngay cả khi độc lập hoặc tích hợp Backend.
@@ -504,6 +504,109 @@ class ApiService {
             ];
             localStorage.setItem(KHOA.NHAT_KY_HE_THONG || 'quanmoc_nhat_ky_he_thong', JSON.stringify(nhatKyMau));
         }
+
+        // 10. Dữ liệu Đơn Gọi Món mẫu (Sprint 2 - US-063 -> US-070)
+        if (!localStorage.getItem(KHOA.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi')) {
+            const dsDonGoiMau = [
+                {
+                    id: 1,
+                    maDon: 'ORD-20261027-001',
+                    banId: 3,
+                    soBan: 'Bàn 03',
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    luotGoi: 1,
+                    thoiGianTao: '2026-10-27 19:15:30',
+                    ghiChuDon: 'Khách yêu cầu làm nhanh vì đói bụng',
+                    tongTien: 335000,
+                    danhSachMon: [
+                        {
+                            id: 101,
+                            monId: 1,
+                            tenMon: 'Gà Nướng Ống Tre Tây Bắc',
+                            size: 'Nguyên con tiêu chuẩn',
+                            topping: 'Xôi nếp nương nướng (+35.000đ)',
+                            donGia: 280000,
+                            soLuong: 1,
+                            thanhTien: 280000,
+                            ghiChu: 'Gà nướng kỹ da giòn, bớt cay',
+                            trangThai: 'DA_LEN_MON',
+                            thoiGianCapNhat: '2026-10-27 19:35:00'
+                        },
+                        {
+                            id: 102,
+                            monId: 8,
+                            tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen',
+                            size: 'Size L (Khổng lồ)',
+                            topping: 'Kem cheese béo ngậy (+12.000đ)',
+                            donGia: 55000,
+                            soLuong: 1,
+                            thanhTien: 55000,
+                            ghiChu: 'Ít đường, nhiều đá',
+                            trangThai: 'DA_LEN_MON',
+                            thoiGianCapNhat: '2026-10-27 19:20:15'
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    maDon: 'ORD-20261027-002',
+                    banId: 3,
+                    soBan: 'Bàn 03',
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    luotGoi: 2,
+                    thoiGianTao: '2026-10-27 19:42:10',
+                    ghiChuDon: 'Gọi thêm món',
+                    tongTien: 185000,
+                    danhSachMon: [
+                        {
+                            id: 103,
+                            monId: 7,
+                            tenMon: 'Rau Rừng Gia Lai Xào Tỏi',
+                            size: 'Tiêu chuẩn',
+                            topping: '',
+                            donGia: 75000,
+                            soLuong: 1,
+                            thanhTien: 75000,
+                            ghiChu: 'Xào nhiều tỏi, bớt dầu mỡ',
+                            trangThai: 'DANG_CHE_BIEN',
+                            thoiGianCapNhat: '2026-10-27 19:44:00'
+                        },
+                        {
+                            id: 104,
+                            monId: 6,
+                            tenMon: 'Gỏi Ngó Sen Tôm Thịt Hoa Chuối',
+                            size: 'Tiêu chuẩn',
+                            topping: 'Bánh phồng tôm chiên thêm (+15.000đ)',
+                            donGia: 110000,
+                            soLuong: 1,
+                            thanhTien: 110000,
+                            ghiChu: 'Không ăn cay, tôm bóc vỏ kỹ',
+                            trangThai: 'CHO_XAC_NHAN',
+                            thoiGianCapNhat: '2026-10-27 19:42:10'
+                        }
+                    ]
+                }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDonGoiMau));
+        }
+
+        // 11. Dữ liệu Yêu Cầu Hỗ Trợ Tại Bàn mẫu (Sprint 2 - US-071 -> US-074)
+        if (!localStorage.getItem(KHOA.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro')) {
+            const dsHoTroMau = [
+                {
+                    id: 1,
+                    banId: 3,
+                    soBan: 'Bàn 03',
+                    loaiYeuCau: 'THEM_DA_LANH',
+                    tenYeuCau: 'Xin thêm đá lạnh / nước lọc',
+                    chiTiet: 'Cho thêm 1 ca đá và 2 ly rỗng',
+                    thoiGian: '2026-10-27 19:30:15',
+                    trangThai: 'DA_XU_LY',
+                    nguoiTiepNhan: 'Phạm Văn Phục Vụ'
+                }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(dsHoTroMau));
+        }
     }
 
     // =========================================================================
@@ -988,6 +1091,467 @@ class ApiService {
     }
 
     // =========================================================================
+    // SPRINT 2: ĐẶT MÓN, THEO DÕI ĐƠN HÀNG & HỖ TRỢ TẠI BÀN (US-063 -> US-078)
+    // Phụ trách: Phong (Frontend Lead)
+    // =========================================================================
+
+    /**
+     * US-063 & US-064: Gửi đơn đặt món (Order) từ giỏ hàng bàn khách xuống hệ thống
+     * @param {Object} donGoi { banId, soBan, danhSachMon: [{ monId, tenMon, donGia, soLuong, size, topping, ghiChu, thanhTien }], ghiChuDon }
+     */
+    async taoDonGoiMon(donGoi) {
+        if (!donGoi || !donGoi.banId || !Array.isArray(donGoi.danhSachMon) || donGoi.danhSachMon.length === 0) {
+            return { ok: false, msg: 'Giỏ hàng trống hoặc chưa xác định bàn ăn!' };
+        }
+
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        const dsDon = raw ? JSON.parse(raw) : [];
+
+        // Lấy danh sách đơn của bàn này để tính lượt gọi món (US-067: Lượt 1, Lượt 2, ...)
+        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(donGoi.banId));
+        const luotGoi = donCuaBan.length + 1;
+
+        const idMoi = dsDon.length > 0 ? Math.max(...dsDon.map(d => d.id || 0)) + 1 : 1;
+        const maDon = `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(idMoi).padStart(3, '0')}`;
+        const thoiGianTao = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        // Chuẩn hóa từng món trong đơn với ID chi tiết và trạng thái mặc định "Chờ xác nhận"
+        let baseItemId = Date.now();
+        let tongTienDon = 0;
+        const danhSachMonChuan = donGoi.danhSachMon.map(m => {
+            const thanhTien = Number(m.thanhTien || (m.donGia * m.soLuong));
+            tongTienDon += thanhTien;
+            return {
+                id: ++baseItemId,
+                monId: m.monId || m.id,
+                tenMon: m.tenMon,
+                size: m.size || 'Tiêu chuẩn',
+                topping: m.topping || '',
+                donGia: Number(m.donGia || 0),
+                soLuong: Number(m.soLuong || 1),
+                thanhTien,
+                ghiChu: m.ghiChu || '',
+                trangThai: 'CHO_XAC_NHAN', // US-066: Trạng thái ban đầu
+                thoiGianCapNhat: thoiGianTao
+            };
+        });
+
+        // Tìm thông tin bàn để lưu tên khu vực
+        const dsBan = await this.layDanhSachBanAn();
+        const thongTinBan = dsBan.find(b => Number(b.id) === Number(donGoi.banId));
+        const soBan = donGoi.soBan || (thongTinBan ? thongTinBan.soBan : `Bàn ${donGoi.banId}`);
+        const khuVucTen = thongTinBan ? (thongTinBan.khuVucTen || 'Tầng 1') : 'Nhà hàng';
+
+        const donMoi = {
+            id: idMoi,
+            maDon,
+            banId: Number(donGoi.banId),
+            soBan,
+            khuVucTen,
+            luotGoi,
+            thoiGianTao,
+            ghiChuDon: donGoi.ghiChuDon || '',
+            tongTien: tongTienDon,
+            danhSachMon: danhSachMonChuan
+        };
+
+        dsDon.push(donMoi);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+
+        // Cập nhật trạng thái bàn sang DANG_DUNG nếu bàn đang TRONG
+        if (thongTinBan && thongTinBan.trangThai === 'TRONG') {
+            await this.capNhatTrangThaiBan(donGoi.banId, 'DANG_DUNG');
+        }
+
+        // US-075 & US-078: Phát sự kiện Socket.io + Chuông báo thời gian thực
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('order:moi', donMoi);
+            window.socketClient.phatAmThanh('donMoi');
+        }
+
+        this.ghiNhatKy(`Đặt món thành công (${soBan} - Lượt ${luotGoi})`, 'INFO', `Tạo đơn ${maDon} gồm ${danhSachMonChuan.length} món. Tổng: ${tongTienDon.toLocaleString('vi-VN')}đ`);
+
+        return {
+            ok: true,
+            data: donMoi,
+            msg: `Đặt món thành công! Đơn hàng của ${soBan} (Lượt ${luotGoi}) đã được chuyển đến Bếp.`
+        };
+    }
+
+    /**
+     * US-065 & US-070: Lấy danh sách toàn bộ các món đã gọi trong phiên và tính tổng tiền lũy kế
+     * @param {number|string} banId ID của bàn ăn
+     */
+    async layDanhSachDonTheoBan(banId) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        const dsDon = raw ? JSON.parse(raw) : [];
+        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(banId));
+
+        let tongTienLuyKe = 0;
+        let tongSoMon = 0;
+        let choXacNhan = 0;
+        let dangCheBien = 0;
+        let daXong = 0;
+        let daLenMon = 0;
+        let daHuy = 0;
+        let tuChoi = 0;
+
+        donCuaBan.forEach(don => {
+            don.danhSachMon.forEach(m => {
+                tongSoMon += m.soLuong;
+                if (m.trangThai === 'CHO_XAC_NHAN') choXacNhan += m.soLuong;
+                else if (m.trangThai === 'DANG_CHE_BIEN') dangCheBien += m.soLuong;
+                else if (m.trangThai === 'DA_XONG') daXong += m.soLuong;
+                else if (m.trangThai === 'DA_LEN_MON') daLenMon += m.soLuong;
+                else if (m.trangThai === 'DA_HUY') daHuy += m.soLuong;
+                else if (m.trangThai === 'TU_CHOI') tuChoi += m.soLuong;
+
+                // Chỉ tính tiền các món không bị hủy hoặc từ chối
+                if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
+                    tongTienLuyKe += Number(m.thanhTien || 0);
+                }
+            });
+        });
+
+        // Lấy thông tin bàn
+        const dsBan = await this.layDanhSachBanAn();
+        const ban = dsBan.find(b => Number(b.id) === Number(banId));
+
+        return {
+            ok: true,
+            data: {
+                banId: Number(banId),
+                soBan: ban ? ban.soBan : `Bàn ${banId}`,
+                khuVucTen: ban ? (ban.khuVucTen || 'Tầng 1') : '',
+                danhSachDon: donCuaBan,
+                tongTienLuyKe,
+                thongKe: {
+                    tongSoMon,
+                    choXacNhan,
+                    dangCheBien,
+                    daXong,
+                    daLenMon,
+                    daHuy,
+                    tuChoi
+                }
+            }
+        };
+    }
+
+    /**
+     * Lấy toàn bộ đơn đặt món trong hệ thống
+     */
+    async layTatCaDonGoiMon() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    /**
+     * US-068: Khách hàng yêu cầu hủy món khi món vẫn đang ở trạng thái "Chờ xác nhận"
+     */
+    async huyMonChuaCheBien(idMonChiTiet, banId, lyDo = 'Khách đổi ý') {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        if (!raw) return { ok: false, msg: 'Không tìm thấy dữ liệu đơn hàng!' };
+
+        const dsDon = JSON.parse(raw);
+        let daTimThay = false;
+        let tenMonDaHuy = '';
+
+        for (const don of dsDon) {
+            if (Number(don.banId) === Number(banId)) {
+                const mon = don.danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet));
+                if (mon) {
+                    if (mon.trangThai !== 'CHO_XAC_NHAN') {
+                        return { ok: false, msg: `Món [${mon.tenMon}] đã được Bếp chế biến hoặc phục vụ, không thể hủy!` };
+                    }
+                    mon.trangThai = 'DA_HUY';
+                    mon.lyDoHuy = lyDo;
+                    mon.thoiGianCapNhat = new Date().toISOString().replace('T', ' ').substring(0, 19);
+                    tenMonDaHuy = mon.tenMon;
+                    daTimThay = true;
+                    break;
+                }
+            }
+        }
+
+        if (!daTimThay) {
+            return { ok: false, msg: 'Không tìm thấy món cần hủy!' };
+        }
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+
+        // US-076: Phát sự kiện cập nhật
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('order:capNhatTrangThai', { idMonChiTiet, banId, trangThai: 'DA_HUY', lyDo });
+        }
+
+        this.ghiNhatKy(`Khách hủy món (${tenMonDaHuy})`, 'WARN', `Bàn ${banId} hủy món: ${tenMonDaHuy}. Lý do: ${lyDo}`);
+
+        return { ok: true, msg: `Đã hủy thành công món [${tenMonDaHuy}]. Tổng tiền đã được khấu trừ.` };
+    }
+
+    /**
+     * US-069: Bếp từ chối món do vừa hết nguyên liệu
+     */
+    async tuChoiMonTuBep(idMonChiTiet, banId, lyDo = 'Bếp vừa hết nguyên liệu trong ngày') {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        if (!raw) return { ok: false, msg: 'Không tìm thấy dữ liệu đơn hàng!' };
+
+        const dsDon = JSON.parse(raw);
+        let daTimThay = false;
+        let tenMonTuChoi = '';
+
+        for (const don of dsDon) {
+            if (Number(don.banId) === Number(banId)) {
+                const mon = don.danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet));
+                if (mon) {
+                    mon.trangThai = 'TU_CHOI';
+                    mon.lyDoTuChoi = lyDo;
+                    mon.thoiGianCapNhat = new Date().toISOString().replace('T', ' ').substring(0, 19);
+                    tenMonTuChoi = mon.tenMon;
+                    daTimThay = true;
+                    break;
+                }
+            }
+        }
+
+        if (!daTimThay) return { ok: false, msg: 'Không tìm thấy món!' };
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+
+        // US-069 & US-078: Bắn thông báo về khách + Phát âm thanh cảnh báo
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('order:tuChoiMon', { idMonChiTiet, banId, tenMon: tenMonTuChoi, lyDo });
+            window.socketClient.phatAmThanh('tuChoi');
+        }
+
+        this.ghiNhatKy(`Bếp từ chối món (${tenMonTuChoi})`, 'WARN', `Bàn ${banId} - Món: ${tenMonTuChoi}. Lý do từ chối: ${lyDo}`);
+
+        return { ok: true, msg: `Đã ghi nhận từ chối món [${tenMonTuChoi}] và phát cảnh báo đến khách hàng.` };
+    }
+
+    /**
+     * US-066 & US-076: Cập nhật trạng thái chế biến món ăn thời gian thực
+     * @param {number} idMonChiTiet ID chi tiết món
+     * @param {number} banId ID bàn
+     * @param {string} trangThaiMoi 'CHO_XAC_NHAN' | 'DANG_CHE_BIEN' | 'DA_XONG' | 'DA_LEN_MON'
+     */
+    async capNhatTrangThaiMonAn(idMonChiTiet, banId, trangThaiMoi) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        if (!raw) return { ok: false, msg: 'Không tìm thấy đơn hàng!' };
+
+        const dsDon = JSON.parse(raw);
+        let daTimThay = false;
+        let thongTinMon = null;
+
+        for (const don of dsDon) {
+            if (Number(don.banId) === Number(banId)) {
+                const mon = don.danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet));
+                if (mon) {
+                    mon.trangThai = trangThaiMoi;
+                    mon.thoiGianCapNhat = new Date().toISOString().replace('T', ' ').substring(0, 19);
+                    thongTinMon = mon;
+                    daTimThay = true;
+                    break;
+                }
+            }
+        }
+
+        if (!daTimThay) return { ok: false, msg: 'Không tìm thấy món ăn!' };
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+
+        // Đồng bộ thời gian thực
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('order:capNhatTrangThai', { idMonChiTiet, banId, trangThai: trangThaiMoi, mon: thongTinMon });
+        }
+
+        return { ok: true, data: thongTinMon, msg: `Cập nhật trạng thái món [${thongTinMon.tenMon}] sang: ${trangThaiMoi}` };
+    }
+
+    /**
+     * US-071 & US-072: Gửi yêu cầu gọi nhân viên hỗ trợ tại bàn
+     * @param {number} banId ID bàn
+     * @param {string} loaiYeuCau Mã loại (THEM_BAT_DUA, THEM_KHAN_GIAY, THEM_DA_LANH, ...)
+     * @param {string} chiTiet Ghi chú chi tiết yêu cầu
+     */
+    async guiYeuCauHoTroTaiBan(banId, loaiYeuCau, chiTiet = '') {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro');
+        const ds = raw ? JSON.parse(raw) : [];
+
+        const dsBan = await this.layDanhSachBanAn();
+        const ban = dsBan.find(b => Number(b.id) === Number(banId));
+        const soBan = ban ? ban.soBan : `Bàn ${banId}`;
+
+        // Tìm tên hiển thị của yêu cầu
+        const danhSachLyDo = window.HANG_SO?.LY_DO_HO_TRO || [];
+        const timLyDo = danhSachLyDo.find(l => l.ma === loaiYeuCau);
+        const tenYeuCau = timLyDo ? timLyDo.ten : 'Cần nhân viên hỗ trợ';
+
+        const idMoi = ds.length > 0 ? Math.max(...ds.map(y => y.id || 0)) + 1 : 1;
+        const thoiGian = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const yeuCauMoi = {
+            id: idMoi,
+            banId: Number(banId),
+            soBan,
+            loaiYeuCau,
+            tenYeuCau,
+            chiTiet,
+            thoiGian,
+            trangThai: 'CHO_TIEP_NHAN', // CHO_TIEP_NHAN -> DA_TIEP_NHAN -> DA_XU_LY
+            nguoiTiepNhan: null
+        };
+
+        ds.unshift(yeuCauMoi);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(ds));
+
+        // Cập nhật trạng thái bàn sang CAN_HO_TRO nếu bàn không phải CHO_THANH_TOAN
+        if (ban && ban.trangThai !== 'CHO_THANH_TOAN') {
+            await this.capNhatTrangThaiBan(banId, 'CAN_HO_TRO');
+        }
+
+        // US-075 & US-078: Phát sự kiện và chuông gọi phục vụ
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('hoTro:yeuCauMoi', yeuCauMoi);
+            window.socketClient.phatAmThanh('hoTro');
+        }
+
+        this.ghiNhatKy(`Khách gọi hỗ trợ (${soBan})`, 'INFO', `${soBan} gửi yêu cầu: ${tenYeuCau}. Ghi chú: ${chiTiet || 'Không'}`);
+
+        return {
+            ok: true,
+            data: yeuCauMoi,
+            msg: `Đã gửi yêu cầu [${tenYeuCau}] đến nhân viên! Nhân viên phục vụ sẽ đến bàn bạn ngay.`
+        };
+    }
+
+    /**
+     * US-073: Gửi yêu cầu thanh toán tại bàn kèm phương thức dự kiến
+     * @param {number} banId ID bàn
+     * @param {string} phuongThuc 'TIEN_MAT' | 'CHUYEN_KHOAN'
+     * @param {string} ghiChu Ghi chú thêm (xuất VAT, tách bill...)
+     */
+    async guiYeuCauThanhToan(banId, phuongThuc = 'TIEN_MAT', ghiChu = '') {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro');
+        const ds = raw ? JSON.parse(raw) : [];
+
+        const dsBan = await this.layDanhSachBanAn();
+        const ban = dsBan.find(b => Number(b.id) === Number(banId));
+        const soBan = ban ? ban.soBan : `Bàn ${banId}`;
+
+        // Lấy tổng tiền lũy kế hiện tại
+        const kqDon = await this.layDanhSachDonTheoBan(banId);
+        const tongTien = kqDon.ok ? kqDon.data.tongTienLuyKe : 0;
+
+        const tenPhuongThuc = phuongThuc === 'CHUYEN_KHOAN' ? 'Chuyển khoản VietQR' : 'Tiền mặt';
+
+        const idMoi = ds.length > 0 ? Math.max(...ds.map(y => y.id || 0)) + 1 : 1;
+        const thoiGian = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const yeuCauMoi = {
+            id: idMoi,
+            banId: Number(banId),
+            soBan,
+            loaiYeuCau: 'THANH_TOAN',
+            tenYeuCau: `💳 Yêu cầu thanh toán (${tenPhuongThuc})`,
+            phuongThuc,
+            tongTamTinh: tongTien,
+            chiTiet: ghiChu || `Khách chọn thanh toán bằng ${tenPhuongThuc}. Tạm tính: ${tongTien.toLocaleString('vi-VN')}đ`,
+            thoiGian,
+            trangThai: 'CHO_TIEP_NHAN',
+            nguoiTiepNhan: null
+        };
+
+        ds.unshift(yeuCauMoi);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(ds));
+
+        // Cập nhật trạng thái bàn sang CHO_THANH_TOAN
+        await this.capNhatTrangThaiBan(banId, 'CHO_THANH_TOAN');
+
+        // Phát sự kiện Socket và chuông thanh toán
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('thanhToan:yeuCau', yeuCauMoi);
+            window.socketClient.phatAmThanh('thanhToan');
+        }
+
+        this.ghiNhatKy(`Khách gọi thanh toán (${soBan})`, 'INFO', `${soBan} yêu cầu thanh toán [${tenPhuongThuc}], tạm tính: ${tongTien.toLocaleString('vi-VN')}đ`);
+
+        return {
+            ok: true,
+            data: yeuCauMoi,
+            msg: `Đã gửi yêu cầu thanh toán! Thu ngân đang kiểm tra hóa đơn và mang phiếu thanh toán ra bàn.`
+        };
+    }
+
+    /**
+     * US-074: Lấy danh sách yêu cầu hỗ trợ (tất cả hoặc theo bàn)
+     */
+    async layDanhSachYeuCauHoTro(banId = null) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro');
+        let ds = raw ? JSON.parse(raw) : [];
+        if (banId !== null && banId !== undefined) {
+            ds = ds.filter(y => Number(y.banId) === Number(banId));
+        }
+        return ds;
+    }
+
+    /**
+     * US-074: Nhân viên tiếp nhận yêu cầu hỗ trợ
+     */
+    async tiepNhanYeuCauHoTro(idYeuCau, nguoiNhan = 'Nhân viên phục vụ') {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro');
+        if (!raw) return { ok: false, msg: 'Không tìm thấy yêu cầu!' };
+
+        const ds = JSON.parse(raw);
+        const yc = ds.find(y => Number(y.id) === Number(idYeuCau));
+        if (!yc) return { ok: false, msg: 'Không tìm thấy yêu cầu hỗ trợ!' };
+
+        yc.trangThai = 'DA_TIEP_NHAN';
+        yc.nguoiTiepNhan = nguoiNhan;
+        yc.thoiGianTiepNhan = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(ds));
+
+        // Phát sự kiện thông báo cho máy khách
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('hoTro:tiepNhan', yc);
+        }
+
+        return { ok: true, data: yc, msg: `Đã tiếp nhận yêu cầu hỗ trợ của ${yc.soBan}.` };
+    }
+
+    /**
+     * Hoàn tất xử lý yêu cầu hỗ trợ
+     */
+    async hoanTatYeuCauHoTro(idYeuCau) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro');
+        if (!raw) return { ok: false, msg: 'Không tìm thấy yêu cầu!' };
+
+        const ds = JSON.parse(raw);
+        const yc = ds.find(y => Number(y.id) === Number(idYeuCau));
+        if (!yc) return { ok: false, msg: 'Không tìm thấy yêu cầu!' };
+
+        yc.trangThai = 'DA_XU_LY';
+        yc.thoiGianHoanTat = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(ds));
+
+        // Kiểm tra xem bàn còn yêu cầu nào chưa xử lý không, nếu hết thì trả trạng thái bàn về DANG_DUNG
+        const conYeuCauKhac = ds.some(y => Number(y.banId) === Number(yc.banId) && y.trangThai !== 'DA_XU_LY');
+        if (!conYeuCauKhac) {
+            const dsBan = await this.layDanhSachBanAn();
+            const ban = dsBan.find(b => Number(b.id) === Number(yc.banId));
+            if (ban && ban.trangThai === 'CAN_HO_TRO') {
+                await this.capNhatTrangThaiBan(yc.banId, 'DANG_DUNG');
+            }
+        }
+
+        return { ok: true, msg: 'Đã hoàn tất hỗ trợ khách hàng!' };
+    }
+}
+
+    // =========================================================================
     // PHẦN 1: BỘ API THỰC ĐƠN ĐIỆN TỬ E-MENU (THEO ĐẶC TẢ SPRINT 2 CỦA MINH)
     // =========================================================================
 
@@ -1286,6 +1850,7 @@ class ApiService {
             msg: 'Yêu cầu của quý khách đã được gửi tới nhân viên! (chế độ dự phòng)'
         };
     }
+}
 }
 
 // Khởi tạo đối tượng toàn cục
