@@ -31,6 +31,22 @@ class UngDungFrontend {
         // Lắng nghe sự kiện click trên Sidebar Menu
         this.ganSuKienDieuHuong();
 
+        // Đọc tab từ URL hash nếu có (ví dụ: #so-do-ban-pos hoặc #pos)
+        const hash = window.location.hash.replace('#', '');
+        const banDoHash = {
+            'so-do-ban-pos': 'soDoBanPos',
+            'pos': 'thanhToanPos',
+            'e-menu': 'eMenuKhachHang',
+            'thuc-don': 'quanLyThucDon',
+            'ban-an': 'quanLyBanQr',
+            'nhan-vien': 'quanLyNhanVien',
+            'vai-tro': 'phanQuyen',
+            'cau-hinh': 'cauHinhHeThong'
+        };
+        if (hash && banDoHash[hash]) {
+            this.tabHienTai = banDoHash[hash];
+        }
+
         // Nạp trang mặc định
         this.chuyenTab(this.tabHienTai);
 
@@ -154,6 +170,16 @@ class UngDungFrontend {
         } else if (tab === 'eMenuKhachHang') {
             if (window.thucDonQr) {
                 window.thucDonQr.khoiTao();
+            }
+        } else if (tab === 'soDoBanPos') {
+            // US-089 -> US-098 (Quân - Sprint 3: Sơ đồ bàn POS)
+            if (window.soDoBanPos) {
+                window.soDoBanPos.khoiTao();
+            }
+        } else if (tab === 'thanhToanPos' || tab === 'posThuNgan') {
+            // US-099 -> US-110 (Quân - Sprint 3: POS Thu ngân & Thanh toán)
+            if (window.thanhToanPos) {
+                window.thanhToanPos.khoiTao();
             }
         } else {
             // Các tab thuộc Sprint 2, 3, 4
