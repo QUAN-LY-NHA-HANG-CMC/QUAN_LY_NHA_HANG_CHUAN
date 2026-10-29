@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "quanmoc-frontend",
+  "public": false,
+  "builds": [
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/trang/(.*)",
+      "dest": "/frontend/trang/$1"
+    },
+    {
+      "src": "/dungChung/(.*)",
+      "dest": "/frontend/dungChung/$1"
+    },
+    {
+      "src": "/dinhTuyen/(.*)",
+      "dest": "/frontend/dinhTuyen/$1"
+    },
+    {
+      "src": "/thanhPhan/(.*)",
+      "dest": "/frontend/thanhPhan/$1"
+    },
+    {
+      "src": "/tepGiaoDien.css",
+      "dest": "/frontend/tepGiaoDien.css"
+    },
+    {
+      "src": "/ungDung.js",
+      "dest": "/frontend/ungDung.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/index.html"
+    }
+  ]
+}
