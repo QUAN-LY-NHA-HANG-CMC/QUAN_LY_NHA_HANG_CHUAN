@@ -24,6 +24,11 @@ const donGoiMonModule = require('./modules/donGoiMon');
 const hoaDonModule = require('./modules/hoaDon');
 const thanhToanModule = require('./modules/thanhToan');
 
+// Nạp các module phụ trách của Minh (Sprint 4)
+const danhGiaModule = require('./modules/danhGia');
+const caLamViecModule = require('./modules/caLamViec');
+const baoCaoModule = require('./modules/baoCao');
+
 const ungDung = express();
 
 // Middleware cơ bản
@@ -134,6 +139,11 @@ ungDung.use('/api/khuyen-mai', khuyenMaiModule.router);
 ungDung.use('/api/don-goi-mon', donGoiMonModule.router);
 ungDung.use('/api/hoa-don', hoaDonModule.router);
 ungDung.use('/api/thanh-toan', thanhToanModule.router);
+
+// API Sprint 4 (Đánh giá & Phản hồi, Ca làm việc & Kết ca, Báo cáo thống kê & Xuất CSV)
+ungDung.use('/api/danh-gia', danhGiaModule.router);
+ungDung.use('/api/ca-lam-viec', caLamViecModule.router);
+ungDung.use('/api/bao-cao', baoCaoModule.router);
 
 // Xử lý tuyến đường không tồn tại (404)
 ungDung.use((req, res) => {
