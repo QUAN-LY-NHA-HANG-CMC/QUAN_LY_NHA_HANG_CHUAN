@@ -40,6 +40,29 @@ Các file Sprint 2 chạy sau toàn bộ migration Sprint 1:
 
 `database/sprint02_giaoDich.sql` là kịch bản tham chiếu cho service tạo đơn. Backend cần dùng idempotency key, tính tiền từ snapshot server và chỉ phát Socket event sau khi `COMMIT` thành công.
 
+## ERD Sprint 3
+
+```text
+chi_tiet_don_hang 1---1 hang_doi_bep 1---n lich_su_mon_bep
+chi_tiet_don_hang 1---n yeu_cau_huy_tra_mon 1---n lich_su_that_thoat_mon
+phien_phuc_vu 1---n lich_su_chuyen_ban
+phien_phuc_vu 1---n lich_su_ghep_ban
+chuong_trinh_khuyen_mai 1---n ma_giam_gia
+hoa_don 1---n chi_tiet_hoa_don
+hoa_don n---n ma_giam_gia (hoa_don_khuyen_mai)
+hoa_don 1---n giao_dich_thanh_toan
+hoa_don 1---n hoa_don (hoa_don_goc_id - tach hoa don)
+```
+
+Các file Sprint 3 chạy sau migration Sprint 1 và Sprint 2:
+
+1. `database/sprint03_taoBang.sql`
+2. `database/sprint03_rangBuoc.sql`
+3. `database/sprint03_chiMuc.sql`
+4. `database/sprint03_duLieuMau.sql`
+
+`database/sprint03_giaoDich.sql` là kịch bản tham chiếu cho US-097, US-098, US-108, US-109 và US-110; không chạy file này như seed.
+
 ## Quy ước
 
 - Tên bảng/cột dùng tiếng Việt không dấu và `snake_case` theo quy ước dự án.
