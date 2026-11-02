@@ -28,7 +28,15 @@ class TheoDoiDonMonModule {
      * Khởi tạo giao diện trang theo dõi đơn món
      */
     async khoiTao(banId = null) {
-        if (banId) this.banIdHienTai = Number(banId);
+        if (banId) {
+            this.banIdHienTai = Number(banId);
+        } else {
+            // Lấy từ session bàn đang được quét hoặc chọn gần nhất
+            const banLuu = localStorage.getItem('quanmoc_ban_id_hien_tai');
+            if (banLuu && !isNaN(Number(banLuu))) {
+                this.banIdHienTai = Number(banLuu);
+            }
+        }
         
         // Cập nhật cho widget hỗ trợ tại bàn
         if (window.hoTroTaiBan) {
@@ -82,7 +90,7 @@ class TheoDoiDonMonModule {
      */
     async taiDanhSachBan() {
         if (window.api) {
-            this.danhSachBan = await window.api.layDanhSachBanAn();
+            this.danhSachBan = window.api.layDanhSachBan ? await window.api.layDanhSachBan() : (window.api.layDanhSachBanAn ? await window.api.layDanhSachBanAn() : []);
         }
     }
 
@@ -98,18 +106,39 @@ class TheoDoiDonMonModule {
             return;
         }
 
-        const phanHoi = await window.api.layDanhSachDonTheoBan(this.banIdHienTai);
-        this.duLieuDonBan = phanHoi.ok ? phanHoi.data : { danhSachDon: [], tongTienLuyKe: 0, thongKe: {} };
-        const dsYeuCau = await window.api.layDanhSachYeuCauHoTro(this.banIdHienTai);
-
-        this.veGiaoDien(vungChua, this.duLieuDonBan, dsYeuCau);
+        try {
+            const phanHoi = await window.api.layDanhSachDonTheoBan(this.banIdHienTai);
+            this.duLieuDonBan = (phanHoi && phanHoi.ok) ? phanHoi.data : {
+                banId: this.banIdHienTai,
+                soBan: `Bàn ${this.banIdHienTai}`,
+                khuVucTen: 'Tầng 1',
+                danhSachDon: [],
+                tongTienLuyKe: 0,
+                thongKe: {}
+            };
+            const dsYeuCau = await window.api.layDanhSachYeuCauHoTro(this.banIdHienTai);
+            this.veGiaoDien(vungChua, this.duLieuDonBan, dsYeuCau || []);
+        } catch (err) {
+            console.error('Lỗi khi tải dữ liệu theo dõi đơn:', err);
+            vungChua.innerHTML = `
+                <div class="khung-loi" style="padding: 24px; text-align: center;">
+                    <h3>Đang làm mới dữ liệu theo dõi đơn món...</h3>
+                    <p style="color: var(--mau-chu-phu); margin: 8px 0 16px;">${err.message || 'Lỗi không xác định'}</p>
+                    <button class="nut nut-chinh" onclick="window.theoDoiDonMonModule.taiDuLieuVaVe()">🔄 Thử lại ngay</button>
+                </div>
+            `;
+        }
     }
 
     /**
      * Render toàn bộ trang
      */
     veGiaoDien(vungChua, data, dsYeuCau) {
-        const { soBan, khuVucTen, danhSachDon, tongTienLuyKe, thongKe } = data;
+        const soBan = data?.soBan || `Bàn ${this.banIdHienTai}`;
+        const khuVucTen = data?.khuVucTen || 'Tầng 1';
+        const danhSachDon = Array.isArray(data?.danhSachDon) ? data.danhSachDon : [];
+        const tongTienLuyKe = Number(data?.tongTienLuyKe || 0);
+        const thongKe = data?.thongKe || {};
         const yeuCauDangCho = (dsYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY');
 
         vungChua.innerHTML = `
@@ -285,13 +314,21 @@ class TheoDoiDonMonModule {
                 ${danhSachDon.length === 0 ? `
                     <div class="khung-trong">
                         <div style="font-size: 54px; margin-bottom: 12px;">🍲</div>
-                        <h3>Bàn này chưa gọi món nào!</h3>
-                        <p style="color: var(--mau-chu-phu); max-width: 480px; margin: 8px auto 20px;">
-                            Bàn ăn đang trống hoặc vừa mở phiên mới. Hãy bấm "Gọi thêm món" để gửi đơn đặt món đầu tiên nhé!
+                        <h3>Bàn này chưa có đơn gọi món trong phiên</h3>
+                        <p style="color: var(--mau-chu-phu); max-width: 520px; margin: 8px auto 20px; line-height: 1.6;">
+                            Bàn <strong>${soBan}</strong> hiện chưa phát sinh đơn hàng nào. Bạn có thể bấm nút bên dưới để nạp 2 lượt gọi món mẫu kiểm thử ngay (Sprint 2 - Phong) hoặc bắt đầu đặt món mới:
                         </p>
-                        <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.moModalGoiThemMon()">
-                            ➕ Bắt đầu đặt món ngay
-                        </button>
+                        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.napDonMauChoBanNay()">
+                                ⚡ Nạp đơn hàng mẫu kiểm thử (${soBan})
+                            </button>
+                            <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.moModalGoiThemMon()">
+                                ➕ Bắt đầu đặt món mới
+                            </button>
+                            <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.chuyenBanTheoDoi(3)">
+                                🍽️ Xem Bàn 03 (Có sẵn 2 lượt gọi)
+                            </button>
+                        </div>
                     </div>
                 ` : `
                     <div class="danh-sach-cac-luot-goi-mon">
@@ -307,7 +344,7 @@ class TheoDoiDonMonModule {
      */
     veTheLuotGoiMon(don) {
         // Áp dụng bộ lọc
-        let dsMon = don.danhSachMon;
+        let dsMon = don.danhSachMon || [];
         if (this.boLocTrangThai === 'CHO_XAC_NHAN') dsMon = dsMon.filter(m => m.trangThai === 'CHO_XAC_NHAN');
         else if (this.boLocTrangThai === 'DANG_CHE_BIEN') dsMon = dsMon.filter(m => m.trangThai === 'DANG_CHE_BIEN' || m.trangThai === 'DA_XONG');
         else if (this.boLocTrangThai === 'DA_LEN_MON') dsMon = dsMon.filter(m => m.trangThai === 'DA_LEN_MON');
@@ -316,6 +353,8 @@ class TheoDoiDonMonModule {
         if (dsMon.length === 0 && this.boLocTrangThai !== 'TAT_CA') {
             return ''; // Không có món nào thỏa mãn bộ lọc trong lượt này
         }
+
+        const tongTienDon = Number(don.tongTien || 0);
 
         return `
             <div class="the-luot-goi-mon">
@@ -327,7 +366,7 @@ class TheoDoiDonMonModule {
                         <span class="thoi-gian-don">🕒 ${don.thoiGianTao}</span>
                     </div>
                     <div class="tong-tien-luot">
-                        <span>Lượt này: <strong>${don.tongTien.toLocaleString('vi-VN')} đ</strong></span>
+                        <span>Lượt này: <strong>${tongTienDon.toLocaleString('vi-VN')} đ</strong></span>
                     </div>
                 </div>
 
@@ -422,7 +461,7 @@ class TheoDoiDonMonModule {
                 <!-- Cột Thành tiền & Nút hủy món (US-068) -->
                 <div class="cot-gia-va-thao-tac">
                     <div class="gia-mon-txt ${laDaHuy || laTuChoi ? 'gach-gia' : ''}">
-                        ${mon.thanhTien.toLocaleString('vi-VN')} đ
+                        ${Number(mon.thanhTien || 0).toLocaleString('vi-VN')} đ
                     </div>
 
                     ${laChoXacNhan ? `
@@ -761,6 +800,106 @@ class TheoDoiDonMonModule {
 
         await window.api.tiepNhanYeuCauHoTro(yc.id, 'Phạm Văn Phục Vụ (Tầng 1)');
         this.taiDuLieuVaVe();
+    }
+
+    /**
+     * Nạp dữ liệu đơn hàng mẫu cho bàn đang chọn để phục vụ kiểm thử nhanh (US-063 -> US-070)
+     */
+    async napDonMauChoBanNay() {
+        const banId = this.banIdHienTai;
+        const ban = this.danhSachBan.find(b => Number(b.id) === Number(banId));
+        const soBan = ban ? ban.soBan : `Bàn ${banId}`;
+        const khuVucTen = ban ? (ban.khuVucTen || 'Tầng 1') : 'Nhà hàng';
+
+        const don1 = {
+            id: Date.now(),
+            maDon: `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(Math.floor(Math.random()*900)+100)}`,
+            banId: Number(banId),
+            soBan: soBan,
+            khuVucTen: khuVucTen,
+            luotGoi: 1,
+            thoiGianTao: new Date(Date.now() - 25*60000).toISOString().replace('T', ' ').substring(0, 19),
+            ghiChuDon: 'Khách đến ăn tối gia đình',
+            tongTien: 335000,
+            danhSachMon: [
+                {
+                    id: Date.now() + 1,
+                    monId: 1,
+                    tenMon: 'Gà Nướng Ống Tre Tây Bắc',
+                    size: 'Nguyên con tiêu chuẩn',
+                    topping: 'Xôi nếp nương nướng (+35.000đ)',
+                    donGia: 280000,
+                    soLuong: 1,
+                    thanhTien: 280000,
+                    ghiChu: 'Gà nướng kỹ da giòn, bớt cay',
+                    trangThai: 'DA_LEN_MON',
+                    thoiGianCapNhat: new Date(Date.now() - 5*60000).toISOString().replace('T', ' ').substring(0, 19)
+                },
+                {
+                    id: Date.now() + 2,
+                    monId: 8,
+                    tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen',
+                    size: 'Size L (Khổng lồ)',
+                    topping: 'Kem cheese béo ngậy (+12.000đ)',
+                    donGia: 55000,
+                    soLuong: 1,
+                    thanhTien: 55000,
+                    ghiChu: 'Ít đường, nhiều đá',
+                    trangThai: 'DA_XONG',
+                    thoiGianCapNhat: new Date(Date.now() - 8*60000).toISOString().replace('T', ' ').substring(0, 19)
+                }
+            ]
+        };
+
+        const don2 = {
+            id: Date.now() + 10,
+            maDon: `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(Math.floor(Math.random()*900)+100)}`,
+            banId: Number(banId),
+            soBan: soBan,
+            khuVucTen: khuVucTen,
+            luotGoi: 2,
+            thoiGianTao: new Date(Date.now() - 8*60000).toISOString().replace('T', ' ').substring(0, 19),
+            ghiChuDon: 'Gọi thêm món',
+            tongTien: 185000,
+            danhSachMon: [
+                {
+                    id: Date.now() + 11,
+                    monId: 7,
+                    tenMon: 'Rau Rừng Gia Lai Xào Tỏi',
+                    size: 'Tiêu chuẩn',
+                    topping: '',
+                    donGia: 75000,
+                    soLuong: 1,
+                    thanhTien: 75000,
+                    ghiChu: 'Xào nhiều tỏi, bớt dầu mỡ',
+                    trangThai: 'DANG_CHE_BIEN',
+                    thoiGianCapNhat: new Date(Date.now() - 4*60000).toISOString().replace('T', ' ').substring(0, 19)
+                },
+                {
+                    id: Date.now() + 12,
+                    monId: 6,
+                    tenMon: 'Gỏi Ngó Sen Tôm Thịt Hoa Chuối',
+                    size: 'Tiêu chuẩn',
+                    topping: 'Bánh phồng tôm chiên thêm (+15.000đ)',
+                    donGia: 110000,
+                    soLuong: 1,
+                    thanhTien: 110000,
+                    ghiChu: 'Không ăn cay, tôm bóc vỏ kỹ',
+                    trangThai: 'CHO_XAC_NHAN',
+                    thoiGianCapNhat: new Date(Date.now() - 8*60000).toISOString().replace('T', ' ').substring(0, 19)
+                }
+            ]
+        };
+
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        const dsDon = raw ? JSON.parse(raw) : [];
+        dsDon.push(don1, don2);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+
+        if (window.thongBao) {
+            window.thongBao.thanhCong('Nạp đơn mẫu thành công', `Đã tạo 2 lượt gọi món mẫu cho ${soBan}.`);
+        }
+        await this.taiDuLieuVaVe();
     }
 
     dongModal() {
