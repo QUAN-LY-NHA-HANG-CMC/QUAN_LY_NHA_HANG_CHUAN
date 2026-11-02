@@ -108,10 +108,33 @@ class DieuPhoiBepModule {
      */
     async taiDuLieu() {
         if (window.api) {
-            this.danhSachDon = await window.api.layTatCaDonGoiMon();
-            this.danhSachMonThucDon = await window.api.layDanhSachMonAn();
-            this.danhSachBan = window.api.layDanhSachBan ? await window.api.layDanhSachBan() : (window.api.layDanhSachBanAn ? await window.api.layDanhSachBanAn() : []);
+            this.danhSachDon = (await window.api.layTatCaDonGoiMon()) || [];
+            this.danhSachMonThucDon = (await window.api.layDanhSachMonAn()) || [];
+            this.danhSachBan = window.api.layDanhSachBan ? (await window.api.layDanhSachBan()) : (window.api.layDanhSachBanAn ? (await window.api.layDanhSachBanAn()) : []);
         }
+
+        // Kiểm tra an toàn dữ liệu mảng
+        if (!Array.isArray(this.danhSachDon)) this.danhSachDon = [];
+        if (!Array.isArray(this.danhSachMonThucDon)) this.danhSachMonThucDon = [];
+        if (!Array.isArray(this.danhSachBan)) this.danhSachBan = [];
+
+        // Chuẩn hóa và làm sạch dữ liệu đơn hàng
+        this.danhSachDon.forEach(don => {
+            if (!don) return;
+            if (!don.thoiGianTao) {
+                don.thoiGianTao = don.thoiGianDat || don.thoiGian || new Date().toISOString().replace('T', ' ').substring(0, 19);
+            }
+            if (!don.khuVucTen) don.khuVucTen = 'Tầng 1';
+            if (!Array.isArray(don.danhSachMon)) don.danhSachMon = [];
+            don.danhSachMon.forEach(m => {
+                if (!m) return;
+                if (!m.trangThai) m.trangThai = 'CHO_XAC_NHAN';
+                // Đồng bộ từ ngữ trạng thái
+                if (m.trangThai === 'CHO_CHE_BIEN') m.trangThai = 'CHO_XAC_NHAN';
+                else if (m.trangThai === 'DA_CHE_BIEN') m.trangThai = 'DA_XONG';
+                else if (m.trangThai === 'DA_PHUC_VU') m.trangThai = 'DA_LEN_MON';
+            });
+        });
 
         // Tự động kiểm tra: nếu chưa có đơn nào đang chờ hoặc toàn bộ đã xong, tạo mẫu đơn chờ sinh động
         this.kiemTraVaBoSungDonMauNeuCan();
@@ -126,8 +149,9 @@ class DieuPhoiBepModule {
      * Bổ sung đơn mẫu có trạng thái chờ chế biến để dễ dàng kiểm thử KDS
      */
     kiemTraVaBoSungDonMauNeuCan() {
+        if (!Array.isArray(this.danhSachDon)) this.danhSachDon = [];
         const coDonCho = this.danhSachDon.some(don => 
-            don.danhSachMon && don.danhSachMon.some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'DANG_CHE_BIEN')
+            don && Array.isArray(don.danhSachMon) && don.danhSachMon.some(m => m && (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'DANG_CHE_BIEN'))
         );
 
         if (!coDonCho && this.danhSachDon.length === 0) {
@@ -141,10 +165,12 @@ class DieuPhoiBepModule {
     tinhSoPhutTroiQua(thoiGianTaoStr) {
         if (!thoiGianTaoStr) return 0;
         try {
-            const thoiGianTao = new Date(thoiGianTaoStr.replace(' ', 'T')).getTime();
+            const str = String(thoiGianTaoStr).replace(' ', 'T');
+            const thoiGianTao = new Date(str).getTime();
+            if (isNaN(thoiGianTao)) return 0;
             const hienTai = Date.now();
             const phut = Math.floor((hienTai - thoiGianTao) / (1000 * 60));
-            return isNaN(phut) ? 0 : phut;
+            return isNaN(phut) ? 0 : Math.max(0, phut);
         } catch {
             return 0;
         }
@@ -156,7 +182,9 @@ class DieuPhoiBepModule {
     dinhDangThoiGianTroiQua(thoiGianTaoStr) {
         if (!thoiGianTaoStr) return '00:00';
         try {
-            const thoiGianTao = new Date(thoiGianTaoStr.replace(' ', 'T')).getTime();
+            const str = String(thoiGianTaoStr).replace(' ', 'T');
+            const thoiGianTao = new Date(str).getTime();
+            if (isNaN(thoiGianTao)) return '00:00';
             const hienTai = Date.now();
             const tongGiay = Math.max(0, Math.floor((hienTai - thoiGianTao) / 1000));
             const phut = Math.floor(tongGiay / 60);
@@ -240,23 +268,27 @@ class DieuPhoiBepModule {
         let tongMonQuaHan = 0;
         let tongMonHoanThanh = 0;
 
-        this.danhSachDon.forEach(don => {
-            const phut = this.tinhSoPhutTroiQua(don.thoiGianTao);
+        (this.danhSachDon || []).forEach(don => {
+            if (!don) return;
+            const thoiGianStr = don.thoiGianTao || don.thoiGianDat || don.thoiGian;
+            const phut = this.tinhSoPhutTroiQua(thoiGianStr);
             (don.danhSachMon || []).forEach(m => {
-                if (m.trangThai === 'CHO_XAC_NHAN') {
+                if (!m) return;
+                const tt = m.trangThai;
+                if (tt === 'CHO_XAC_NHAN' || tt === 'CHO_CHE_BIEN') {
                     tongMonCho += Number(m.soLuong || 1);
                     if (phut >= 20) tongMonQuaHan += Number(m.soLuong || 1);
-                } else if (m.trangThai === 'DANG_CHE_BIEN') {
+                } else if (tt === 'DANG_CHE_BIEN') {
                     tongMonDangNau += Number(m.soLuong || 1);
                     if (phut >= 20) tongMonQuaHan += Number(m.soLuong || 1);
-                } else if (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_LEN_MON') {
+                } else if (tt === 'DA_XONG' || tt === 'DA_CHE_BIEN' || tt === 'DA_LEN_MON' || tt === 'DA_PHUC_VU') {
                     tongMonHoanThanh += Number(m.soLuong || 1);
                 }
             });
         });
 
         // Lấy danh sách khu vực để lọc
-        const cacKhuVuc = [...new Set(this.danhSachDon.map(d => d.khuVucTen).filter(Boolean))];
+        const cacKhuVuc = [...new Set((this.danhSachDon || []).map(d => d && d.khuVucTen).filter(Boolean))];
 
         vungChua.innerHTML = `
             <div class="kds-container">
@@ -336,8 +368,9 @@ class DieuPhoiBepModule {
      * Lấy số đơn đang có món cần bếp xử lý
      */
     laySoDonDangXuLy() {
+        if (!Array.isArray(this.danhSachDon)) return 0;
         return this.danhSachDon.filter(don => 
-            don.danhSachMon && don.danhSachMon.some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'DANG_CHE_BIEN')
+            don && Array.isArray(don.danhSachMon) && don.danhSachMon.some(m => m && (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN'))
         ).length;
     }
 
@@ -345,7 +378,8 @@ class DieuPhoiBepModule {
      * Lấy số món đang tạm hết
      */
     laySoMonDangHet() {
-        return this.danhSachMonThucDon.filter(m => m.trangThai === 0).length;
+        if (!Array.isArray(this.danhSachMonThucDon)) return 0;
+        return this.danhSachMonThucDon.filter(m => m && (m.trangThai === 0 || m.trangThai === 'HET_HANG' || m.conHang === false)).length;
     }
 
     chuyenCheDoXem(cheDo) {
@@ -392,7 +426,7 @@ class DieuPhoiBepModule {
         // Lọc theo trạng thái
         if (this.boLocTrangThai === 'CHO_CHE_BIEN') {
             danhSachHienThi = danhSachHienThi.filter(d => 
-                (d.danhSachMon || []).some(m => m.trangThai === 'CHO_XAC_NHAN')
+                (d.danhSachMon || []).some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN')
             );
         } else if (this.boLocTrangThai === 'DANG_CHE_BIEN') {
             danhSachHienThi = danhSachHienThi.filter(d => 
@@ -400,14 +434,16 @@ class DieuPhoiBepModule {
             );
         } else if (this.boLocTrangThai === 'DA_XONG') {
             danhSachHienThi = danhSachHienThi.filter(d => 
-                (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG')
+                (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN')
             );
         }
 
         // US-079: Sắp xếp theo FIFO (First-In First-Out) - Đơn đặt sớm nhất hiển thị trước
         danhSachHienThi.sort((a, b) => {
-            const timeA = new Date(a.thoiGianTao.replace(' ', 'T')).getTime();
-            const timeB = new Date(b.thoiGianTao.replace(' ', 'T')).getTime();
+            const timeAStr = a ? (a.thoiGianTao || a.thoiGianDat || a.thoiGian || '') : '';
+            const timeBStr = b ? (b.thoiGianTao || b.thoiGianDat || b.thoiGian || '') : '';
+            const timeA = timeAStr ? new Date(String(timeAStr).replace(' ', 'T')).getTime() || 0 : 0;
+            const timeB = timeBStr ? new Date(String(timeBStr).replace(' ', 'T')).getTime() || 0 : 0;
             return timeA - timeB; // Cũ nhất đứng đầu
         });
 
@@ -472,13 +508,14 @@ class DieuPhoiBepModule {
      */
     renderTheDonHang(don, viTri) {
         const danhSachMon = don.danhSachMon || [];
-        const thongTinCanhBao = this.layThongTinCanhBaoThoiGian(don.thoiGianTao);
-        const thoiGianTroiQua = this.dinhDangThoiGianTroiQua(don.thoiGianTao);
+        const thoiGianStr = don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
+        const thongTinCanhBao = this.layThongTinCanhBaoThoiGian(thoiGianStr);
+        const thoiGianTroiQua = this.dinhDangThoiGianTroiQua(thoiGianStr);
 
         // Kiểm tra số món theo trạng thái trong thẻ
-        const monCho = danhSachMon.filter(m => m.trangThai === 'CHO_XAC_NHAN').length;
+        const monCho = danhSachMon.filter(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN').length;
         const monDangNau = danhSachMon.filter(m => m.trangThai === 'DANG_CHE_BIEN').length;
-        const monDaXong = danhSachMon.filter(m => m.trangThai === 'DA_XONG').length;
+        const monDaXong = danhSachMon.filter(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN').length;
 
         // Trạng thái chung của thẻ
         let tongSoMonConLai = monCho + monDangNau;
@@ -503,13 +540,13 @@ class DieuPhoiBepModule {
                             <span class="kds-luot-badge">Lượt ${don.luotGoi || 1}</span>
                         </div>
                         <div class="kds-time-badge ${thongTinCanhBao.lopBadge}">
-                            <span class="kds-dong-ho-troi-qua" data-time="${don.thoiGianTao}">⏱️ ${thoiGianTroiQua}</span>
+                            <span class="kds-dong-ho-troi-qua" data-time="${thoiGianStr}">⏱️ ${thoiGianTroiQua}</span>
                         </div>
                     </div>
 
                     <!-- US-085: Thông báo cảnh báo quá thời gian -->
                     <div class="kds-alert-pill ${thongTinCanhBao.lopBadge}">
-                        ${thongTinCanhBao.icon} ${thongTinCanhBao.nhan} • Gửi lúc ${don.thoiGianTao ? don.thoiGianTao.substring(11, 16) : ''}
+                        ${thongTinCanhBao.icon} ${thongTinCanhBao.nhan} • Gửi lúc ${thoiGianStr ? String(thoiGianStr).substring(11, 16) : ''}
                     </div>
 
                     ${don.ghiChuDon ? `
@@ -521,12 +558,12 @@ class DieuPhoiBepModule {
                     <!-- NÚT THAO TÁC TOÀN BỘ PHIẾU (US-082, US-083) -->
                     <div class="kds-batch-card-actions">
                         ${monCho > 0 ? `
-                            <button class="nut nut-nho nut-chinh kds-btn-batch" onclick="window.dieuPhoiBepModule.batDauNauCaPhieu(${don.id})" title="Nhận nấu tất cả các món đang chờ trong phiếu này">
+                            <button class="nut nut-nho nut-chinh kds-btn-batch" onclick="window.dieuPhoiBepModule.batDauNauCaPhieu('${don.id}')" title="Nhận nấu tất cả các món đang chờ trong phiếu này">
                                 🔥 Nấu tất cả (${monCho})
                             </button>
                         ` : ''}
                         ${monDangNau > 0 ? `
-                            <button class="nut nut-nho nut-xanh kds-btn-batch" onclick="window.dieuPhoiBepModule.hoanThanhCaPhieu(${don.id})" title="Đánh dấu hoàn thành toàn bộ phiếu và báo Phục vụ">
+                            <button class="nut nut-nho nut-xanh kds-btn-batch" onclick="window.dieuPhoiBepModule.hoanThanhCaPhieu('${don.id}')" title="Đánh dấu hoàn thành toàn bộ phiếu và báo Phục vụ">
                                 ✅ Xong tất cả (${monDangNau})
                             </button>
                         ` : ''}
@@ -555,17 +592,27 @@ class DieuPhoiBepModule {
      * Render từng dòng món ăn trong thẻ đơn hàng (US-080, US-082, US-083, US-084, US-088)
      */
     renderDongMonAn(mon, don) {
-        const thongTinTrangThai = window.HANG_SO?.TRANG_THAI_MON_GOI?.[mon.trangThai] || {
-            ten: mon.trangThai,
+        const trangThai = mon.trangThai || 'CHO_XAC_NHAN';
+        const thongTinTrangThai = window.HANG_SO?.TRANG_THAI_MON_GOI?.[trangThai] || 
+            (trangThai === 'CHO_CHE_BIEN' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.CHO_XAC_NHAN :
+            (trangThai === 'DA_CHE_BIEN' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.DA_XONG :
+            (trangThai === 'DA_PHUC_VU' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.DA_LEN_MON : null))) || {
+            ten: trangThai,
             mau: '#6B7280',
             icon: '📋',
             lopBadge: 'badge-xam'
         };
 
         const coGhiChuDacBiet = Boolean(mon.ghiChu && mon.ghiChu.trim());
+        const tenMonEscaped = String(mon.tenMon || '').replace(/'/g, "\\'");
+        const soBanEscaped = String(don.soBan || ('Bàn ' + don.banId)).replace(/'/g, "\\'");
+        const isCho = (trangThai === 'CHO_XAC_NHAN' || trangThai === 'CHO_CHE_BIEN');
+        const isDangNau = (trangThai === 'DANG_CHE_BIEN');
+        const isXong = (trangThai === 'DA_XONG' || trangThai === 'DA_CHE_BIEN');
+        const isLenMon = (trangThai === 'DA_LEN_MON' || trangThai === 'DA_PHUC_VU');
 
         return `
-            <div class="kds-item-row kds-status-${mon.trangThai.toLowerCase()}" id="mon-${mon.id}">
+            <div class="kds-item-row kds-status-${String(trangThai).toLowerCase()}" id="mon-${mon.id}">
                 <!-- CỘT SỐ LƯỢNG NỔI BẬT -->
                 <div class="kds-item-qty-box">
                     <span class="kds-qty-badge">x${mon.soLuong || 1}</span>
@@ -613,22 +660,22 @@ class DieuPhoiBepModule {
 
                 <!-- CÁC NÚT THAO TÁC 1-CHẠM TRÊN TỪNG MÓN -->
                 <div class="kds-item-actions">
-                    ${mon.trangThai === 'CHO_XAC_NHAN' ? `
+                    ${isCho ? `
                         <button class="nut nut-chinh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.batDauNauMon(${mon.id}, ${don.banId})" title="Bắt đầu chế biến món này (US-082)">
                             👨‍🍳 Bắt đầu nấu
                         </button>
-                        <button class="nut nut-do-vien nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.moModalTuChoiMon(${mon.id}, ${don.banId}, '${mon.tenMon.replace(/'/g, "\\'")}')" title="Từ chối món do hết nguyên liệu (US-088)">
+                        <button class="nut nut-do-vien nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.moModalTuChoiMon(${mon.id}, ${don.banId}, '${tenMonEscaped}')" title="Từ chối món do hết nguyên liệu (US-088)">
                             🚫 Hết món
                         </button>
                     ` : ''}
 
-                    ${mon.trangThai === 'DANG_CHE_BIEN' ? `
-                        <button class="nut nut-xanh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.hoanThanhMon(${mon.id}, ${don.banId}, '${mon.tenMon.replace(/'/g, "\\'")}', '${don.soBan}')" title="Đánh dấu đã nấu xong, thông báo Phục vụ bưng món (US-083, US-084)">
+                    ${isDangNau ? `
+                        <button class="nut nut-xanh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.hoanThanhMon(${mon.id}, ${don.banId}, '${tenMonEscaped}', '${soBanEscaped}')" title="Đánh dấu đã nấu xong, thông báo Phục vụ bưng món (US-083, US-084)">
                             🔔 Nấu xong
                         </button>
                     ` : ''}
 
-                    ${mon.trangThai === 'DA_XONG' ? `
+                    ${isXong ? `
                         <button class="nut nut-phu nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.xacNhanDaLenMon(${mon.id}, ${don.banId})" title="Xác nhận Phục vụ đã bưng món lên bàn khách (US-084)">
                             🏃 Đã lên bàn
                         </button>
@@ -637,7 +684,7 @@ class DieuPhoiBepModule {
                         </button>
                     ` : ''}
 
-                    ${mon.trangThai === 'DA_LEN_MON' ? `
+                    ${isLenMon ? `
                         <span class="badge badge-xanh-la" style="font-size: 11px;">
                             ✅ Hoàn tất
                         </span>
@@ -654,10 +701,14 @@ class DieuPhoiBepModule {
         // Quét tất cả các món đang chờ hoặc đang nấu trên toàn bộ quán
         const banDoGomMon = new Map();
 
-        this.danhSachDon.forEach(don => {
+        (this.danhSachDon || []).forEach(don => {
+            if (!don) return;
+            const donThoiGian = don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
             (don.danhSachMon || []).forEach(mon => {
-                if (mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'DANG_CHE_BIEN') {
-                    const khoaGom = `${mon.tenMon}___${mon.size || 'Mặc định'}`;
+                if (!mon) return;
+                const tt = mon.trangThai;
+                if (tt === 'CHO_XAC_NHAN' || tt === 'CHO_CHE_BIEN' || tt === 'DANG_CHE_BIEN') {
+                    const khoaGom = `${mon.tenMon || 'Món'}___${mon.size || 'Mặc định'}`;
                     if (!banDoGomMon.has(khoaGom)) {
                         banDoGomMon.set(khoaGom, {
                             tenMon: mon.tenMon,
@@ -672,8 +723,8 @@ class DieuPhoiBepModule {
                     const nhom = banDoGomMon.get(khoaGom);
                     const qty = Number(mon.soLuong || 1);
                     nhom.tongSoLuong += qty;
-                    if (mon.trangThai === 'CHO_XAC_NHAN') nhom.soLuongCho += qty;
-                    if (mon.trangThai === 'DANG_CHE_BIEN') nhom.soLuongDangNau += qty;
+                    if (tt === 'CHO_XAC_NHAN' || tt === 'CHO_CHE_BIEN') nhom.soLuongCho += qty;
+                    if (tt === 'DANG_CHE_BIEN') nhom.soLuongDangNau += qty;
 
                     nhom.cacBanCho.push({
                         monId: mon.id,
@@ -682,8 +733,8 @@ class DieuPhoiBepModule {
                         khuVucTen: don.khuVucTen,
                         soLuong: qty,
                         ghiChu: mon.ghiChu,
-                        trangThai: mon.trangThai,
-                        thoiGianTao: don.thoiGianTao
+                        trangThai: tt,
+                        thoiGianTao: donThoiGian
                     });
                 }
             });
@@ -789,17 +840,21 @@ class DieuPhoiBepModule {
     renderTabLichSuXong() {
         const danhSachHoanThanh = [];
 
-        this.danhSachDon.forEach(don => {
+        (this.danhSachDon || []).forEach(don => {
+            if (!don) return;
+            const donThoiGian = don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
             (don.danhSachMon || []).forEach(mon => {
-                if (mon.trangThai === 'DA_XONG' || mon.trangThai === 'DA_LEN_MON') {
+                if (!mon) return;
+                const tt = mon.trangThai;
+                if (tt === 'DA_XONG' || tt === 'DA_CHE_BIEN' || tt === 'DA_LEN_MON' || tt === 'DA_PHUC_VU') {
                     danhSachHoanThanh.push({
                         ...mon,
                         banId: don.banId,
                         soBan: don.soBan || ('Bàn ' + don.banId),
                         khuVucTen: don.khuVucTen,
                         maDon: don.maDon,
-                        thoiGianTao: don.thoiGianTao,
-                        thoiGianCapNhat: mon.thoiGianCapNhat || mon.thoiGianXong || don.thoiGianTao
+                        thoiGianTao: donThoiGian,
+                        thoiGianCapNhat: mon.thoiGianCapNhat || mon.thoiGianXong || donThoiGian
                     });
                 }
             });
@@ -807,8 +862,10 @@ class DieuPhoiBepModule {
 
         // Sắp xếp món hoàn thành gần nhất lên đầu
         danhSachHoanThanh.sort((a, b) => {
-            const timeA = new Date((a.thoiGianCapNhat || '').replace(' ', 'T')).getTime();
-            const timeB = new Date((b.thoiGianCapNhat || '').replace(' ', 'T')).getTime();
+            const timeAStr = a ? (a.thoiGianCapNhat || a.thoiGianXong || a.thoiGianTao || '') : '';
+            const timeBStr = b ? (b.thoiGianCapNhat || b.thoiGianXong || b.thoiGianTao || '') : '';
+            const timeA = timeAStr ? new Date(String(timeAStr).replace(' ', 'T')).getTime() || 0 : 0;
+            const timeB = timeBStr ? new Date(String(timeBStr).replace(' ', 'T')).getTime() || 0 : 0;
             return timeB - timeA;
         });
 
@@ -898,10 +955,11 @@ class DieuPhoiBepModule {
        TAB 4: KIỂM SOÁT HẾT MÓN TẠI BẾP (US-087)
        ========================================================================== */
     renderTabKiemSoatHetMon() {
+        const dsMon = Array.isArray(this.danhSachMonThucDon) ? this.danhSachMonThucDon : [];
         // Lấy danh mục để lọc
-        const cacDanhMuc = [...new Set(this.danhSachMonThucDon.map(m => m.tenDanhMuc || 'Món đặc sắc').filter(Boolean))];
+        const cacDanhMuc = [...new Set(dsMon.map(m => (m && m.tenDanhMuc) || 'Món đặc sắc').filter(Boolean))];
 
-        let dsHienThi = [...this.danhSachMonThucDon].filter(m => m.trangThai !== -1);
+        let dsHienThi = [...dsMon].filter(m => m && m.trangThai !== -1);
 
         // Lọc từ khóa
         if (this.tuKhoaMonHet) {
@@ -1058,12 +1116,12 @@ class DieuPhoiBepModule {
      * US-082: Bắt đầu nấu toàn bộ phiếu order
      */
     async batDauNauCaPhieu(donId) {
-        const don = this.danhSachDon.find(d => Number(d.id) === Number(donId));
+        const don = this.danhSachDon.find(d => String(d.id) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonDaNhan = 0;
         for (const mon of don.danhSachMon) {
-            if (mon.trangThai === 'CHO_XAC_NHAN') {
+            if (mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
                 await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DANG_CHE_BIEN');
                 soMonDaNhan++;
             }
@@ -1104,12 +1162,12 @@ class DieuPhoiBepModule {
      * US-083 & US-084: Đánh dấu hoàn thành toàn bộ phiếu
      */
     async hoanThanhCaPhieu(donId) {
-        const don = this.danhSachDon.find(d => Number(d.id) === Number(donId));
+        const don = this.danhSachDon.find(d => String(d.id) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonHoanThanh = 0;
         for (const mon of don.danhSachMon) {
-            if (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN') {
+            if (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
                 await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DA_XONG');
                 soMonHoanThanh++;
             }
@@ -1164,7 +1222,7 @@ class DieuPhoiBepModule {
         let soLuongCapNhat = 0;
         for (const don of this.danhSachDon) {
             for (const mon of (don.danhSachMon || [])) {
-                if (mon.tenMon === tenMon && (mon.size || '') === (size || '') && mon.trangThai === 'CHO_XAC_NHAN') {
+                if (mon.tenMon === tenMon && (mon.size || '') === (size || '') && (mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN')) {
                     await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DANG_CHE_BIEN');
                     soLuongCapNhat += Number(mon.soLuong || 1);
                 }
@@ -1185,7 +1243,7 @@ class DieuPhoiBepModule {
         for (const don of this.danhSachDon) {
             for (const mon of (don.danhSachMon || [])) {
                 if (mon.tenMon === tenMon && (mon.size || '') === (size || '') && 
-                    (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN')) {
+                    (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN')) {
                     await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DA_XONG');
                     soLuongCapNhat += Number(mon.soLuong || 1);
                 }

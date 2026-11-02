@@ -962,11 +962,20 @@ class ApiService {
 
     async layDanhSachMonAn() {
         const kq = await this.yeuCau('/thuc-don');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok && Array.isArray(kq.data)) return kq.data;
 
         // Fallback LocalStorage
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachMonAn(ds) {
@@ -1551,7 +1560,13 @@ class ApiService {
      */
     async layTatCaDonGoiMon() {
         const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-        let ds = raw ? JSON.parse(raw) : [];
+        let ds = [];
+        try {
+            ds = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(ds)) ds = [];
+        } catch {
+            ds = [];
+        }
 
         // ĐỒNG BỘ: Đọc thêm các đơn đang mở trong POS sơ đồ bàn của Quân ('quanmoc_pos_phien_ban')
         const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
@@ -1561,26 +1576,35 @@ class ApiService {
                 Object.values(phienMap).forEach(phien => {
                     if (phien && Array.isArray(phien.danhSachMon) && phien.danhSachMon.length > 0) {
                         const maDonPhien = `DON-POS-BAN-${phien.banId}`;
+                        const thoiGian = phien.thoiGianBatDau || new Date().toISOString().replace('T', ' ').substring(0, 19);
                         if (!ds.some(d => d.maDon === maDonPhien || (Number(d.banId) === Number(phien.banId) && d.phienPos))) {
                             ds.push({
                                 id: `pos_phien_${phien.banId}`,
                                 maDon: maDonPhien,
                                 banId: phien.banId,
                                 soBan: `Bàn ${String(phien.banId).padStart(2, '0')}`,
-                                thoiGianDat: phien.thoiGianBatDau || new Date().toISOString(),
+                                thoiGianDat: thoiGian,
+                                thoiGianTao: thoiGian,
+                                khuVucTen: 'Tầng 1',
                                 phienPos: true,
-                                danhSachMon: phien.danhSachMon.map((m, idx) => ({
-                                    id: m.id || (phien.banId * 100 + idx + 1),
-                                    monAnId: m.monAnId,
-                                    tenMon: m.tenMon,
-                                    soLuong: m.soLuong || 1,
-                                    donGia: m.donGia || 0,
-                                    thanhTien: (m.soLuong || 1) * (m.donGia || 0),
-                                    tuyChon: m.tuyChon || '',
-                                    ghiChu: m.ghiChu || '',
-                                    trangThai: m.trangThai || 'CHO_CHE_BIEN',
-                                    thoiGianCapNhat: phien.thoiGianBatDau || new Date().toISOString()
-                                }))
+                                danhSachMon: phien.danhSachMon.map((m, idx) => {
+                                    let ttChuan = m.trangThai || 'CHO_XAC_NHAN';
+                                    if (ttChuan === 'CHO_CHE_BIEN') ttChuan = 'CHO_XAC_NHAN';
+                                    else if (ttChuan === 'DA_CHE_BIEN') ttChuan = 'DA_XONG';
+                                    else if (ttChuan === 'DA_PHUC_VU') ttChuan = 'DA_LEN_MON';
+                                    return {
+                                        id: m.id || (phien.banId * 100 + idx + 1),
+                                        monAnId: m.monAnId,
+                                        tenMon: m.tenMon,
+                                        soLuong: m.soLuong || 1,
+                                        donGia: m.donGia || 0,
+                                        thanhTien: (m.soLuong || 1) * (m.donGia || 0),
+                                        tuyChon: m.tuyChon || '',
+                                        ghiChu: m.ghiChu || '',
+                                        trangThai: ttChuan,
+                                        thoiGianCapNhat: thoiGian
+                                    };
+                                })
                             });
                         }
                     }
@@ -1713,7 +1737,9 @@ class ApiService {
                 if (phienMap[banId] && Array.isArray(phienMap[banId].danhSachMon)) {
                     const mPos = phienMap[banId].danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet) || (thongTinMon && m.tenMon === thongTinMon.tenMon));
                     if (mPos) {
-                        mPos.trangThai = trangThaiMoi;
+                        let posTt = trangThaiMoi;
+                        if (trangThaiMoi === 'DA_LEN_MON') posTt = 'DA_PHUC_VU';
+                        mPos.trangThai = posTt;
                         if (!thongTinMon) thongTinMon = mPos;
                         daTimThay = true;
                         localStorage.setItem('quanmoc_pos_phien_ban', JSON.stringify(phienMap));
