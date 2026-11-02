@@ -1547,10 +1547,50 @@ class ApiService {
 
     /**
      * Lấy toàn bộ đơn đặt món trong hệ thống
+     * ĐỒNG BỘ: Tự động tổng hợp từ cả đơn gọi món QR và phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
      */
     async layTatCaDonGoiMon() {
         const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-        return raw ? JSON.parse(raw) : [];
+        let ds = raw ? JSON.parse(raw) : [];
+
+        // ĐỒNG BỘ: Đọc thêm các đơn đang mở trong POS sơ đồ bàn của Quân ('quanmoc_pos_phien_ban')
+        const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
+        if (rawPosPhien) {
+            try {
+                const phienMap = JSON.parse(rawPosPhien);
+                Object.values(phienMap).forEach(phien => {
+                    if (phien && Array.isArray(phien.danhSachMon) && phien.danhSachMon.length > 0) {
+                        const maDonPhien = `DON-POS-BAN-${phien.banId}`;
+                        if (!ds.some(d => d.maDon === maDonPhien || (Number(d.banId) === Number(phien.banId) && d.phienPos))) {
+                            ds.push({
+                                id: `pos_phien_${phien.banId}`,
+                                maDon: maDonPhien,
+                                banId: phien.banId,
+                                soBan: `Bàn ${String(phien.banId).padStart(2, '0')}`,
+                                thoiGianDat: phien.thoiGianBatDau || new Date().toISOString(),
+                                phienPos: true,
+                                danhSachMon: phien.danhSachMon.map((m, idx) => ({
+                                    id: m.id || (phien.banId * 100 + idx + 1),
+                                    monAnId: m.monAnId,
+                                    tenMon: m.tenMon,
+                                    soLuong: m.soLuong || 1,
+                                    donGia: m.donGia || 0,
+                                    thanhTien: (m.soLuong || 1) * (m.donGia || 0),
+                                    tuyChon: m.tuyChon || '',
+                                    ghiChu: m.ghiChu || '',
+                                    trangThai: m.trangThai || 'CHO_CHE_BIEN',
+                                    thoiGianCapNhat: phien.thoiGianBatDau || new Date().toISOString()
+                                }))
+                            });
+                        }
+                    }
+                });
+            } catch (e) {
+                console.warn('Lỗi đồng bộ phiên bàn POS sang KDS:', e);
+            }
+        }
+
+        return ds;
     }
 
     /**
@@ -1639,21 +1679,19 @@ class ApiService {
 
     /**
      * US-066 & US-076: Cập nhật trạng thái chế biến món ăn thời gian thực
-     * @param {number} idMonChiTiet ID chi tiết món
-     * @param {number} banId ID bàn
-     * @param {string} trangThaiMoi 'CHO_XAC_NHAN' | 'DANG_CHE_BIEN' | 'DA_XONG' | 'DA_LEN_MON'
+     * ĐỒNG BỘ: Cập nhật đồng thời vào cả danh sách đơn QR và phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
      */
     async capNhatTrangThaiMonAn(idMonChiTiet, banId, trangThaiMoi) {
-        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-        if (!raw) return { ok: false, msg: 'Không tìm thấy đơn hàng!' };
-
-        const dsDon = JSON.parse(raw);
         let daTimThay = false;
         let thongTinMon = null;
 
+        // 1. Kiểm tra và cập nhật trong đơn gọi món
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        let dsDon = raw ? JSON.parse(raw) : [];
+
         for (const don of dsDon) {
             if (Number(don.banId) === Number(banId)) {
-                const mon = don.danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet));
+                const mon = (don.danhSachMon || []).find(m => Number(m.id) === Number(idMonChiTiet));
                 if (mon) {
                     mon.trangThai = trangThaiMoi;
                     mon.thoiGianCapNhat = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -1663,10 +1701,30 @@ class ApiService {
                 }
             }
         }
+        if (daTimThay) {
+            localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+        }
+
+        // 2. ĐỒNG BỘ: Kiểm tra và cập nhật luôn vào phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
+        const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
+        if (rawPosPhien) {
+            try {
+                const phienMap = JSON.parse(rawPosPhien);
+                if (phienMap[banId] && Array.isArray(phienMap[banId].danhSachMon)) {
+                    const mPos = phienMap[banId].danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet) || (thongTinMon && m.tenMon === thongTinMon.tenMon));
+                    if (mPos) {
+                        mPos.trangThai = trangThaiMoi;
+                        if (!thongTinMon) thongTinMon = mPos;
+                        daTimThay = true;
+                        localStorage.setItem('quanmoc_pos_phien_ban', JSON.stringify(phienMap));
+                    }
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ trạng thái món sang POS:', e);
+            }
+        }
 
         if (!daTimThay) return { ok: false, msg: 'Không tìm thấy món ăn!' };
-
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
 
         // Đồng bộ thời gian thực
         if (window.socketClient) {
@@ -2419,10 +2477,47 @@ class ApiService {
 
     /**
      * US-131: Tra cứu danh sách toàn bộ hóa đơn đã thanh toán kèm bộ lọc
+     * ĐỒNG BỘ: Tự động tổng hợp từ cả hóa đơn hệ thống và lịch sử hóa đơn POS của Quân ('quanmoc_pos_lich_su_hoa_don')
      */
     async layDanhSachHoaDon(boLoc = {}) {
         const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don');
         let ds = raw ? JSON.parse(raw) : [];
+
+        // ĐỒNG BỘ: Đọc thêm hóa đơn từ POS thu ngân của Quân ('quanmoc_pos_lich_su_hoa_don')
+        const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
+        if (rawPos) {
+            try {
+                const dsPos = JSON.parse(rawPos);
+                if (Array.isArray(dsPos)) {
+                    dsPos.forEach(hdPos => {
+                        if (!ds.some(h => h.maHoaDon === hdPos.maHoaDon)) {
+                            ds.push({
+                                id: hdPos.id || hdPos.maHoaDon,
+                                maHoaDon: hdPos.maHoaDon,
+                                banSo: hdPos.soBan,
+                                soBan: hdPos.soBan,
+                                thoiGianThanhToan: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
+                                thoiGian: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
+                                tamTinh: hdPos.tongTienMon || hdPos.tamTinh || hdPos.tongThanhToan,
+                                giamGia: hdPos.giamGia || 0,
+                                vat: hdPos.vat || 0,
+                                tongThanhToan: hdPos.tongThanhToan || hdPos.tongTien,
+                                tongTien: hdPos.tongThanhToan || hdPos.tongTien,
+                                phuongThuc: hdPos.phuongThuc || 'TIEN_MAT',
+                                thuNganTen: hdPos.thuNgan || 'Quân (Thu ngân POS)',
+                                thuNgan: hdPos.thuNgan || 'Quân (Thu ngân POS)',
+                                danhSachMon: hdPos.danhSachMon || []
+                            });
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ hóa đơn POS sang Báo cáo:', e);
+            }
+        }
+
+        // Sắp xếp giảm dần theo thời gian thanh toán
+        ds.sort((a, b) => new Date(b.thoiGianThanhToan || b.thoiGian || 0) - new Date(a.thoiGianThanhToan || a.thoiGian || 0));
 
         // Lọc theo từ khóa (Mã HĐ hoặc Số bàn)
         if (boLoc.tuKhoa) {
@@ -2636,6 +2731,25 @@ class ApiService {
                 }
             });
         });
+
+        // ĐỒNG BỘ: Đọc thêm nhật ký hủy trả từ POS của Quân ('quanmoc_pos_nhat_ky_huy_tra')
+        const rawPosHuy = localStorage.getItem('quanmoc_pos_nhat_ky_huy_tra');
+        if (rawPosHuy) {
+            try {
+                const dsPosHuy = JSON.parse(rawPosHuy);
+                if (Array.isArray(dsPosHuy)) {
+                    dsPosHuy.forEach(h => {
+                        const sl = Number(h.soLuong || 1);
+                        soMonHuy += sl;
+                        giaTriHuy += Number(h.thanhTien || 0);
+                        const lyDo = h.lyDo || h.lyDoHuy || 'Hủy tại quầy POS';
+                        lyDoHuyMap[lyDo] = (lyDoHuyMap[lyDo] || 0) + sl;
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ nhật ký hủy POS:', e);
+            }
+        }
 
         // Bổ sung dữ liệu mẫu nếu chưa phát sinh món hủy
         if (soMonHuy === 0) {

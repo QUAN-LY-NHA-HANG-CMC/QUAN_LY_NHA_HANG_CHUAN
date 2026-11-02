@@ -53,6 +53,9 @@ class UngDungFrontend {
             'phan-quyen': 'phanQuyen',
             'cau-hinh': 'cauHinhHeThong',
             'pos': 'posThuNgan',
+            'so-do-ban': 'posThuNgan',
+            'thanh-toan-pos': 'thanhToanPos',
+            'danh-gia': 'danhGiaDichVu',
             'ca-lam-viec': 'caLamViec',
             'calamviec': 'caLamViec',
             'ket-ca': 'caLamViec',
@@ -241,6 +244,21 @@ class UngDungFrontend {
         } else if (tab === 'eMenuKhachHang') {
             if (window.thucDonQr) {
                 window.thucDonQr.khoiTao();
+            }
+        } else if (tab === 'posThuNgan' || tab === 'soDoBanPos') {
+            // US-089 -> US-098 (Sprint 3 - Quân: Sơ đồ bàn POS)
+            if (window.soDoBanPos) {
+                window.soDoBanPos.khoiTao();
+            }
+        } else if (tab === 'thanhToanPos') {
+            // US-099 -> US-110 (Sprint 3 - Quân: Quầy Thu ngân & Thanh toán POS)
+            if (window.thanhToanPos) {
+                window.thanhToanPos.khoiTao();
+            }
+        } else if (tab === 'danhGiaDichVu') {
+            // US-111 -> US-116 (Sprint 4 - Quân: Đánh giá chất lượng dịch vụ)
+            if (window.quanLyDanhGia) {
+                window.quanLyDanhGia.khoiTao();
             }
         } else if (tab === 'caLamViec') {
             // US-117 -> US-122 (Sprint 4 - Phong: Quản lý Ca làm việc & Kết ca)

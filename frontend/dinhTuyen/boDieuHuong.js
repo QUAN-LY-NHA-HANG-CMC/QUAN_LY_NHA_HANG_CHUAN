@@ -164,11 +164,20 @@ class BoDieuHuong {
             }
         }
 
-        // 5. Thu ngân & Hóa đơn POS: QUAN_LY hoặc THU_NGAN
-        if (tab === 'posThuNgan') {
+        // 5. Thu ngân & Hóa đơn POS (Quân): QUAN_LY, THU_NGAN hoặc PHUC_VU
+        if (tab === 'posThuNgan' || tab === 'soDoBanPos') {
+            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN' && vaiTro !== 'PHUC_VU') {
+                if (window.thongBao) {
+                    window.thongBao.thatBai('Từ chối truy cập', 'Sơ đồ bàn POS chỉ dành cho Nhân viên phục vụ, Thu ngân hoặc Quản lý!');
+                }
+                return false;
+            }
+        }
+
+        if (tab === 'thanhToanPos') {
             if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN') {
                 if (window.thongBao) {
-                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Thu ngân & Thanh toán chỉ dành cho Thu ngân hoặc Quản lý!');
+                    window.thongBao.thatBai('Từ chối truy cập', 'Quầy Thu ngân & Thanh toán chỉ dành cho Thu ngân hoặc Quản lý!');
                 }
                 return false;
             }
