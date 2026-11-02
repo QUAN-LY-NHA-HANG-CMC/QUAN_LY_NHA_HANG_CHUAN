@@ -46,6 +46,10 @@ class HoTroTaiBanComponent {
         container.innerHTML = `
             <!-- Nút bật/tắt menu hỗ trợ nổi -->
             <div class="menu-ho-tro-noi-cac-nut" id="menu-cac-nut-ho-tro">
+                <button type="button" class="nut-noi-con nut-noi-theo-doi-don" onclick="window.hoTroTaiBan.moTrangTheoDoiDon()" title="Xem món đã gọi & Tiến độ (Sprint 2)">
+                    <span class="icon-noi">⏱️</span>
+                    <span class="chu-noi">Món đã gọi</span>
+                </button>
                 <button type="button" class="nut-noi-con nut-noi-goi-phuc-vu" onclick="window.hoTroTaiBan.moModalGoiNhanVien()" title="Gọi nhân viên phục vụ">
                     <span class="icon-noi">🙋</span>
                     <span class="chu-noi">Gọi nhân viên</span>
@@ -83,6 +87,13 @@ class HoTroTaiBanComponent {
         if (menu && btn) {
             menu.classList.remove('hien-thi');
             btn.classList.remove('dang-mo');
+        }
+    }
+
+    moTrangTheoDoiDon() {
+        this.dongMenu();
+        if (window.ungDung) {
+            window.ungDung.chuyenTab('theoDoiDonMon');
         }
     }
 

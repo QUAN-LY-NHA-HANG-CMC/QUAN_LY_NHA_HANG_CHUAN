@@ -164,31 +164,40 @@ class BoDieuHuong {
             }
         }
 
-        // 5. Sơ đồ bàn POS (Quân - Sprint 3): QUAN_LY, THU_NGAN hoặc PHUC_VU
-        if (tab === 'soDoBanPos') {
+        // 5. Thu ngân & Hóa đơn POS (Quân): QUAN_LY, THU_NGAN hoặc PHUC_VU
+        if (tab === 'posThuNgan' || tab === 'soDoBanPos') {
             if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN' && vaiTro !== 'PHUC_VU') {
                 if (window.thongBao) {
-                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Sơ đồ bàn chỉ dành cho Phục vụ, Thu ngân hoặc Quản lý!');
+                    window.thongBao.thatBai('Từ chối truy cập', 'Sơ đồ bàn POS chỉ dành cho Nhân viên phục vụ, Thu ngân hoặc Quản lý!');
                 }
                 return false;
             }
         }
 
-        // 6. Thu ngân & Hóa đơn POS (Quân - Sprint 3): QUAN_LY hoặc THU_NGAN
-        if (tab === 'posThuNgan' || tab === 'thanhToanPos') {
+        if (tab === 'thanhToanPos') {
             if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN') {
                 if (window.thongBao) {
-                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Thu ngân & Thanh toán chỉ dành cho Thu ngân hoặc Quản lý!');
+                    window.thongBao.thatBai('Từ chối truy cập', 'Quầy Thu ngân & Thanh toán chỉ dành cho Thu ngân hoặc Quản lý!');
                 }
                 return false;
             }
         }
 
-        // 7. Đánh giá & Phản hồi dịch vụ (Quân - Sprint 4): QUAN_LY, THU_NGAN, PHUC_VU
-        if (tab === 'danhGiaDichVu') {
-            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN' && vaiTro !== 'PHUC_VU') {
+        // 6. Quản lý Ca làm việc & Kết ca két tiền (Sprint 4 - Phong): QUAN_LY hoặc THU_NGAN
+        if (tab === 'caLamViec') {
+            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN') {
                 if (window.thongBao) {
-                    window.thongBao.thatBai('Từ chối truy cập', 'Chức năng Đánh giá dịch vụ dành cho Quản lý, Thu ngân hoặc Phục vụ!');
+                    window.thongBao.thatBai('Từ chối truy cập', 'Quản lý ca làm việc và kết ca thu ngân chỉ dành cho Thu ngân hoặc Quản lý!');
+                }
+                return false;
+            }
+        }
+
+        // 7. Báo cáo doanh thu & Đối soát hóa đơn (Sprint 4 - Phong): QUAN_LY hoặc THU_NGAN
+        if (tab === 'baoCao') {
+            if (vaiTro !== 'QUAN_LY' && vaiTro !== 'THU_NGAN') {
+                if (window.thongBao) {
+                    window.thongBao.canhBao('Hạn chế quyền', 'Báo cáo doanh thu và đối soát lịch sử chỉ dành cho Thu ngân hoặc Quản lý!');
                 }
                 return false;
             }
@@ -223,7 +232,7 @@ class BoDieuHuong {
             const tabHienTai = window.ungDung ? window.ungDung.tabHienTai : '';
             if (!this.kiemTraQuyenTruyCapTab(tabHienTai)) {
                 if (maVaiTro === 'QUAN_LY') window.ungDung.chuyenTab('quanLyNhanVien');
-                else if (maVaiTro === 'BEP') window.ungDung.chuyenTab('quanLyThucDon');
+                else if (maVaiTro === 'BEP') window.ungDung.chuyenTab('dieuPhoiBep');
                 else window.ungDung.chuyenTab('quanLyBanQr');
             } else {
                 // Tải lại nội dung tab hiện tại với phân quyền mới

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ỨNG DỤNG FRONTEND CHÍNH (ungDung.js)
  * Điều phối các Module và Luồng điều hướng Single Page Application (SPA)
  * Tích hợp & đồng bộ toàn diện giữa các phân hệ của Quân (Bàn & Thực đơn) và Phong (Admin Core, Auth, Nhân sự, Phân quyền, Cấu hình)
@@ -14,10 +14,7 @@ class UngDungFrontend {
 
         // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
         if (window.api && !window.api.layAccessToken()) {
-            const kq = await window.api.dangNhap('quanly', '123456');
-            if (kq && kq.ok && window.boDieuHuong) {
-                window.boDieuHuong.capNhatNguoiDung(kq.data.nguoiDung);
-            }
+            await window.api.dangNhap('quanly', '123456');
         }
 
         // Đồng bộ cấu hình thương hiệu nhà hàng toàn cục lên Header, Sidebar và Tiêu đề trang
@@ -39,25 +36,48 @@ class UngDungFrontend {
             window.hoTroTaiBan.khoiTao(3);
         }
 
-        // Đọc tab từ URL hash nếu có (ví dụ: #so-do-ban-pos hoặc #pos)
-        const hash = window.location.hash.replace('#', '');
-        const banDoHash = {
-            'danh-gia': 'danhGiaDichVu',
-            'so-do-ban-pos': 'soDoBanPos',
-            'pos': 'thanhToanPos',
+        // Đọc URL hash nếu người dùng truy cập trực tiếp qua liên kết hoặc F5 (VD: #theo-doi-don, #bep-kds, #sprint2)
+        const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+        const banDoTab = {
+            'theo-doi-don': 'theoDoiDonMon',
+            'theodoidonmon': 'theoDoiDonMon',
+            'sprint2': 'theoDoiDonMon',
+            'bep-kds': 'dieuPhoiBep',
+            'dieuphoibep': 'dieuPhoiBep',
+            'sprint3': 'dieuPhoiBep',
             'e-menu': 'eMenuKhachHang',
-            'thuc-don': 'quanLyThucDon',
+            'emenukhachhang': 'eMenuKhachHang',
             'ban-an': 'quanLyBanQr',
+            'thuc-don': 'quanLyThucDon',
             'nhan-vien': 'quanLyNhanVien',
-            'vai-tro': 'phanQuyen',
-            'cau-hinh': 'cauHinhHeThong'
+            'phan-quyen': 'phanQuyen',
+            'cau-hinh': 'cauHinhHeThong',
+            'pos': 'posThuNgan',
+            'so-do-ban': 'posThuNgan',
+            'thanh-toan-pos': 'thanhToanPos',
+            'danh-gia': 'danhGiaDichVu',
+            'ca-lam-viec': 'caLamViec',
+            'calamviec': 'caLamViec',
+            'ket-ca': 'caLamViec',
+            'bao-cao': 'baoCao',
+            'baocao': 'baoCao',
+            'doanh-thu': 'baoCao',
+            'sprint4': 'baoCao'
         };
-        if (hash && banDoHash[hash]) {
-            this.tabHienTai = banDoHash[hash];
+        if (hash && banDoTab[hash]) {
+            this.tabHienTai = banDoTab[hash];
         }
 
         // Nạp trang mặc định
         this.chuyenTab(this.tabHienTai);
+
+        // Lắng nghe sự kiện hashchange để điều hướng mượt mà
+        window.addEventListener('hashchange', () => {
+            const h = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+            if (h && banDoTab[h] && banDoTab[h] !== this.tabHienTai) {
+                this.chuyenTab(banDoTab[h]);
+            }
+        });
 
         // Thông báo chào mừng
         setTimeout(() => {
@@ -131,7 +151,33 @@ class UngDungFrontend {
             return;
         }
 
+        // Hủy interval đồng hồ của KDS nếu chuyển sang tab khác
+        if (tab !== 'dieuPhoiBep' && window.dieuPhoiBepModule) {
+            window.dieuPhoiBepModule.huyDongHo();
+        }
+
         this.tabHienTai = tab;
+
+        // Cập nhật URL Hash tương ứng mà không làm giật trang
+        const banDoHash = {
+            'theoDoiDonMon': 'theo-doi-don',
+            'dieuPhoiBep': 'bep-kds',
+            'eMenuKhachHang': 'e-menu',
+            'quanLyBanQr': 'ban-an',
+            'quanLyThucDon': 'thuc-don',
+            'quanLyNhanVien': 'nhan-vien',
+            'phanQuyen': 'phan-quyen',
+            'cauHinhHeThong': 'cau-hinh',
+            'posThuNgan': 'pos',
+            'baoCao': 'bao-cao'
+        };
+        if (banDoHash[tab] && window.location.hash !== '#' + banDoHash[tab]) {
+            try {
+                history.replaceState(null, '', '#' + banDoHash[tab]);
+            } catch {
+                window.location.hash = banDoHash[tab];
+            }
+        }
 
         // Cập nhật trạng thái active trên sidebar
         document.querySelectorAll('.muc-menu[data-tab]').forEach(muc => {
@@ -139,6 +185,15 @@ class UngDungFrontend {
                 muc.classList.add('kich-hoat');
             } else {
                 muc.classList.remove('kich-hoat');
+            }
+        });
+
+        // Cập nhật trạng thái active trên thanh Header pill nếu có
+        document.querySelectorAll('.nut-vai-tro-pill[data-tab-nav]').forEach(pill => {
+            if (pill.getAttribute('data-tab-nav') === tab) {
+                pill.classList.add('kich-hoat');
+            } else {
+                pill.classList.remove('kich-hoat');
             }
         });
 
@@ -181,24 +236,39 @@ class UngDungFrontend {
             if (window.theoDoiDonMonModule) {
                 window.theoDoiDonMonModule.khoiTao();
             }
+        } else if (tab === 'dieuPhoiBep') {
+            // US-079 -> US-088 (Sprint 3 - Phong: Điều phối Bếp KDS & Kiểm soát hết món)
+            if (window.dieuPhoiBepModule) {
+                window.dieuPhoiBepModule.khoiTao();
+            }
         } else if (tab === 'eMenuKhachHang') {
             if (window.thucDonQr) {
                 window.thucDonQr.khoiTao();
             }
-        } else if (tab === 'soDoBanPos') {
-            // US-089 -> US-098 (Quân - Sprint 3: Sơ đồ bàn POS)
+        } else if (tab === 'posThuNgan' || tab === 'soDoBanPos') {
+            // US-089 -> US-098 (Sprint 3 - Quân: Sơ đồ bàn POS)
             if (window.soDoBanPos) {
                 window.soDoBanPos.khoiTao();
             }
-        } else if (tab === 'thanhToanPos' || tab === 'posThuNgan') {
-            // US-099 -> US-110 (Quân - Sprint 3: POS Thu ngân & Thanh toán)
+        } else if (tab === 'thanhToanPos') {
+            // US-099 -> US-110 (Sprint 3 - Quân: Quầy Thu ngân & Thanh toán POS)
             if (window.thanhToanPos) {
                 window.thanhToanPos.khoiTao();
             }
         } else if (tab === 'danhGiaDichVu') {
-            // US-111 -> US-116 (Quân - Sprint 4: Đánh giá & Phản hồi dịch vụ)
+            // US-111 -> US-116 (Sprint 4 - Quân: Đánh giá chất lượng dịch vụ)
             if (window.quanLyDanhGia) {
                 window.quanLyDanhGia.khoiTao();
+            }
+        } else if (tab === 'caLamViec') {
+            // US-117 -> US-122 (Sprint 4 - Phong: Quản lý Ca làm việc & Kết ca)
+            if (window.caLamViecModule) {
+                window.caLamViecModule.khoiTao();
+            }
+        } else if (tab === 'baoCao') {
+            // US-123 -> US-134 (Sprint 4 - Phong: Dashboard Báo cáo Doanh thu & Đối soát hóa đơn)
+            if (window.baoCaoDoanhThuModule) {
+                window.baoCaoDoanhThuModule.khoiTao();
             }
         } else {
             // Các tab thuộc Sprint 2, 3, 4

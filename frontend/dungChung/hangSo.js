@@ -27,7 +27,13 @@ const HANG_SO = {
         DANH_SACH_DON_GOI: 'quanmoc_ds_don_goi',
         PHIEN_BAN_HIEN_TAI: 'quanmoc_phien_ban_hien_tai',
         DANH_SACH_YEU_CAU_HO_TRO: 'quanmoc_ds_yeu_cau_ho_tro',
-        GIO_HANG_TEMPORARY: 'quanmoc_gio_hang_tam'
+        GIO_HANG_TEMPORARY: 'quanmoc_gio_hang_tam',
+        // Sprint 4 - Phần việc của Phong (Ca làm việc, Kết ca, Báo cáo Doanh thu & Hóa đơn)
+        DANH_SACH_CA_LAM_VIEC: 'quanmoc_ds_ca_lam_viec',
+        CA_HIEN_TAI: 'quanmoc_ca_hien_tai',
+        LICH_SU_KET_CA: 'quanmoc_ls_ket_ca',
+        PHIEU_THU_CHI: 'quanmoc_phieu_thu_chi',
+        DANH_SACH_HOA_DON: 'quanmoc_ds_hoa_don'
     },
 
     // Trạng thái bàn ăn (Rule 2: Tiếng Việt rõ nghĩa)

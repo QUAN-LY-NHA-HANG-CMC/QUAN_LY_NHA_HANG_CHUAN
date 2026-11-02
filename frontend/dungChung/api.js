@@ -30,6 +30,13 @@ class ApiService {
      * Kiểm tra trạng thái máy chủ siêu tốc (Timeout 200ms)
      */
     async kiemTraKetNoiServer() {
+        // Nếu mở trực tiếp dạng file:/// hoặc protocol không phải http/https -> Chạy offline ngay
+        if (typeof window !== 'undefined' && (!window.location || window.location.protocol === 'file:')) {
+            this.serverDangChay = false;
+            this.daKiemTraServer = true;
+            return false;
+        }
+
         if (this.daKiemTraServer) {
             return this.serverDangChay;
         }
@@ -578,12 +585,65 @@ class ApiService {
                             thoiGianCapNhat: '2026-10-27 19:42:10'
                         }
                     ]
+                },
+                // Đơn mẫu cho Bàn 01 (Khách QR mặc định của E-Menu)
+                {
+                    id: 3,
+                    maDon: 'ORD-20261027-003',
+                    banId: 1,
+                    soBan: 'Bàn 01',
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    luotGoi: 1,
+                    thoiGianTao: '2026-10-27 19:30:00',
+                    ghiChuDon: 'Khách gọi món qua QR',
+                    tongTien: 375000,
+                    danhSachMon: [
+                        {
+                            id: 105,
+                            monId: 2,
+                            tenMon: 'Bò Tơ Cuộn Bánh Tráng Phơi Sương',
+                            size: 'Tiêu chuẩn',
+                            topping: 'Rau rừng cuốn thêm (+20.000đ)',
+                            donGia: 220000,
+                            soLuong: 1,
+                            thanhTien: 220000,
+                            ghiChu: 'Thịt bò cắt mỏng mềm',
+                            trangThai: 'DANG_CHE_BIEN',
+                            thoiGianCapNhat: '2026-10-27 19:35:00'
+                        },
+                        {
+                            id: 106,
+                            monId: 4,
+                            tenMon: 'Cơm Cháy Kho Quẹt Tôm Thịt Niêu Đất',
+                            size: 'Tiêu chuẩn',
+                            topping: 'Tóp mỡ kho quẹt thêm (+30.000đ)',
+                            donGia: 95000,
+                            soLuong: 1,
+                            thanhTien: 95000,
+                            ghiChu: 'Cơm cháy giòn đáy nồi',
+                            trangThai: 'CHO_XAC_NHAN',
+                            thoiGianCapNhat: '2026-10-27 19:30:00'
+                        },
+                        {
+                            id: 107,
+                            monId: 8,
+                            tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen',
+                            size: 'Size M (Tiêu chuẩn)',
+                            topping: '',
+                            donGia: 45000,
+                            soLuong: 1,
+                            thanhTien: 45000,
+                            ghiChu: 'Nhiều đá, ít ngọt',
+                            trangThai: 'DA_LEN_MON',
+                            thoiGianCapNhat: '2026-10-27 19:32:00'
+                        }
+                    ]
                 }
             ];
             localStorage.setItem(KHOA.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDonGoiMau));
         }
 
-        // 11. Dữ liệu Yêu Cầu Hỗ Trợ Tại Bàn mẫu (Sprint 2 - US-071 -> US-074)
+        // 11. Dữ liệu Yêu Cầu Hỗ TrỢ Tại Bàn mẫu (Sprint 2 - US-071 -> US-074)
         if (!localStorage.getItem(KHOA.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro')) {
             const dsHoTroMau = [
                 {
@@ -596,9 +656,255 @@ class ApiService {
                     thoiGian: '2026-10-27 19:30:15',
                     trangThai: 'DA_XU_LY',
                     nguoiTiepNhan: 'Phạm Văn Phục Vụ'
+                },
+                {
+                    id: 2,
+                    banId: 1,
+                    soBan: 'Bàn 01',
+                    loaiYeuCau: 'THEM_BAT_DUA',
+                    tenYeuCau: '🥢 Xin thêm bát, đĩa, đũa, thìa',
+                    chiTiet: 'Khách xin thêm 2 bộ chén đũa cho em bé',
+                    thoiGian: '2026-10-27 19:40:00',
+                    trangThai: 'CHO_TIEP_NHAN',
+                    nguoiTiepNhan: null
                 }
             ];
             localStorage.setItem(KHOA.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro', JSON.stringify(dsHoTroMau));
+        }
+
+        // 12. Dữ liệu Ca Làm Việc mẫu (Sprint 4 - US-117 -> US-122)
+        if (!localStorage.getItem(KHOA.DANH_SACH_CA_LAM_VIEC || 'quanmoc_ds_ca_lam_viec')) {
+            const dsCaMau = [
+                { id: 1, maCa: 'CA_SANG', tenCa: 'Ca Sáng (08:00 - 15:00)', gioBatDau: '08:00', gioKetThuc: '15:00', moTa: 'Phục vụ điểm tâm và bữa trưa công sở' },
+                { id: 2, maCa: 'CA_TOI', tenCa: 'Ca Chiều / Tối (15:00 - 23:00)', gioBatDau: '15:00', gioKetThuc: '23:00', moTa: 'Cao điểm ăn tối gia đình, tiệc tùng' },
+                { id: 3, maCa: 'CA_DEM', tenCa: 'Ca Đêm (23:00 - 06:00)', gioBatDau: '23:00', gioKetThuc: '06:00', moTa: 'Phục vụ xuyên đêm & bảo quản dọn dẹp' }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_CA_LAM_VIEC || 'quanmoc_ds_ca_lam_viec', JSON.stringify(dsCaMau));
+        }
+
+        // 13. Ca làm việc đang mở hiện tại (Active Shift)
+        if (!localStorage.getItem(KHOA.CA_HIEN_TAI || 'quanmoc_ca_hien_tai')) {
+            const caHienTaiMau = {
+                id: 101,
+                maCa: 'SHIFT-20261102-02',
+                caId: 2,
+                tenCa: 'Ca Chiều / Tối (15:00 - 23:00)',
+                thuNganId: 2,
+                thuNganTen: 'Trần Thị Thu Ngân',
+                thoiGianMo: '2026-11-02 15:00:00',
+                tienDauCa: 1500000, // 1.500.000đ tiền lẻ thối
+                ghiChuMo: 'Tiền mặt đầu ca gồm các mệnh giá 20k, 50k, 100k đủ cơ số',
+                trangThai: 'DANG_MO'
+            };
+            localStorage.setItem(KHOA.CA_HIEN_TAI || 'quanmoc_ca_hien_tai', JSON.stringify(caHienTaiMau));
+        }
+
+        // 14. Phiếu Thu / Chi tiền mặt phát sinh trong ca (Sprint 4 - US-119)
+        if (!localStorage.getItem(KHOA.PHIEU_THU_CHI || 'quanmoc_phieu_thu_chi')) {
+            const dsThuChiMau = [
+                {
+                    id: 1,
+                    maPhieu: 'PT-20261102-001',
+                    loai: 'THU',
+                    soTien: 500000,
+                    lyDo: 'Nạp thêm tiền lẻ thối ca tối (mệnh giá 10k, 20k)',
+                    nguoiThucHien: 'Trần Thị Thu Ngân',
+                    thoiGian: '2026-11-02 16:30:00',
+                    caId: 101
+                },
+                {
+                    id: 2,
+                    maPhieu: 'PC-20261102-001',
+                    loai: 'CHI',
+                    soTien: 85000,
+                    lyDo: 'Mua bổ sung 2 bao đá lạnh khẩn cấp khi hết đá',
+                    nguoiThucHien: 'Trần Thị Thu Ngân',
+                    thoiGian: '2026-11-02 18:15:00',
+                    caId: 101
+                }
+            ];
+            localStorage.setItem(KHOA.PHIEU_THU_CHI || 'quanmoc_phieu_thu_chi', JSON.stringify(dsThuChiMau));
+        }
+
+        // 15. Lịch sử Biên bản kết ca thu ngân (Sprint 4 - US-121, US-122)
+        if (!localStorage.getItem(KHOA.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca')) {
+            const lsKetCaMau = [
+                {
+                    id: 1,
+                    maBienBan: 'Z-20261101-01',
+                    tenCa: 'Ca Sáng (08:00 - 15:00)',
+                    ngay: '2026-11-01',
+                    thuNganMo: 'Trần Thị Thu Ngân',
+                    thuNganDong: 'Trần Thị Thu Ngân',
+                    thoiGianMo: '2026-11-01 08:00:00',
+                    thoiGianDong: '2026-11-01 15:05:00',
+                    tienDauCa: 1500000,
+                    tongDoanhThu: 4850000,
+                    doanhThuTienMat: 2150000,
+                    doanhThuChuyenKhoan: 2700000,
+                    tongThuPhatSinh: 200000,
+                    tongChiPhatSinh: 50000,
+                    tienMatLyThuyet: 3800000, // 1500k + 2150k + 200k - 50k
+                    tienMatThucTe: 3800000,
+                    chenhLech: 0,
+                    trangThaiChenhLech: 'KHOP_CHUAN',
+                    soHoaDon: 8,
+                    ghiChu: 'Bàn giao ca sáng khớp 100%, két tiền ngăn nắp'
+                },
+                {
+                    id: 2,
+                    maBienBan: 'Z-20261101-02',
+                    tenCa: 'Ca Chiều / Tối (15:00 - 23:00)',
+                    ngay: '2026-11-01',
+                    thuNganMo: 'Trần Thị Thu Ngân',
+                    thuNganDong: 'Trần Thị Thu Ngân',
+                    thoiGianMo: '2026-11-01 15:00:00',
+                    thoiGianDong: '2026-11-01 23:10:00',
+                    tienDauCa: 1500000,
+                    tongDoanhThu: 12450000,
+                    doanhThuTienMat: 5200000,
+                    doanhThuChuyenKhoan: 7250000,
+                    tongThuPhatSinh: 0,
+                    tongChiPhatSinh: 120000,
+                    tienMatLyThuyet: 6580000, // 1500k + 5200k - 120k
+                    tienMatThucTe: 6600000,
+                    chenhLech: 20000, // Dư 20k
+                    trangThaiChenhLech: 'THUA_QUY',
+                    soHoaDon: 19,
+                    ghiChu: 'Thừa 20.000đ do khách không lấy tiền thối lẻ'
+                }
+            ];
+            localStorage.setItem(KHOA.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca', JSON.stringify(lsKetCaMau));
+        }
+
+        // 16. Danh sách Hóa Đơn đã thanh toán mẫu (Sprint 4 - US-123 -> US-134)
+        if (!localStorage.getItem(KHOA.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don')) {
+            const dsHoaDonMau = [
+                {
+                    id: 1,
+                    maHoaDon: 'HD-20261102-001',
+                    soBan: 'Bàn 01',
+                    banId: 1,
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    thuNganTen: 'Trần Thị Thu Ngân',
+                    thoiGianVao: '2026-11-02 11:30:00',
+                    thoiGianThanhToan: '2026-11-02 12:45:00',
+                    phuongThuc: 'CHUYEN_KHOAN', // CHUYEN_KHOAN | TIEN_MAT
+                    tienMonAn: 520000,
+                    tienGiamGia: 0,
+                    tienVat: 41600, // 8% VAT
+                    tongThanhToan: 561600,
+                    tienKhachDua: 561600,
+                    tienThua: 0,
+                    soKhach: 4,
+                    gioThanhToanInt: 12, // Khung giờ 12h
+                    danhSachMon: [
+                        { monId: 1, tenMon: 'Gà Nướng Ống Tre Tây Bắc', soLuong: 1, donGia: 280000, thanhTien: 280000, danhMucTen: 'Món Nướng Đặc Sắc' },
+                        { monId: 7, tenMon: 'Rau Rừng Gia Lai Xào Tỏi', soLuong: 2, donGia: 75000, thanhTien: 150000, danhMucTen: 'Rau & Khai Vị' },
+                        { monId: 8, tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen', soLuong: 2, donGia: 45000, thanhTien: 90000, danhMucTen: 'Đồ Uống & Tráng Miệng' }
+                    ]
+                },
+                {
+                    id: 2,
+                    maHoaDon: 'HD-20261102-002',
+                    soBan: 'Bàn 05',
+                    banId: 5,
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    thuNganTen: 'Trần Thị Thu Ngân',
+                    thoiGianVao: '2026-11-02 12:05:00',
+                    thoiGianThanhToan: '2026-11-02 13:15:00',
+                    phuongThuc: 'TIEN_MAT',
+                    tienMonAn: 690000,
+                    tienGiamGia: 50000, // Voucher 50k
+                    tienVat: 51200,
+                    tongThanhToan: 691200,
+                    tienKhachDua: 700000,
+                    tienThua: 8800,
+                    soKhach: 3,
+                    gioThanhToanInt: 13,
+                    danhSachMon: [
+                        { monId: 3, tenMon: 'Lẩu Riêu Cua Đồng Bắp Bò', soLuong: 1, donGia: 380000, thanhTien: 380000, danhMucTen: 'Lẩu Dân Dã' },
+                        { monId: 2, tenMon: 'Bò Tơ Cuộn Bánh Tráng Phơi Sương', soLuong: 1, donGia: 220000, thanhTien: 220000, danhMucTen: 'Món Nướng Đặc Sắc' },
+                        { monId: 8, tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen', soLuong: 2, donGia: 45000, thanhTien: 90000, danhMucTen: 'Đồ Uống & Tráng Miệng' }
+                    ]
+                },
+                {
+                    id: 3,
+                    maHoaDon: 'HD-20261102-003',
+                    soBan: 'Bàn 08',
+                    banId: 8,
+                    khuVucTen: 'Tầng 2 (Ngoài trời)',
+                    thuNganTen: 'Trần Thị Thu Ngân',
+                    thoiGianVao: '2026-11-02 17:30:00',
+                    thoiGianThanhToan: '2026-11-02 19:10:00',
+                    phuongThuc: 'CHUYEN_KHOAN',
+                    tienMonAn: 975000,
+                    tienGiamGia: 0,
+                    tienVat: 78000,
+                    tongThanhToan: 1053000,
+                    tienKhachDua: 1053000,
+                    tienThua: 0,
+                    soKhach: 5,
+                    gioThanhToanInt: 19,
+                    danhSachMon: [
+                        { monId: 1, tenMon: 'Gà Nướng Ống Tre Tây Bắc', soLuong: 2, donGia: 280000, thanhTien: 560000, danhMucTen: 'Món Nướng Đặc Sắc' },
+                        { monId: 4, tenMon: 'Cơm Cháy Kho Quẹt Tôm Thịt Niêu Đất', soLuong: 2, donGia: 95000, thanhTien: 190000, danhMucTen: 'Cơm & Món Chay' },
+                        { monId: 6, tenMon: 'Gỏi Ngó Sen Tôm Thịt Hoa Chuối', soLuong: 1, donGia: 110000, thanhTien: 110000, danhMucTen: 'Rau & Khai Vị' },
+                        { monId: 8, tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen', soLuong: 2, donGia: 55000, thanhTien: 110000, danhMucTen: 'Đồ Uống & Tráng Miệng' }
+                    ]
+                },
+                {
+                    id: 4,
+                    maHoaDon: 'HD-20261102-004',
+                    soBan: 'Bàn 03',
+                    banId: 3,
+                    khuVucTen: 'Tầng 1 (Máy lạnh)',
+                    thuNganTen: 'Trần Thị Thu Ngân',
+                    thoiGianVao: '2026-11-02 18:45:00',
+                    thoiGianThanhToan: '2026-11-02 20:20:00',
+                    phuongThuc: 'TIEN_MAT',
+                    tienMonAn: 485000,
+                    tienGiamGia: 0,
+                    tienVat: 38800,
+                    tongThanhToan: 523800,
+                    tienKhachDua: 550000,
+                    tienThua: 26200,
+                    soKhach: 2,
+                    gioThanhToanInt: 20,
+                    danhSachMon: [
+                        { monId: 2, tenMon: 'Bò Tơ Cuộn Bánh Tráng Phơi Sương', soLuong: 1, donGia: 220000, thanhTien: 220000, danhMucTen: 'Món Nướng Đặc Sắc' },
+                        { monId: 6, tenMon: 'Gỏi Ngó Sen Tôm Thịt Hoa Chuối', soLuong: 1, donGia: 110000, thanhTien: 110000, danhMucTen: 'Rau & Khai Vị' },
+                        { monId: 8, tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen', soLuong: 2, donGia: 45000, thanhTien: 90000, danhMucTen: 'Đồ Uống & Tráng Miệng' },
+                        { monId: 7, tenMon: 'Rau Rừng Gia Lai Xào Tỏi', soLuong: 1, donGia: 75000, thanhTien: 75000, danhMucTen: 'Rau & Khai Vị' }
+                    ]
+                },
+                {
+                    id: 5,
+                    maHoaDon: 'HD-20261102-005',
+                    soBan: 'Phòng VIP 1',
+                    banId: 11,
+                    khuVucTen: 'Phòng VIP',
+                    thuNganTen: 'Trần Thị Thu Ngân',
+                    thoiGianVao: '2026-11-02 19:00:00',
+                    thoiGianThanhToan: '2026-11-02 21:05:00',
+                    phuongThuc: 'CHUYEN_KHOAN',
+                    tienMonAn: 1850000,
+                    tienGiamGia: 100000,
+                    tienVat: 140000,
+                    tongThanhToan: 1890000,
+                    tienKhachDua: 1890000,
+                    tienThua: 0,
+                    soKhach: 8,
+                    gioThanhToanInt: 21,
+                    danhSachMon: [
+                        { monId: 1, tenMon: 'Gà Nướng Ống Tre Tây Bắc', soLuong: 3, donGia: 280000, thanhTien: 840000, danhMucTen: 'Món Nướng Đặc Sắc' },
+                        { monId: 3, tenMon: 'Lẩu Riêu Cua Đồng Bắp Bò', soLuong: 2, donGia: 380000, thanhTien: 760000, danhMucTen: 'Lẩu Dân Dã' },
+                        { monId: 4, tenMon: 'Cơm Cháy Kho Quẹt Tôm Thịt Niêu Đất', soLuong: 2, donGia: 95000, thanhTien: 190000, danhMucTen: 'Cơm & Món Chay' },
+                        { monId: 8, tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen', soLuong: 6, donGia: 45000, thanhTien: 270000, danhMucTen: 'Đồ Uống & Tráng Miệng' }
+                    ]
+                }
+            ];
+            localStorage.setItem(KHOA.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don', JSON.stringify(dsHoaDonMau));
         }
     }
 
@@ -628,6 +934,10 @@ class ApiService {
         return data ? JSON.parse(data) : [];
     }
 
+    async layDanhSachBanAn() {
+        return this.layDanhSachBan();
+    }
+
     async luuDanhSachBan(ds) {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban', JSON.stringify(ds));
         this.ghiNhatKy('Cập nhật sơ đồ bàn', 'INFO', `Cập nhật sơ đồ bàn ăn (${ds.length} bàn).`);
@@ -652,13 +962,20 @@ class ApiService {
 
     async layDanhSachMonAn() {
         const kq = await this.yeuCau('/thuc-don');
-        if (kq && kq.ok) {
-            return Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
-        }
+        if (kq && kq.ok && Array.isArray(kq.data)) return kq.data;
 
         // Fallback LocalStorage
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachMonAn(ds) {
@@ -690,11 +1007,10 @@ class ApiService {
 
         // Fallback LocalStorage Authentication
         const dsNhanVien = await this.layDanhSachNhanVien();
-        const danhSach = Array.isArray(dsNhanVien) ? dsNhanVien : (dsNhanVien?.danhSach || []);
-        const timThay = danhSach.find(nv => 
-            (nv && nv.tenDangNhap && nv.tenDangNhap.toLowerCase() === tenDangNhap.trim().toLowerCase() || 
-             nv && nv.email && nv.email.toLowerCase() === tenDangNhap.trim().toLowerCase()) &&
-            (nv.matKhau === matKhau || matKhau === '123456')
+        const timThay = dsNhanVien.find(nv => 
+            (nv.tenDangNhap.toLowerCase() === tenDangNhap.trim().toLowerCase() || 
+             nv.email.toLowerCase() === tenDangNhap.trim().toLowerCase()) &&
+            nv.matKhau === matKhau
         );
 
         if (!timThay) {
@@ -813,9 +1129,7 @@ class ApiService {
 
     async layDanhSachNhanVien() {
         const kq = await this.yeuCau('/nhan-vien');
-        if (kq && kq.ok) {
-            return Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
-        }
+        if (kq && kq.ok) return kq.data;
 
         const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
         return data ? JSON.parse(data) : [];
@@ -1176,9 +1490,6 @@ class ApiService {
         };
     }
 
-    /**
-     * Alias đồng bộ cho module giỏ hàng (Quân - Sprint 2)
-     */
     async guiDonDatMon(donGoi) {
         return this.taoDonGoiMon(donGoi);
     }
@@ -1245,10 +1556,65 @@ class ApiService {
 
     /**
      * Lấy toàn bộ đơn đặt món trong hệ thống
+     * ĐỒNG BỘ: Tự động tổng hợp từ cả đơn gọi món QR và phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
      */
     async layTatCaDonGoiMon() {
         const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-        return raw ? JSON.parse(raw) : [];
+        let ds = [];
+        try {
+            ds = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(ds)) ds = [];
+        } catch {
+            ds = [];
+        }
+
+        // ĐỒNG BỘ: Đọc thêm các đơn đang mở trong POS sơ đồ bàn của Quân ('quanmoc_pos_phien_ban')
+        const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
+        if (rawPosPhien) {
+            try {
+                const phienMap = JSON.parse(rawPosPhien);
+                Object.values(phienMap).forEach(phien => {
+                    if (phien && Array.isArray(phien.danhSachMon) && phien.danhSachMon.length > 0) {
+                        const maDonPhien = `DON-POS-BAN-${phien.banId}`;
+                        const thoiGian = phien.thoiGianBatDau || new Date().toISOString().replace('T', ' ').substring(0, 19);
+                        if (!ds.some(d => d.maDon === maDonPhien || (Number(d.banId) === Number(phien.banId) && d.phienPos))) {
+                            ds.push({
+                                id: `pos_phien_${phien.banId}`,
+                                maDon: maDonPhien,
+                                banId: phien.banId,
+                                soBan: `Bàn ${String(phien.banId).padStart(2, '0')}`,
+                                thoiGianDat: thoiGian,
+                                thoiGianTao: thoiGian,
+                                khuVucTen: 'Tầng 1',
+                                phienPos: true,
+                                danhSachMon: phien.danhSachMon.map((m, idx) => {
+                                    let ttChuan = m.trangThai || 'CHO_XAC_NHAN';
+                                    if (ttChuan === 'CHO_CHE_BIEN') ttChuan = 'CHO_XAC_NHAN';
+                                    else if (ttChuan === 'DA_CHE_BIEN') ttChuan = 'DA_XONG';
+                                    else if (ttChuan === 'DA_PHUC_VU') ttChuan = 'DA_LEN_MON';
+                                    return {
+                                        id: m.id || (phien.banId * 100 + idx + 1),
+                                        monAnId: m.monAnId,
+                                        tenMon: m.tenMon,
+                                        soLuong: m.soLuong || 1,
+                                        donGia: m.donGia || 0,
+                                        thanhTien: (m.soLuong || 1) * (m.donGia || 0),
+                                        tuyChon: m.tuyChon || '',
+                                        ghiChu: m.ghiChu || '',
+                                        trangThai: ttChuan,
+                                        thoiGianCapNhat: thoiGian
+                                    };
+                                })
+                            });
+                        }
+                    }
+                });
+            } catch (e) {
+                console.warn('Lỗi đồng bộ phiên bàn POS sang KDS:', e);
+            }
+        }
+
+        return ds;
     }
 
     /**
@@ -1337,21 +1703,19 @@ class ApiService {
 
     /**
      * US-066 & US-076: Cập nhật trạng thái chế biến món ăn thời gian thực
-     * @param {number} idMonChiTiet ID chi tiết món
-     * @param {number} banId ID bàn
-     * @param {string} trangThaiMoi 'CHO_XAC_NHAN' | 'DANG_CHE_BIEN' | 'DA_XONG' | 'DA_LEN_MON'
+     * ĐỒNG BỘ: Cập nhật đồng thời vào cả danh sách đơn QR và phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
      */
     async capNhatTrangThaiMonAn(idMonChiTiet, banId, trangThaiMoi) {
-        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-        if (!raw) return { ok: false, msg: 'Không tìm thấy đơn hàng!' };
-
-        const dsDon = JSON.parse(raw);
         let daTimThay = false;
         let thongTinMon = null;
 
+        // 1. Kiểm tra và cập nhật trong đơn gọi món
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        let dsDon = raw ? JSON.parse(raw) : [];
+
         for (const don of dsDon) {
             if (Number(don.banId) === Number(banId)) {
-                const mon = don.danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet));
+                const mon = (don.danhSachMon || []).find(m => Number(m.id) === Number(idMonChiTiet));
                 if (mon) {
                     mon.trangThai = trangThaiMoi;
                     mon.thoiGianCapNhat = new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -1361,10 +1725,32 @@ class ApiService {
                 }
             }
         }
+        if (daTimThay) {
+            localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+        }
+
+        // 2. ĐỒNG BỘ: Kiểm tra và cập nhật luôn vào phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
+        const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
+        if (rawPosPhien) {
+            try {
+                const phienMap = JSON.parse(rawPosPhien);
+                if (phienMap[banId] && Array.isArray(phienMap[banId].danhSachMon)) {
+                    const mPos = phienMap[banId].danhSachMon.find(m => Number(m.id) === Number(idMonChiTiet) || (thongTinMon && m.tenMon === thongTinMon.tenMon));
+                    if (mPos) {
+                        let posTt = trangThaiMoi;
+                        if (trangThaiMoi === 'DA_LEN_MON') posTt = 'DA_PHUC_VU';
+                        mPos.trangThai = posTt;
+                        if (!thongTinMon) thongTinMon = mPos;
+                        daTimThay = true;
+                        localStorage.setItem('quanmoc_pos_phien_ban', JSON.stringify(phienMap));
+                    }
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ trạng thái món sang POS:', e);
+            }
+        }
 
         if (!daTimThay) return { ok: false, msg: 'Không tìm thấy món ăn!' };
-
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
 
         // Đồng bộ thời gian thực
         if (window.socketClient) {
@@ -1848,10 +2234,566 @@ class ApiService {
         dsCu.push(ycMoi);
         localStorage.setItem(key, JSON.stringify(dsCu));
 
+        // Đồng bộ vào kho yêu cầu hỗ trợ chung của hệ thống (Sprint 2 - Phong & Minh)
+        const keyChung = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_YEU_CAU_HO_TRO || 'quanmoc_ds_yeu_cau_ho_tro';
+        const dsChung = JSON.parse(localStorage.getItem(keyChung) || '[]');
+        const ycChung = {
+            id: ycMoi.id,
+            banId: Number(banId),
+            soBan: `Bàn ${banId}`,
+            loaiYeuCau: loaiYeuCau === 'YeuCauThanhToan' ? 'THANH_TOAN' : 'GAP_NHAN_VIEN',
+            tenYeuCau: loaiYeuCau === 'YeuCauThanhToan' ? `💳 Yêu cầu thanh toán (${body.phuongThucThanhToan || 'Tiền mặt'})` : `🙋 Hỗ trợ tại bàn: ${body.lyDo || 'Xin hỗ trợ'}`,
+            chiTiet: ghiChu || body.lyDo || '',
+            thoiGian: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            trangThai: 'CHO_TIEP_NHAN',
+            nguoiTiepNhan: null
+        };
+        dsChung.unshift(ycChung);
+        localStorage.setItem(keyChung, JSON.stringify(dsChung));
+
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('hoTro:yeuCauMoi', ycChung);
+            window.socketClient.phatAmThanh('hoTro');
+        }
+
         return {
             ok: true,
             data: ycMoi,
             msg: 'Yêu cầu của quý khách đã được gửi tới nhân viên! (chế độ dự phòng)'
+        };
+    }
+
+    // =========================================================================
+    // PHẦN 4: BỘ API QUẢN LÝ CA LÀM VIỆC & KẾT CA (US-117 -> US-122)
+    // =========================================================================
+
+    /**
+     * US-117: Lấy danh sách các ca làm việc trong ngày
+     */
+    async layDanhSachCaLamViec() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_CA_LAM_VIEC || 'quanmoc_ds_ca_lam_viec');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    /**
+     * US-118: Lấy thông tin ca làm việc đang mở hiện tại
+     */
+    async layCaHienTai() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.CA_HIEN_TAI || 'quanmoc_ca_hien_tai');
+        return raw ? JSON.parse(raw) : null;
+    }
+
+    /**
+     * US-118: Thu ngân thực hiện mở ca làm việc và nhập tiền đầu ca
+     */
+    async moCaLamViec({ caId, tenCa, thuNganId, thuNganTen, tienDauCa, ghiChuMo }) {
+        const caDangMo = await this.layCaHienTai();
+        if (caDangMo) {
+            return { ok: false, msg: `Đang có ca [${caDangMo.tenCa}] chưa đóng! Vui lòng kết ca hiện tại trước khi mở ca mới.` };
+        }
+
+        const id = Date.now();
+        const ngay = new Date().toISOString().slice(0, 10);
+        const maCa = `SHIFT-${ngay.replace(/-/g, '')}-${String(Math.floor(Math.random()*90)+10)}`;
+        const thoiGianMo = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const caMoi = {
+            id,
+            maCa,
+            caId: Number(caId || 1),
+            tenCa: tenCa || 'Ca Sáng',
+            thuNganId: Number(thuNganId || 2),
+            thuNganTen: thuNganTen || 'Thu ngân',
+            thoiGianMo,
+            tienDauCa: Number(tienDauCa || 0),
+            ghiChuMo: ghiChuMo || '',
+            trangThai: 'DANG_MO'
+        };
+
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.CA_HIEN_TAI || 'quanmoc_ca_hien_tai', JSON.stringify(caMoi));
+        this.ghiNhatKy(`Mở ca làm việc (${caMoi.tenCa})`, 'INFO', `Thu ngân [${caMoi.thuNganTen}] mở ca. Tiền mặt đầu ca: ${caMoi.tienDauCa.toLocaleString('vi-VN')}đ`);
+
+        return {
+            ok: true,
+            data: caMoi,
+            msg: `Mở ca [${caMoi.tenCa}] thành công! Tiền đầu ca: ${caMoi.tienDauCa.toLocaleString('vi-VN')} đ`
+        };
+    }
+
+    /**
+     * US-119: Ghi nhận phiếu thu / chi tiền mặt phát sinh trong ca
+     */
+    async taoPhieuThuChi({ loai, soTien, lyDo, nguoiThucHien, caId }) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.PHIEU_THU_CHI || 'quanmoc_phieu_thu_chi');
+        const ds = raw ? JSON.parse(raw) : [];
+
+        const id = Date.now();
+        const ngay = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const maPhieu = `${loai === 'THU' ? 'PT' : 'PC'}-${ngay}-${String(ds.length + 1).padStart(3, '0')}`;
+        const thoiGian = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const phieuMoi = {
+            id,
+            maPhieu,
+            loai, // 'THU' | 'CHI'
+            soTien: Number(soTien || 0),
+            lyDo: lyDo || (loai === 'THU' ? 'Thu tiền mặt phát sinh' : 'Chi tiền mặt phát sinh'),
+            nguoiThucHien: nguoiThucHien || 'Thu ngân',
+            thoiGian,
+            caId: caId || 101
+        };
+
+        ds.unshift(phieuMoi);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.PHIEU_THU_CHI || 'quanmoc_phieu_thu_chi', JSON.stringify(ds));
+
+        this.ghiNhatKy(
+            `Tạo phiếu ${loai === 'THU' ? 'thu' : 'chi'} tiền mặt`,
+            loai === 'CHI' ? 'WARN' : 'INFO',
+            `Mã ${maPhieu}: ${phieuMoi.soTien.toLocaleString('vi-VN')}đ. Lý do: ${phieuMoi.lyDo}`
+        );
+
+        return {
+            ok: true,
+            data: phieuMoi,
+            msg: `Tạo phiếu ${loai === 'THU' ? 'thu' : 'chi'} [${maPhieu}] thành công!`
+        };
+    }
+
+    /**
+     * US-119: Lấy danh sách phiếu thu chi trong ca
+     */
+    async layDanhSachPhieuThuChi(caId = null) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.PHIEU_THU_CHI || 'quanmoc_phieu_thu_chi');
+        let ds = raw ? JSON.parse(raw) : [];
+        if (caId) {
+            ds = ds.filter(p => Number(p.caId) === Number(caId));
+        }
+        return ds;
+    }
+
+    /**
+     * US-120: Tự động tổng hợp số liệu doanh thu và tiền mặt trong ca
+     */
+    async tinhTongKetCa(caId = null) {
+        const ca = await this.layCaHienTai();
+        const tienDauCa = ca ? Number(ca.tienDauCa || 0) : 0;
+
+        // Lấy các phiếu thu chi của ca
+        const dsPhieu = await this.layDanhSachPhieuThuChi(ca ? ca.id : null);
+        let tongThuPhatSinh = 0;
+        let tongChiPhatSinh = 0;
+        dsPhieu.forEach(p => {
+            if (p.loai === 'THU') tongThuPhatSinh += Number(p.soTien || 0);
+            else if (p.loai === 'CHI') tongChiPhatSinh += Number(p.soTien || 0);
+        });
+
+        // Lấy các hóa đơn phát sinh trong ngày
+        const dsHoaDon = await this.layDanhSachHoaDon();
+        let doanhThuTienMat = 0;
+        let doanhThuChuyenKhoan = 0;
+        let soHoaDon = 0;
+
+        dsHoaDon.forEach(hd => {
+            if (hd.phuongThuc === 'TIEN_MAT') {
+                doanhThuTienMat += Number(hd.tongThanhToan || 0);
+            } else {
+                doanhThuChuyenKhoan += Number(hd.tongThanhToan || 0);
+            }
+            soHoaDon++;
+        });
+
+        const tongDoanhThu = doanhThuTienMat + doanhThuChuyenKhoan;
+        const tienMatLyThuyet = tienDauCa + doanhThuTienMat + tongThuPhatSinh - tongChiPhatSinh;
+
+        return {
+            ca,
+            tienDauCa,
+            tongDoanhThu,
+            doanhThuTienMat,
+            doanhThuChuyenKhoan,
+            tongThuPhatSinh,
+            tongChiPhatSinh,
+            tienMatLyThuyet,
+            soHoaDon,
+            dsPhieu
+        };
+    }
+
+    /**
+     * US-121: Thu ngân đóng ca, kiểm đếm thực tế và đối soát chênh lệch
+     */
+    async dongCaLamViec({ tienMatThucTe, chiTietKiemDem, ghiChu, thuNganDongTen }) {
+        const ca = await this.layCaHienTai();
+        if (!ca) {
+            return { ok: false, msg: 'Hiện không có ca làm việc nào đang mở để đóng!' };
+        }
+
+        const tongKet = await this.tinhTongKetCa(ca.id);
+        const thucTe = Number(tienMatThucTe || 0);
+        const lyThuyet = tongKet.tienMatLyThuyet;
+        const chenhLech = thucTe - lyThuyet;
+
+        let trangThaiChenhLech = 'KHOP_CHUAN';
+        if (chenhLech > 0) trangThaiChenhLech = 'THUA_QUY';
+        else if (chenhLech < 0) trangThaiChenhLech = 'THIEU_QUY';
+
+        const id = Date.now();
+        const ngay = new Date().toISOString().slice(0, 10);
+        const maBienBan = `Z-${ngay.replace(/-/g, '')}-${String(Math.floor(Math.random()*90)+10)}`;
+        const thoiGianDong = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+        const bienBanKetCa = {
+            id,
+            maBienBan,
+            caId: ca.caId,
+            tenCa: ca.tenCa,
+            ngay,
+            thuNganMo: ca.thuNganTen,
+            thuNganDong: thuNganDongTen || ca.thuNganTen,
+            thoiGianMo: ca.thoiGianMo,
+            thoiGianDong,
+            tienDauCa: ca.tienDauCa,
+            tongDoanhThu: tongKet.tongDoanhThu,
+            doanhThuTienMat: tongKet.doanhThuTienMat,
+            doanhThuChuyenKhoan: tongKet.doanhThuChuyenKhoan,
+            tongThuPhatSinh: tongKet.tongThuPhatSinh,
+            tongChiPhatSinh: tongKet.tongChiPhatSinh,
+            tienMatLyThuyet: lyThuyet,
+            tienMatThucTe: thucTe,
+            chenhLech,
+            trangThaiChenhLech,
+            soHoaDon: tongKet.soHoaDon,
+            chiTietKiemDem: chiTietKiemDem || null,
+            ghiChu: ghiChu || ''
+        };
+
+        // Lưu vào lịch sử kết ca
+        const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
+        const dsLs = rawLs ? JSON.parse(rawLs) : [];
+        dsLs.unshift(bienBanKetCa);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca', JSON.stringify(dsLs));
+
+        // Xóa ca hiện tại (đã đóng thành công)
+        localStorage.removeItem(window.HANG_SO?.KHOA_LUU_TRU?.CA_HIEN_TAI || 'quanmoc_ca_hien_tai');
+
+        this.ghiNhatKy(
+            `Kết ca làm việc (${bienBanKetCa.tenCa})`,
+            chenhLech !== 0 ? 'WARN' : 'INFO',
+            `Biên bản [${maBienBan}]: Doanh thu ${bienBanKetCa.tongDoanhThu.toLocaleString('vi-VN')}đ. Chênh lệch két: ${chenhLech.toLocaleString('vi-VN')}đ (${trangThaiChenhLech})`
+        );
+
+        return {
+            ok: true,
+            data: bienBanKetCa,
+            msg: `Kết ca [${bienBanKetCa.tenCa}] thành công! Biên bản đối soát: ${maBienBan}`
+        };
+    }
+
+    /**
+     * US-122: Quản lý xem toàn bộ lịch sử biên bản kết ca
+     */
+    async layLichSuKetCa() {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
+        return raw ? JSON.parse(raw) : [];
+    }
+
+    // =========================================================================
+    // PHẦN 5: BỘ API BÁO CÁO DOANH THU, DASHBOARD & HÓA ĐƠN (US-123 -> US-134)
+    // =========================================================================
+
+    /**
+     * US-131: Tra cứu danh sách toàn bộ hóa đơn đã thanh toán kèm bộ lọc
+     * ĐỒNG BỘ: Tự động tổng hợp từ cả hóa đơn hệ thống và lịch sử hóa đơn POS của Quân ('quanmoc_pos_lich_su_hoa_don')
+     */
+    async layDanhSachHoaDon(boLoc = {}) {
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don');
+        let ds = raw ? JSON.parse(raw) : [];
+
+        // ĐỒNG BỘ: Đọc thêm hóa đơn từ POS thu ngân của Quân ('quanmoc_pos_lich_su_hoa_don')
+        const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
+        if (rawPos) {
+            try {
+                const dsPos = JSON.parse(rawPos);
+                if (Array.isArray(dsPos)) {
+                    dsPos.forEach(hdPos => {
+                        if (!ds.some(h => h.maHoaDon === hdPos.maHoaDon)) {
+                            ds.push({
+                                id: hdPos.id || hdPos.maHoaDon,
+                                maHoaDon: hdPos.maHoaDon,
+                                banSo: hdPos.soBan,
+                                soBan: hdPos.soBan,
+                                thoiGianThanhToan: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
+                                thoiGian: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
+                                tamTinh: hdPos.tongTienMon || hdPos.tamTinh || hdPos.tongThanhToan,
+                                giamGia: hdPos.giamGia || 0,
+                                vat: hdPos.vat || 0,
+                                tongThanhToan: hdPos.tongThanhToan || hdPos.tongTien,
+                                tongTien: hdPos.tongThanhToan || hdPos.tongTien,
+                                phuongThuc: hdPos.phuongThuc || 'TIEN_MAT',
+                                thuNganTen: hdPos.thuNgan || 'Quân (Thu ngân POS)',
+                                thuNgan: hdPos.thuNgan || 'Quân (Thu ngân POS)',
+                                danhSachMon: hdPos.danhSachMon || []
+                            });
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ hóa đơn POS sang Báo cáo:', e);
+            }
+        }
+
+        // Sắp xếp giảm dần theo thời gian thanh toán
+        ds.sort((a, b) => new Date(b.thoiGianThanhToan || b.thoiGian || 0) - new Date(a.thoiGianThanhToan || a.thoiGian || 0));
+
+        // Lọc theo từ khóa (Mã HĐ hoặc Số bàn)
+        if (boLoc.tuKhoa) {
+            const kw = boLoc.tuKhoa.toLowerCase().trim();
+            ds = ds.filter(hd => 
+                (hd.maHoaDon && hd.maHoaDon.toLowerCase().includes(kw)) ||
+                (hd.soBan && hd.soBan.toLowerCase().includes(kw)) ||
+                (hd.thuNganTen && hd.thuNganTen.toLowerCase().includes(kw))
+            );
+        }
+
+        // Lọc theo phương thức thanh toán
+        if (boLoc.phuongThuc && boLoc.phuongThuc !== 'TAT_CA') {
+            ds = ds.filter(hd => hd.phuongThuc === boLoc.phuongThuc);
+        }
+
+        // Lọc theo ngày bắt đầu / kết thúc
+        if (boLoc.tuNgay) {
+            ds = ds.filter(hd => hd.thoiGianThanhToan >= boLoc.tuNgay);
+        }
+        if (boLoc.denNgay) {
+            ds = ds.filter(hd => hd.thoiGianThanhToan <= boLoc.denNgay + ' 23:59:59');
+        }
+
+        return ds;
+    }
+
+    /**
+     * US-132: Xem chi tiết hóa đơn cũ
+     */
+    async layChiTietHoaDon(id) {
+        const ds = await this.layDanhSachHoaDon();
+        const hd = ds.find(h => Number(h.id) === Number(id) || h.maHoaDon === id);
+        if (!hd) return { ok: false, msg: 'Không tìm thấy hóa đơn!' };
+        return { ok: true, data: hd };
+    }
+
+    /**
+     * US-123 & US-124 & US-125: Thống kê số liệu Dashboard tổng quan trong ngày & chuỗi thời gian
+     */
+    async layThongKeDoanhThu(ky = 'HOM_NAY') {
+        const ds = await this.layDanhSachHoaDon();
+        
+        let tongDoanhThu = 0;
+        let tongTienMat = 0;
+        let tongChuyenKhoan = 0;
+        let tongMonPhucVu = 0;
+        let tongKhach = 0;
+        let soHoaDon = ds.length;
+
+        ds.forEach(hd => {
+            const tien = Number(hd.tongThanhToan || 0);
+            tongDoanhThu += tien;
+            if (hd.phuongThuc === 'TIEN_MAT') tongTienMat += tien;
+            else tongChuyenKhoan += tien;
+
+            tongKhach += Number(hd.soKhach || 2);
+            (hd.danhSachMon || []).forEach(m => {
+                tongMonPhucVu += Number(m.soLuong || 1);
+            });
+        });
+
+        const giaTriTrungBinhDon = soHoaDon > 0 ? Math.round(tongDoanhThu / soHoaDon) : 0;
+
+        // Chuỗi dữ liệu biểu đồ doanh thu theo 7 ngày gần nhất
+        const bieuDo7Ngay = [
+            { ngay: '27/10', doanhThu: 8200000, don: 14 },
+            { ngay: '28/10', doanhThu: 9450000, don: 16 },
+            { ngay: '29/10', doanhThu: 7800000, don: 12 },
+            { ngay: '30/10', doanhThu: 11200000, don: 19 },
+            { ngay: '31/10', doanhThu: 13500000, don: 22 },
+            { ngay: '01/11', doanhThu: 17300000, don: 27 },
+            { ngay: 'Hôm nay', doanhThu: tongDoanhThu, don: soHoaDon }
+        ];
+
+        return {
+            tongDoanhThu,
+            soHoaDon,
+            giaTriTrungBinhDon,
+            tongKhach,
+            tongMonPhucVu,
+            tyTrongThanhToan: {
+                tienMat: tongTienMat,
+                chuyenKhoan: tongChuyenKhoan,
+                phanTramTienMat: tongDoanhThu > 0 ? Math.round((tongTienMat / tongDoanhThu) * 100) : 0,
+                phanTramChuyenKhoan: tongDoanhThu > 0 ? Math.round((tongChuyenKhoan / tongDoanhThu) * 100) : 0
+            },
+            bieuDo7Ngay
+        };
+    }
+
+    /**
+     * US-126: Thống kê doanh thu theo từng danh mục thực đơn
+     */
+    async layThongKeDoanhThuTheoDanhMuc() {
+        const ds = await this.layDanhSachHoaDon();
+        const mapDanhMuc = {};
+
+        ds.forEach(hd => {
+            (hd.danhSachMon || []).forEach(m => {
+                const tenDm = m.danhMucTen || 'Món khác';
+                if (!mapDanhMuc[tenDm]) mapDanhMuc[tenDm] = { ten: tenDm, doanhThu: 0, soLuong: 0 };
+                mapDanhMuc[tenDm].doanhThu += Number(m.thanhTien || 0);
+                mapDanhMuc[tenDm].soLuong += Number(m.soLuong || 1);
+            });
+        });
+
+        const ketQua = Object.values(mapDanhMuc).sort((a, b) => b.doanhThu - a.doanhThu);
+        const tongAll = ketQua.reduce((s, d) => s + d.doanhThu, 0);
+        ketQua.forEach(d => {
+            d.phanTram = tongAll > 0 ? Math.round((d.doanhThu / tongAll) * 100) : 0;
+        });
+        return ketQua;
+    }
+
+    /**
+     * US-127: Bảng xếp hạng Top món ăn bán chạy nhất
+     */
+    async layTopMonBanChay(gioiHan = 5) {
+        const ds = await this.layDanhSachHoaDon();
+        const mapMon = {};
+
+        ds.forEach(hd => {
+            (hd.danhSachMon || []).forEach(m => {
+                const key = m.monId || m.tenMon;
+                if (!mapMon[key]) {
+                    mapMon[key] = {
+                        monId: m.monId,
+                        tenMon: m.tenMon,
+                        danhMucTen: m.danhMucTen || '',
+                        soLuongBan: 0,
+                        tongTien: 0
+                    };
+                }
+                mapMon[key].soLuongBan += Number(m.soLuong || 1);
+                mapMon[key].tongTien += Number(m.thanhTien || 0);
+            });
+        });
+
+        return Object.values(mapMon)
+            .sort((a, b) => b.soLuongBan - a.soLuongBan)
+            .slice(0, gioiHan);
+    }
+
+    /**
+     * US-128: Thống kê các món ăn ít người gọi để tối ưu thực đơn
+     */
+    async layThongKeMonBanCham(gioiHan = 5) {
+        const dsMonThucDon = await this.layDanhSachMonAn();
+        const topBan = await this.layTopMonBanChay(100);
+        const mapDaBan = {};
+        topBan.forEach(m => { mapDaBan[m.tenMon] = m.soLuongBan; });
+
+        const dsCham = dsMonThucDon.map(m => ({
+            id: m.id,
+            tenMon: m.tenMon,
+            giaBan: m.giaBan,
+            soLuongBan: mapDaBan[m.tenMon] || 0,
+            deXuat: (mapDaBan[m.tenMon] || 0) === 0 ? 'Chưa phát sinh lượt gọi nào trong ngày' : 'Sản lượng thấp, nên xem xét combo ưu đãi'
+        })).sort((a, b) => a.soLuongBan - b.soLuongBan).slice(0, gioiHan);
+
+        return dsCham;
+    }
+
+    /**
+     * US-129: Thống kê khung giờ cao điểm (Peak Hours)
+     */
+    async layThongKeKhungGioCaoDiem() {
+        const ds = await this.layDanhSachHoaDon();
+        const khungGio = [
+            { gio: '09h - 11h', nhan: 'Buổi sáng', soDon: 0, doanhThu: 0 },
+            { gio: '11h - 14h', nhan: 'Trưa cao điểm', soDon: 0, doanhThu: 0, laCaoDiem: true },
+            { gio: '14h - 17h', nhan: 'Chiều xế', soDon: 0, doanhThu: 0 },
+            { gio: '17h - 21h', nhan: 'Tối cao điểm', soDon: 0, doanhThu: 0, laCaoDiem: true },
+            { gio: '21h - 23h', nhan: 'Đêm muộn', soDon: 0, doanhThu: 0 }
+        ];
+
+        ds.forEach(hd => {
+            const g = hd.gioThanhToanInt || 12;
+            const tien = Number(hd.tongThanhToan || 0);
+            if (g >= 9 && g < 11) { khungGio[0].soDon++; khungGio[0].doanhThu += tien; }
+            else if (g >= 11 && g < 14) { khungGio[1].soDon++; khungGio[1].doanhThu += tien; }
+            else if (g >= 14 && g < 17) { khungGio[2].soDon++; khungGio[2].doanhThu += tien; }
+            else if (g >= 17 && g < 21) { khungGio[3].soDon++; khungGio[3].doanhThu += tien; }
+            else { khungGio[4].soDon++; khungGio[4].doanhThu += tien; }
+        });
+
+        return khungGio;
+    }
+
+    /**
+     * US-130: Thống kê tỷ lệ đơn hủy / món hủy
+     */
+    async layThongKeHuyMon() {
+        const rawDon = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        const dsDon = rawDon ? JSON.parse(rawDon) : [];
+
+        let tongMon = 0;
+        let soMonHuy = 0;
+        let giaTriHuy = 0;
+        const lyDoHuyMap = {};
+
+        dsDon.forEach(d => {
+            (d.danhSachMon || []).forEach(m => {
+                tongMon += Number(m.soLuong || 1);
+                if (m.trangThai === 'DA_HUY' || m.trangThai === 'TU_CHOI') {
+                    soMonHuy += Number(m.soLuong || 1);
+                    giaTriHuy += Number(m.thanhTien || 0);
+                    const lyDo = m.lyDoHuy || m.lyDoTuChoi || 'Khác';
+                    lyDoHuyMap[lyDo] = (lyDoHuyMap[lyDo] || 0) + 1;
+                }
+            });
+        });
+
+        // ĐỒNG BỘ: Đọc thêm nhật ký hủy trả từ POS của Quân ('quanmoc_pos_nhat_ky_huy_tra')
+        const rawPosHuy = localStorage.getItem('quanmoc_pos_nhat_ky_huy_tra');
+        if (rawPosHuy) {
+            try {
+                const dsPosHuy = JSON.parse(rawPosHuy);
+                if (Array.isArray(dsPosHuy)) {
+                    dsPosHuy.forEach(h => {
+                        const sl = Number(h.soLuong || 1);
+                        soMonHuy += sl;
+                        giaTriHuy += Number(h.thanhTien || 0);
+                        const lyDo = h.lyDo || h.lyDoHuy || 'Hủy tại quầy POS';
+                        lyDoHuyMap[lyDo] = (lyDoHuyMap[lyDo] || 0) + sl;
+                    });
+                }
+            } catch (e) {
+                console.warn('Lỗi đồng bộ nhật ký hủy POS:', e);
+            }
+        }
+
+        // Bổ sung dữ liệu mẫu nếu chưa phát sinh món hủy
+        if (soMonHuy === 0) {
+            soMonHuy = 2;
+            giaTriHuy = 185000;
+            tongMon = 35;
+            lyDoHuyMap['Bếp hết nguyên liệu trong ngày'] = 1;
+            lyDoHuyMap['Khách đổi ý muốn đổi món khác'] = 1;
+        }
+
+        const tyLeHuy = tongMon > 0 ? ((soMonHuy / tongMon) * 100).toFixed(1) : 0;
+
+        return {
+            tongMon,
+            soMonHuy,
+            giaTriHuy,
+            tyLeHuy,
+            lyDoHuyList: Object.entries(lyDoHuyMap).map(([lyDo, sl]) => ({ lyDo, soLuong: sl }))
         };
     }
 }
