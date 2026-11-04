@@ -39,6 +39,8 @@ class UngDungFrontend {
         // Đọc URL hash nếu người dùng truy cập trực tiếp qua liên kết hoặc F5 (VD: #theo-doi-don, #bep-kds, #sprint2)
         const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
         const banDoTab = {
+            'so-do-ban-pos': 'posThuNgan',
+            'so-do-ban': 'posThuNgan',
             'theo-doi-don': 'theoDoiDonMon',
             'theodoidonmon': 'theoDoiDonMon',
             'sprint2': 'theoDoiDonMon',
