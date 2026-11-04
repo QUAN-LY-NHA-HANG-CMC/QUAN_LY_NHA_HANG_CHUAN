@@ -140,8 +140,8 @@ class QuanLyBanQrModule {
 
     veTheBan(ban) {
         const khuVuc = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
-        const tenKhuVuc = khuVuc ? khuVuc.ten : 'Chưa phân khu';
-        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+        const tokenBaoMat = ban.qrToken || ban.tokenBaoMat || '';
+        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, tokenBaoMat, ban.id);
         const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 120);
 
         const thongTinTrangThai = window.HANG_SO.TRANG_THAI_BAN[ban.trangThai] || window.HANG_SO.TRANG_THAI_BAN.TRONG;
@@ -213,7 +213,8 @@ class QuanLyBanQrModule {
 
         const khuVuc = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
         const tenKhuVuc = khuVuc ? khuVuc.ten : 'Quán Mộc';
-        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+        const tokenBaoMat = ban.qrToken || ban.tokenBaoMat || '';
+        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, tokenBaoMat, ban.id);
         const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 280);
 
         const modal = document.getElementById('khung-modal-toan-cuc');
@@ -251,14 +252,27 @@ class QuanLyBanQrModule {
                                 <span>📶 Wi-Fi: <strong>QuanMoc_KhachHang</strong></span> | 
                                 <span>Mật khẩu: <strong>quanmoc2026</strong></span>
                             </div>
-                            <div class="link-dinh-danh">${window.DinhDang.thoatHtml(urlQr)}</div>
+                            <div class="hop-link-qr" style="margin-top: 10px; padding: 10px 14px; background: rgba(0,0,0,0.04); border-radius: 8px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <a href="${urlQr}" target="_blank" rel="noopener noreferrer" style="color: #2563EB; text-decoration: underline; word-break: break-all; font-weight: 600;" title="Bấm vào để mở trực tiếp trang E-Menu gọi món">
+                                    🔗 ${window.DinhDang.thoatHtml(urlQr)}
+                                </a>
+                                <button type="button" class="nut nut-phu nut-nho" style="white-space: nowrap; font-size: 12px; padding: 4px 10px;" onclick="navigator.clipboard.writeText('${urlQr}'); if (window.thongBao) window.thongBao.thanhCong('Đã sao chép link gọi món!');">
+                                    📋 Sao chép
+                                </button>
+                            </div>
+                            <p style="font-size: 11px; color: var(--mau-chu-phu); margin-top: 6px; line-height: 1.4;">
+                                💡 <em>Điện thoại quét mã cần kết nối chung mạng Wi-Fi của quán để mở liên kết nội bộ.</em>
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="duoi-modal">
-                    <button class="nut" style="background: #10B981; color: #FFF;" onclick="window.quanLyBanQr.dongModal(); window.ungDung.chuyenTab('eMenuKhachHang'); window.thucDonQr.khoiTao(${ban.id}, '${ban.qrToken}')" title="Mô phỏng khách quét QR mở E-Menu bàn này">
-                        📱 Mở E-Menu Khách
+                <div class="duoi-modal" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                    <button class="nut" style="background: #10B981; color: #FFF; font-weight: 600;" onclick="window.open('${urlQr}', '_blank')" title="Mở trang E-Menu gọi món trên tab trình duyệt mới">
+                        🚀 Mở Link Trực Tiếp (Tab Mới)
+                    </button>
+                    <button class="nut nut-phu" onclick="window.quanLyBanQr.dongModal(); window.ungDung.chuyenTab('eMenuKhachHang'); window.thucDonQr.khoiTao(${ban.id}, '${tokenBaoMat}')" title="Mô phỏng khách quét QR mở E-Menu bàn này trong Admin">
+                        📱 Giả lập Giao diện Mobile
                     </button>
                     <button class="nut nut-canh-bao" onclick="window.quanLyBanQr.lamMoiTokenQr(${ban.id})" title="Tạo mã bảo mật mới ngăn khách cũ đặt từ xa">
                         🔄 Làm mới mã bảo mật (US-030)
@@ -321,7 +335,8 @@ class QuanLyBanQrModule {
                         ${banIn.map(ban => {
                             const kv = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
                             const tenKv = kv ? kv.ten : 'Quán Mộc';
-                            const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+                            const tokenBaoMat = ban.qrToken || ban.tokenBaoMat || '';
+                            const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, tokenBaoMat, ban.id);
                             const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 200);
 
                             return `

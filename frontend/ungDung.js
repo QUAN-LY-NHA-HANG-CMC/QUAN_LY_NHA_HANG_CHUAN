@@ -12,6 +12,15 @@ class UngDungFrontend {
     async khoiDong() {
         console.log('🚀 Khởi động Hệ thống Quản Lý Nhà Hàng & Gọi Món QR (Quán Mộc)');
 
+        // Tải thông tin mạng LAN & Cấu hình máy chủ
+        try {
+            const resHeThong = await fetch('/api/kiem-tra-he-thong').then(r => r.json());
+            if (resHeThong && resHeThong.lanIp) {
+                window.LAN_IP = resHeThong.lanIp;
+                localStorage.setItem('quanmoc_lan_ip', resHeThong.lanIp);
+            }
+        } catch (e) {}
+
         // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
         if (window.api && !window.api.layAccessToken()) {
             await window.api.dangNhap('quanly', '123456');
@@ -36,8 +45,12 @@ class UngDungFrontend {
             window.hoTroTaiBan.khoiTao(3);
         }
 
-        // Đọc URL hash nếu người dùng truy cập trực tiếp qua liên kết hoặc F5 (VD: #theo-doi-don, #bep-kds, #sprint2)
+        // Đọc URL path, search params và hash để xác định trang cần mở
+        const pathname = window.location.pathname.toLowerCase();
+        const searchParams = new URLSearchParams(window.location.search);
         const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+        const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+
         const banDoTab = {
             'so-do-ban-pos': 'posThuNgan',
             'so-do-ban': 'posThuNgan',
@@ -66,7 +79,16 @@ class UngDungFrontend {
             'doanh-thu': 'baoCao',
             'sprint4': 'baoCao'
         };
-        if (hash && banDoTab[hash]) {
+
+        const coBanParam = searchParams.has('ban') || searchParams.has('banId') || searchParams.has('maBan') ||
+                           hashParams.has('ban') || hashParams.has('banId') || hashParams.has('maBan');
+        const laDuongDanEMenu = pathname.includes('/e-menu') || pathname.includes('/menu') || 
+                                hash.startsWith('e-menu') || hash.startsWith('emenukhachhang');
+
+        if (laDuongDanEMenu || coBanParam) {
+            this.tabHienTai = 'eMenuKhachHang';
+            this.batCheDoKhachHang(true);
+        } else if (hash && banDoTab[hash]) {
             this.tabHienTai = banDoTab[hash];
         }
 
@@ -76,22 +98,45 @@ class UngDungFrontend {
         // Lắng nghe sự kiện hashchange để điều hướng mượt mà
         window.addEventListener('hashchange', () => {
             const h = (window.location.hash || '').replace('#', '').trim().toLowerCase();
-            if (h && banDoTab[h] && banDoTab[h] !== this.tabHienTai) {
-                this.chuyenTab(banDoTab[h]);
+            const tabName = h.includes('?') ? h.split('?')[0] : h;
+            if (tabName && banDoTab[tabName] && banDoTab[tabName] !== this.tabHienTai) {
+                this.chuyenTab(banDoTab[tabName]);
             }
         });
 
-        // Thông báo chào mừng
-        setTimeout(() => {
-            if (window.thongBao) {
-                const user = window.api ? window.api.layThongTinNguoiDung() : null;
-                const ten = user ? user.hoTen : 'Quản trị viên';
-                window.thongBao.thongTin(
-                    `Xin chào ${ten}!`,
-                    'Chào mừng bạn đến với Hệ thống Quản lý Nhà hàng & Gọi món QR Quán Mộc.'
-                );
-            }
-        }, 500);
+        // Thông báo chào mừng (chỉ hiển thị trong trang quản trị)
+        if (!this.laCheDoKhachHang()) {
+            setTimeout(() => {
+                if (window.thongBao) {
+                    const user = window.api ? window.api.layThongTinNguoiDung() : null;
+                    const ten = user ? user.hoTen : 'Quản trị viên';
+                    window.thongBao.thongTin(
+                        `Xin chào ${ten}!`,
+                        'Chào mừng bạn đến với Hệ thống Quản lý Nhà hàng & Gọi món QR Quán Mộc.'
+                    );
+                }
+            }, 500);
+        }
+    }
+
+    laCheDoKhachHang() {
+        return document.body.classList.contains('che-do-khach-hang');
+    }
+
+    batCheDoKhachHang(kichHoat = true) {
+        if (kichHoat) {
+            document.body.classList.add('che-do-khach-hang');
+        } else {
+            document.body.classList.remove('che-do-khach-hang');
+        }
+    }
+
+    thoatCheDoKhachHang() {
+        this.batCheDoKhachHang(false);
+        try {
+            history.replaceState(null, '', '/#ban-an');
+        } catch {}
+        this.chuyenTab('quanLyBanQr');
     }
 
     /**

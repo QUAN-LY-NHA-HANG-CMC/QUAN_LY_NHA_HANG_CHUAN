@@ -5916,3 +5916,91 @@ input:checked + .slider-round:before {
         box-shadow: none !important;
     }
 }
+
+/* =========================================================================
+   CHẾ ĐỘ WEB GỌI MÓN E-MENU CHO KHÁCH QUÉT MÃ QR (STANDALONE MOBILE CLIENT)
+   ========================================================================= */
+body.che-do-khach-hang {
+    background-color: #F3F4F6 !important;
+    overflow-x: hidden;
+}
+
+body.che-do-khach-hang .thanh-dieu-huong-doc,
+body.che-do-khach-hang .thanh-dau-trang {
+    display: none !important;
+}
+
+body.che-do-khach-hang .khung-ung-dung {
+    display: block !important;
+    min-height: 100vh;
+}
+
+body.che-do-khach-hang .vung-noi-dung-chinh {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh;
+}
+
+body.che-do-khach-hang .phan-than-chinh {
+    padding: 0 !important;
+    max-width: 100% !important;
+}
+
+body.che-do-khach-hang .khung-emenu-wrapper {
+    width: 100%;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 0;
+    gap: 0;
+}
+
+body.che-do-khach-hang .thanh-dieu-khien-emenu {
+    display: none !important;
+}
+
+body.che-do-khach-hang .khung-dien-thoai-ngoai.che-do-mobile-phone {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100vh;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    margin-bottom: 0;
+}
+
+body.che-do-khach-hang .man-hinh-dien-thoai {
+    border-radius: 0;
+    min-height: 100vh;
+    box-shadow: 0 0 24px rgba(0,0,0,0.06);
+}
+
+.chan-trang-emenu-khach {
+    padding: 24px 16px 48px;
+    text-align: center;
+    background: #F9FAFB;
+    border-top: 1px dashed var(--mau-vien);
+    margin-top: 24px;
+}
+
+.nut-ve-quan-tri {
+    background: #FFF;
+    border: 1px dashed var(--mau-vien);
+    color: var(--mau-chu-phu);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.nut-ve-quan-tri:hover {
+    background: #FFF7ED;
+    color: var(--mau-chinh);
+    border-color: var(--mau-chinh);
+}

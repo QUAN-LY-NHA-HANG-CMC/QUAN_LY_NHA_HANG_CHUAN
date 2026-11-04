@@ -2,25 +2,33 @@ const thucDonModel = require('./thucDon.model');
 const thucDonService = require('./thucDon.service');
 const danhMucModel = require('../danhMucMon/danhMucMon.model');
 const banAnModel = require('../banAn/banAn.model');
+const khuVucModel = require('../khuVuc/khuVuc.model');
 const cauHinhModel = require('../cauHinhNhaHang/cauHinh.model');
 const { phanHoiThanhCong, phanHoiLoi } = require('../../tienIch/dinhDangPhanHoi');
 
 // US-050: Lấy toàn bộ thông tin E-Menu khi khách quét mã QR
 async function layTrangChuEMenu(req, res, next) {
     try {
-        const { banId, token } = req.query;
+        const banParam = req.query.banId || req.query.ban || req.query.maBan;
+        const { token } = req.query;
 
-        if (!banId) {
-            return phanHoiLoi(res, 'Thiếu thông tin ID bàn', 400);
+        if (!banParam) {
+            return phanHoiLoi(res, 'Thiếu thông tin ID bàn hoặc mã bàn', 400);
         }
 
-        const ban = await banAnModel.layTheoId(banId);
+        let ban = null;
+        if (!isNaN(banParam)) {
+            ban = await banAnModel.layTheoId(Number(banParam));
+        }
+        if (!ban) {
+            ban = await banAnModel.layTheoMaBan(String(banParam));
+        }
         if (!ban) {
             return phanHoiLoi(res, 'Bàn ăn không tồn tại', 404);
         }
 
-        // Kiểm tra token bảo mật của bàn
-        if (token && ban.tokenBaoMat !== token) {
+        // Kiểm tra token bảo mật của bàn nếu có truyền token
+        if (token && ban.tokenBaoMat && ban.tokenBaoMat !== token && ban.qrToken && ban.qrToken !== token) {
             return phanHoiLoi(res, 'Mã QR bàn không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ nhân viên để lấy mã QR mới.', 403);
         }
 
@@ -48,11 +56,13 @@ async function layTrangChuEMenu(req, res, next) {
             nganHang: cauHinh.nganHang
         };
 
+        const khuVuc = await khuVucModel.layTheoId(ban.khuVucId);
         const thongTinBan = {
             banId: ban.id,
             maBan: ban.maBan,
             tenBan: ban.tenBan,
             khuVucId: ban.khuVucId,
+            tenKhuVuc: khuVuc ? khuVuc.ten : 'Tầng 1 - Sảnh chính',
             sucChua: ban.sucChua
         };
 

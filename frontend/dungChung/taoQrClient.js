@@ -442,11 +442,28 @@
             }
         },
 
-        taoDuongDanBanAn: function(maBan, token) {
+        taoDuongDanBanAn: function(maBan, token, banId) {
             var origin = (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') 
                 ? window.location.origin 
                 : 'http://localhost:3001';
-            return origin + '/e-menu?ban=' + encodeURIComponent(maBan) + '&token=' + encodeURIComponent(token);
+
+            // Nếu đang mở trên localhost nhưng máy chủ có IP mạng LAN (ví dụ 192.168.x.x hay 172.x.x.x)
+            // thì tự động sử dụng IP LAN để điện thoại cùng mạng Wi-Fi quét mã QR là mở được trang gọi món ngay!
+            if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+                var lanIp = window.LAN_IP || (typeof localStorage !== 'undefined' ? localStorage.getItem('quanmoc_lan_ip') : null);
+                if (lanIp && lanIp !== 'localhost' && lanIp !== '127.0.0.1') {
+                    origin = window.location.protocol + '//' + lanIp + ':' + (window.location.port || '3001');
+                }
+            }
+
+            var thamSo = 'ban=' + encodeURIComponent(maBan || 'B101');
+            if (banId) {
+                thamSo += '&banId=' + encodeURIComponent(banId);
+            }
+            if (token) {
+                thamSo += '&token=' + encodeURIComponent(token);
+            }
+            return origin + '/e-menu?' + thamSo;
         },
 
         taiAnhVeMay: function(urlAnh, tenTep) {

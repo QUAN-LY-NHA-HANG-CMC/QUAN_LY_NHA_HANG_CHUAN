@@ -56,7 +56,10 @@ ungDung.get(['/api/kiem-tra-he-thong', '/api/kiem-tra-suc-khoe'], (req, res) => 
         thoiGian: new Date().toISOString(),
         duAn: 'Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM)',
         tacGia: 'Minh - Backend API',
-        sprint: 'Sprint 2 (E-Menu QR, Giỏ hàng & Hỗ trợ)'
+        sprint: 'Sprint 2 (E-Menu QR, Giỏ hàng & Hỗ trợ)',
+        lanIp: cauHinhChung.lanIp,
+        congBackend: cauHinhChung.congBackend,
+        qrBaseUrl: cauHinhChung.qrBaseUrl
     });
 });
 
@@ -141,6 +144,19 @@ ungDung.use('/api/thanh-toan', thanhToanModule.router);
 ungDung.use('/api/danh-gia', danhGiaModule.router);
 ungDung.use('/api/ca-lam-viec', caLamViecModule.router);
 ungDung.use('/api/bao-cao', baoCaoModule.router);
+
+// Phục vụ giao diện E-Menu Gọi món QR & Single Page Application (SPA)
+ungDung.get(['/e-menu', '/e-menu/*', '/menu', '/menu/*', '/theo-doi-don', '/bep-kds', '/pos'], (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
+// Fallback phục vụ Single Page Application cho các yêu cầu GET không phải API
+ungDung.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/tepTaiLen')) {
+        return next();
+    }
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
 
 // Xử lý tuyến đường không tồn tại (404)
 ungDung.use((req, res) => {

@@ -56,25 +56,27 @@ class ThucDonQrManager {
             return;
         }
 
-        // Đọc từ URL query string (?banId=1&token=...)
+        // Đọc từ URL query string (?banId=1&token=... hoặc ?ban=B101&token=...)
         const urlParams = new URLSearchParams(window.location.search);
-        const banIdUrl = urlParams.get('banId') || urlParams.get('ban');
+        const banIdUrl = urlParams.get('banId') || urlParams.get('ban') || urlParams.get('maBan');
         const tokenUrl = urlParams.get('token');
 
         // Hoặc đọc từ URL Hash (#e-menu?banId=1&token=...)
         let banIdHash = null, tokenHash = null;
         if (window.location.hash.includes('?')) {
             const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-            banIdHash = hashParams.get('banId') || hashParams.get('ban');
+            banIdHash = hashParams.get('banId') || hashParams.get('ban') || hashParams.get('maBan');
             tokenHash = hashParams.get('token');
         }
 
         this.banId = banIdUrl || banIdHash || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
-        this.token = tokenUrl || tokenHash || localStorage.getItem('quanmoc_token_hien_tai') || 'a405d1729525dfb8e91350df4e32b0da';
+        this.token = tokenUrl || tokenHash || localStorage.getItem('quanmoc_token_hien_tai') || '';
 
         // Lưu phiên bàn (US-049)
         localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
-        localStorage.setItem('quanmoc_token_hien_tai', this.token);
+        if (this.token) {
+            localStorage.setItem('quanmoc_token_hien_tai', this.token);
+        }
     }
 
     /**
@@ -89,6 +91,11 @@ class ThucDonQrManager {
                 this.thongTinBan = res.data.thongTinBan;
                 this.dsDanhMuc = res.data.danhMuc || [];
                 this.dsMonBanChay = res.data.monBanChay || [];
+
+                if (this.thongTinBan) {
+                    this.banId = this.thongTinBan.banId || this.thongTinBan.id || this.banId;
+                    localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
+                }
 
                 // Đồng bộ bàn với Giỏ hàng
                 if (window.gioHangManager) {
@@ -236,12 +243,22 @@ class ThucDonQrManager {
                             ${this.taoDanhSachMonAnHtml()}
                         </div>
 
-                        <!-- 5. Nút Hỗ Trợ Tại Bàn Nổi (US-071 -> US-073) -->
+                        <!-- 5. Chân trang E-Menu cho khách -->
+                        <div class="chan-trang-emenu-khach">
+                            <p style="font-size: 13px; color: var(--mau-chu-phu); margin-bottom: 8px;">
+                                🍽️ Chúc quý khách một bữa ăn ngon miệng tại <strong>${window.DinhDang.thoatHtml(quan.tenQuan)}</strong>!
+                            </p>
+                            <button type="button" class="nut-ve-quan-tri" onclick="window.ungDung.thoatCheDoKhachHang()">
+                                👨‍💼 Nhân viên / Quản lý: Đăng nhập quản trị
+                            </button>
+                        </div>
+
+                        <!-- 6. Nút Hỗ Trợ Tại Bàn Nổi (US-071 -> US-073) -->
                         <div class="nut-ho-tro-noi-emenu" onclick="window.thucDonQr.moModalYeuCauHoTro()">
                             <span>🔔 Gọi phục vụ / Tính tiền</span>
                         </div>
 
-                        <!-- 6. Floating Cart Bar Nổi (US-058) -->
+                        <!-- 7. Floating Cart Bar Nổi (US-058) -->
                         <div id="vung-floating-cart"></div>
 
                     </div>

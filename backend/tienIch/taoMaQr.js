@@ -3,11 +3,12 @@ const QRCode = require('qrcode');
 const cauHinhChung = require('../cauHinh/cauHinhChung');
 
 function taoTokenBaoMatQr() {
-    return crypto.randomBytes(16).toString('hex');
+    return 'tok_' + crypto.randomBytes(8).toString('hex');
 }
 
-function taoDuongDanQrBan(banId, tokenBaoMat) {
-    return `${cauHinhChung.qrBaseUrl}?banId=${banId}&token=${tokenBaoMat}`;
+function taoDuongDanQrBan(banId, tokenBaoMat, maBan) {
+    const ma = maBan || `B${banId}`;
+    return `${cauHinhChung.qrBaseUrl}?ban=${encodeURIComponent(ma)}&banId=${banId}&token=${tokenBaoMat}`;
 }
 
 async function taoAnhQrDataUrl(duongDan) {

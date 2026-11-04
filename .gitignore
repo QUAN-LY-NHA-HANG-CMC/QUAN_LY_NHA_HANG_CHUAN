@@ -11,3 +11,5 @@ tepTaiLen/*
 .DS_Store
 .idea/
 .vscode/
+test-results/
+playwright-report/

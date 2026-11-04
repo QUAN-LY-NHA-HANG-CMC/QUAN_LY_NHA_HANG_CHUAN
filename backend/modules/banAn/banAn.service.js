@@ -7,7 +7,7 @@ async function layDanhSachBanAn(boLoc) {
     // Bổ sung thông tin URL mã QR cho từng bàn
     return danhSach.map(ban => ({
         ...ban,
-        duongDanQr: taoDuongDanQrBan(ban.id, ban.tokenBaoMat)
+        duongDanQr: taoDuongDanQrBan(ban.id, ban.tokenBaoMat, ban.maBan)
     }));
 }
 
@@ -18,7 +18,7 @@ async function layChiTietBanAn(id) {
         loi.status = 404;
         throw loi;
     }
-    const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat);
+    const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat, ban.maBan);
     return {
         ...ban,
         duongDanQr
@@ -41,7 +41,7 @@ async function taoBanAn(duLieu) {
     }
 
     const banMoi = await banAnModel.taoMoi(duLieu);
-    const duongDanQr = taoDuongDanQrBan(banMoi.id, banMoi.tokenBaoMat);
+    const duongDanQr = taoDuongDanQrBan(banMoi.id, banMoi.tokenBaoMat, banMoi.maBan);
     const anhQr = await taoAnhQrDataUrl(duongDanQr);
 
     return {
@@ -88,7 +88,7 @@ async function xoaBanAn(id) {
 
 async function layMaQrBanAn(id) {
     const ban = await layChiTietBanAn(id);
-    const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat);
+    const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat, ban.maBan);
     const anhQr = await taoAnhQrDataUrl(duongDanQr);
 
     return {
@@ -104,7 +104,7 @@ async function lamMoiTokenQr(id) {
     await layChiTietBanAn(id);
     const tokenMoi = taoTokenBaoMatQr();
     const banCapNhat = await banAnModel.lamMoiToken(id, tokenMoi);
-    const duongDanQr = taoDuongDanQrBan(banCapNhat.id, banCapNhat.tokenBaoMat);
+    const duongDanQr = taoDuongDanQrBan(banCapNhat.id, banCapNhat.tokenBaoMat, banCapNhat.maBan);
     const anhQr = await taoAnhQrDataUrl(duongDanQr);
 
     return {
@@ -118,7 +118,7 @@ async function layQrTatCaBanTheoKhuVuc(khuVucId) {
     const danhSach = await banAnModel.layTatCa({ khuVucId });
     const ketQua = await Promise.all(
         danhSach.map(async (ban) => {
-            const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat);
+            const duongDanQr = taoDuongDanQrBan(ban.id, ban.tokenBaoMat, ban.maBan);
             const anhQr = await taoAnhQrDataUrl(duongDanQr);
             return {
                 id: ban.id,

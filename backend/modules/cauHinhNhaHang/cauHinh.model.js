@@ -20,7 +20,16 @@ let cauHinhNhaHang = {
 };
 
 async function layCauHinh() {
-    return { ...cauHinhNhaHang };
+    let cauHinhChung = {};
+    try {
+        cauHinhChung = require('../../cauHinh/cauHinhChung');
+    } catch {}
+    return {
+        ...cauHinhNhaHang,
+        lanIp: cauHinhChung.lanIp || 'localhost',
+        congBackend: cauHinhChung.congBackend || 3001,
+        qrBaseUrl: cauHinhChung.qrBaseUrl || 'http://localhost:3001/e-menu'
+    };
 }
 
 async function capNhatCauHinh(duLieuMoi) {
