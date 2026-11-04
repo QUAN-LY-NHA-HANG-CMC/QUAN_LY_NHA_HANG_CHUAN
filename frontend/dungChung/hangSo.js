@@ -5,8 +5,10 @@
  */
 
 const HANG_SO = {
-    // Cấu hình máy chủ API
-    API_BASE_URL: 'http://localhost:3001/api',
+    // Cấu hình máy chủ API (tự động thích ứng với localhost hoặc IP mạng LAN của máy chủ)
+    API_BASE_URL: (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null' && !window.location.protocol.startsWith('file'))
+        ? `${window.location.origin}/api`
+        : 'http://localhost:3001/api',
     
     // Khóa lưu trữ LocalStorage
     KHOA_LUU_TRU: {

@@ -140,6 +140,7 @@ class QuanLyBanQrModule {
 
     veTheBan(ban) {
         const khuVuc = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
+        const tenKhuVuc = khuVuc ? khuVuc.ten : (ban.khuVucTen || 'Chưa phân khu');
         const tokenBaoMat = ban.qrToken || ban.tokenBaoMat || '';
         const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, tokenBaoMat, ban.id);
         const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 120);
