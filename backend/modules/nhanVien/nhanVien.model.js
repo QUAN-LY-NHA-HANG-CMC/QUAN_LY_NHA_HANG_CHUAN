@@ -153,6 +153,42 @@ async function datLaiMatKhau(id, matKhauMoiDaBam) {
     return true;
 }
 
+async function dongBoDanhSach(danhSachMoi) {
+    if (!Array.isArray(danhSachMoi)) return danhSachNhanVien;
+    const vaiTroMap = {
+        'QUAN_LY': 'QuanLy',
+        'THU_NGAN': 'ThuNgan',
+        'BEP': 'Bep',
+        'PHUC_VU': 'PhucVu',
+        'QuanLy': 'QuanLy',
+        'ThuNgan': 'ThuNgan',
+        'Bep': 'Bep',
+        'PhucVu': 'PhucVu'
+    };
+    const trangThaiMap = {
+        'DANG_LAM_VIEC': 'HoatDong',
+        'DA_KHOA': 'Khoa',
+        'HoatDong': 'HoatDong',
+        'Khoa': 'Khoa',
+        'DaXoa': 'DaXoa'
+    };
+
+    danhSachNhanVien = danhSachMoi.map((n, idx) => ({
+        id: Number(n.id) || (idx + 1),
+        tenDangNhap: (n.tenDangNhap || `nv${idx + 1}`).toLowerCase().trim(),
+        matKhau: n.matKhau || '$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe',
+        hoTen: (n.hoTen || n.tenDangNhap || `Nhân viên ${n.id}`).trim(),
+        soDienThoai: (n.soDienThoai || '').trim(),
+        email: (n.email || `${n.tenDangNhap}@quanmoc.com`).trim(),
+        vaiTro: vaiTroMap[n.vaiTro] || 'PhucVu',
+        trangThai: trangThaiMap[n.trangThai] || 'HoatDong',
+        ngayTao: n.ngayTao ? new Date(n.ngayTao) : new Date(),
+        ngayCapNhat: new Date()
+    }));
+    tuTangId = Math.max(...danhSachNhanVien.map(n => n.id || 0), 0) + 1;
+    return danhSachNhanVien;
+}
+
 module.exports = {
     layDanhSach,
     layTheoId,
@@ -161,5 +197,6 @@ module.exports = {
     taoMoi,
     capNhat,
     doiTrangThai,
-    datLaiMatKhau
+    datLaiMatKhau,
+    dongBoDanhSach
 };

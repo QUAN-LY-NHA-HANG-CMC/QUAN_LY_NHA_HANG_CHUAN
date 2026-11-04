@@ -88,11 +88,23 @@ async function datLaiMatKhau(req, res, next) {
     }
 }
 
+async function dongBo(req, res, next) {
+    try {
+        const { danhSach } = req.body;
+        const nhanVienModel = require('./nhanVien.model');
+        const dsMoi = await nhanVienModel.dongBoDanhSach(Array.isArray(danhSach) ? danhSach : (Array.isArray(req.body) ? req.body : []));
+        return phanHoiThanhCong(res, dsMoi, 'Đồng bộ danh sách nhân viên thành công');
+    } catch (loi) {
+        next(loi);
+    }
+}
+
 module.exports = {
     layDanhSach,
     layChiTiet,
     taoMoi,
     capNhat,
     doiTrangThai,
-    datLaiMatKhau
+    datLaiMatKhau,
+    dongBo
 };

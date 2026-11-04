@@ -912,35 +912,62 @@ class ApiService {
     // API KHU VỰC & BÀN ĂN (US-023 -> US-030)
     // =========================================================================
     async layDanhSachKhuVuc() {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc';
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        let list = [];
+        try {
+            list = data ? JSON.parse(data) : [];
+        } catch {
+            list = [];
+        }
+        if (Array.isArray(list) && list.length > 0) {
+            // Đồng bộ ngầm với Backend nếu máy chủ đang chạy
+            this.yeuCau('/khu-vuc/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
+            return list;
+        }
+
         const kq = await this.yeuCau('/khu-vuc');
         if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
-            return kq.data.map(kv => ({
+            const parsed = kq.data.map(kv => ({
                 ...kv,
                 ten: kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`,
                 tenKhuVuc: kv.tenKhuVuc || kv.ten || `Khu vực ${kv.id}`
             }));
+            localStorage.setItem(key, JSON.stringify(parsed));
+            return parsed;
         }
-
-        // Fallback LocalStorage
-        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc');
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc');
-        }
-        try {
-            const arr = data ? JSON.parse(data) : [];
-            return Array.isArray(arr) ? arr : [];
-        } catch {
-            return [];
-        }
+        return [];
     }
 
     async luuDanhSachKhuVuc(ds) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc', JSON.stringify(ds));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc';
+        localStorage.setItem(key, JSON.stringify(ds));
+        this.yeuCau('/khu-vuc/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật khu vực bàn', 'INFO', `Cập nhật danh sách khu vực phục vụ (${ds.length} khu vực).`);
     }
 
     async layDanhSachBan() {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban';
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        let list = [];
+        try {
+            list = data ? JSON.parse(data) : [];
+        } catch {
+            list = [];
+        }
+        if (Array.isArray(list) && list.length > 0) {
+            this.yeuCau('/ban-an/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
+            return list;
+        }
+
         const kq = await this.yeuCau('/ban-an');
         if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
             const trangThaiMap = {
@@ -953,7 +980,7 @@ class ApiService {
                 'ChoThanhToan': 'CHO_THANH_TOAN',
                 'CHO_THANH_TOAN': 'CHO_THANH_TOAN'
             };
-            return kq.data.map(b => ({
+            const parsed = kq.data.map(b => ({
                 ...b,
                 soBan: b.soBan || b.tenBan || `Bàn ${b.id}`,
                 tenBan: b.tenBan || b.soBan || `Bàn ${b.id}`,
@@ -961,20 +988,10 @@ class ApiService {
                 trangThai: trangThaiMap[b.trangThai] || b.trangThai || 'TRONG',
                 sucChua: b.sucChua || 4
             }));
+            localStorage.setItem(key, JSON.stringify(parsed));
+            return parsed;
         }
-
-        // Fallback LocalStorage
-        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban');
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban');
-        }
-        try {
-            const arr = data ? JSON.parse(data) : [];
-            return Array.isArray(arr) ? arr : [];
-        } catch {
-            return [];
-        }
+        return [];
     }
 
     async layDanhSachBanAn() {
@@ -982,7 +999,9 @@ class ApiService {
     }
 
     async luuDanhSachBan(ds) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban', JSON.stringify(ds));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban';
+        localStorage.setItem(key, JSON.stringify(ds));
+        this.yeuCau('/ban-an/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật sơ đồ bàn', 'INFO', `Cập nhật sơ đồ bàn ăn (${ds.length} bàn).`);
     }
 
@@ -990,25 +1009,62 @@ class ApiService {
     // API DANH MỤC & THỰC ĐƠN (US-031 -> US-040)
     // =========================================================================
     async layDanhSachDanhMuc() {
-        const kq = await this.yeuCau('/danh-muc');
-        if (kq && kq.ok && Array.isArray(kq.data)) return kq.data;
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc';
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        let list = [];
+        try {
+            list = data ? JSON.parse(data) : [];
+        } catch {
+            list = [];
+        }
+        if (Array.isArray(list) && list.length > 0) {
+            this.yeuCau('/danh-muc-mon/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
+            return list;
+        }
 
-        // Fallback LocalStorage
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc');
-        return data ? JSON.parse(data) : [];
+        const kq = await this.yeuCau('/danh-muc');
+        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+            localStorage.setItem(key, JSON.stringify(kq.data));
+            return kq.data;
+        }
+        return [];
     }
 
     async luuDanhSachDanhMuc(ds) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc', JSON.stringify(ds));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc';
+        localStorage.setItem(key, JSON.stringify(ds));
+        this.yeuCau('/danh-muc-mon/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật danh mục thực đơn', 'INFO', `Cập nhật danh mục thực đơn (${ds.length} danh mục).`);
     }
 
     async layDanhSachMonAn() {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an';
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        let list = [];
+        try {
+            list = data ? JSON.parse(data) : [];
+        } catch {
+            list = [];
+        }
+        if (Array.isArray(list) && list.length > 0) {
+            // Luôn đồng bộ danh sách món ăn từ LocalStorage sang Backend để E-Menu / Mobile thấy được các sửa đổi
+            this.yeuCau('/thuc-don/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
+            return list;
+        }
+
         const kq = await this.yeuCau('/thuc-don');
         if (kq && kq.ok) {
             const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || null);
             if (rawList && rawList.length > 0) {
-                return rawList.map(m => ({
+                const parsed = rawList.map(m => ({
                     ...m,
                     maMon: m.maMon || `MON-${m.id}`,
                     trangThai: m.trangThai === 'HoatDong' ? 1 : (m.trangThai === 'TamHet' ? 0 : (typeof m.trangThai === 'number' ? m.trangThai : 1)),
@@ -1016,25 +1072,18 @@ class ApiService {
                     tuyChonSize: m.tuyChonSize || [],
                     tuyChonTopping: m.tuyChonTopping || []
                 }));
+                localStorage.setItem(key, JSON.stringify(parsed));
+                return parsed;
             }
         }
-
-        // Fallback LocalStorage
-        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
-        }
-        try {
-            const arr = data ? JSON.parse(data) : [];
-            return Array.isArray(arr) ? arr : [];
-        } catch {
-            return [];
-        }
+        return [];
     }
 
     async luuDanhSachMonAn(ds) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an', JSON.stringify(ds));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an';
+        localStorage.setItem(key, JSON.stringify(ds));
+        // Đẩy đồng bộ ngay lập tức sang Backend API
+        this.yeuCau('/thuc-don/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật món ăn thực đơn', 'INFO', `Cập nhật danh sách món ăn (${ds.length} món).`);
     }
 
@@ -1183,6 +1232,23 @@ class ApiService {
     // =========================================================================
 
     async layDanhSachNhanVien() {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien';
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        let list = [];
+        try {
+            list = data ? JSON.parse(data) : [];
+        } catch {
+            list = [];
+        }
+        if (Array.isArray(list) && list.length > 0) {
+            this.yeuCau('/nhan-vien/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
+            return list;
+        }
+
         const kq = await this.yeuCau('/nhan-vien');
         if (kq && kq.ok) {
             const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
@@ -1203,30 +1269,23 @@ class ApiService {
                     'Khoa': 'DA_KHOA',
                     'DA_KHOA': 'DA_KHOA'
                 };
-                return rawList.map(nv => ({
+                const parsed = rawList.map(nv => ({
                     ...nv,
                     vaiTro: vaiTroMap[nv.vaiTro] || nv.vaiTro || 'PHUC_VU',
                     trangThai: trangThaiMap[nv.trangThai] || nv.trangThai || 'DANG_LAM_VIEC',
                     matKhau: nv.matKhau || '123456'
                 }));
+                localStorage.setItem(key, JSON.stringify(parsed));
+                return parsed;
             }
         }
-
-        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
-        }
-        try {
-            const arr = data ? JSON.parse(data) : [];
-            return Array.isArray(arr) ? arr : [];
-        } catch {
-            return [];
-        }
+        return [];
     }
 
     async luuDanhSachNhanVien(ds) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien', JSON.stringify(ds));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien';
+        localStorage.setItem(key, JSON.stringify(ds));
+        this.yeuCau('/nhan-vien/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
     }
 
     /**
@@ -1436,19 +1495,37 @@ class ApiService {
     // =========================================================================
 
     async layCauHinhHeThong() {
-        const kq = await this.yeuCau('/cau-hinh');
-        if (kq && kq.ok) return kq.data;
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong';
+        const raw = localStorage.getItem(key);
+        let localData = null;
+        try {
+            localData = raw ? JSON.parse(raw) : null;
+        } catch {}
 
-        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong');
-        return raw ? JSON.parse(raw) : (window.HANG_SO ? window.HANG_SO.NHA_HANG_MAC_DINH : {});
+        if (localData) {
+            // Đồng bộ sang Backend để E-Menu / Mobile nhận cấu hình mới
+            this.yeuCau('/cau-hinh', { method: 'POST', body: localData }).catch(() => {});
+            return localData;
+        }
+
+        const kq = await this.yeuCau('/cau-hinh');
+        if (kq && kq.ok && kq.data) {
+            localStorage.setItem(key, JSON.stringify(kq.data));
+            return kq.data;
+        }
+
+        return (window.HANG_SO ? window.HANG_SO.NHA_HANG_MAC_DINH : {});
     }
 
     async luuCauHinhHeThong(cauHinhMoi) {
-        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong', JSON.stringify(cauHinhMoi));
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong';
+        localStorage.setItem(key, JSON.stringify(cauHinhMoi));
         localStorage.setItem('quanmoc_cau_hinh_quan', JSON.stringify(cauHinhMoi));
         if (window.HANG_SO && window.HANG_SO.NHA_HANG_MAC_DINH) {
             Object.assign(window.HANG_SO.NHA_HANG_MAC_DINH, cauHinhMoi);
         }
+        // Gửi cập nhật trực tiếp lên Backend API
+        this.yeuCau('/cau-hinh', { method: 'POST', body: cauHinhMoi }).catch(() => {});
         this.ghiNhatKy('Cập nhật cấu hình nhà hàng', 'INFO', 'Lưu thay đổi thông tin nhà hàng, thuế VAT hoặc tài khoản VietQR.');
         if (window.ungDung && typeof window.ungDung.dongBoThongTinNhaHangToanCuc === 'function') {
             window.ungDung.dongBoThongTinNhaHangToanCuc(cauHinhMoi);

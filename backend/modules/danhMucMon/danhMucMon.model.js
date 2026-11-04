@@ -59,11 +59,26 @@ async function xoa(id) {
     return true;
 }
 
+async function dongBoDanhSach(danhSachMoi) {
+    if (!Array.isArray(danhSachMoi)) return danhSachDanhMuc;
+    danhSachDanhMuc = danhSachMoi.map((dm, idx) => ({
+        id: Number(dm.id) || (idx + 1),
+        tenDanhMuc: (dm.tenDanhMuc || dm.ten || `Danh mục ${dm.id}`).trim(),
+        thuTuHienThi: Number(dm.thuTuHienThi) || (idx + 1),
+        trangThai: dm.trangThai || 'HoatDong',
+        ngayTao: dm.ngayTao ? new Date(dm.ngayTao) : new Date(),
+        ngayCapNhat: new Date()
+    }));
+    tuTangId = Math.max(...danhSachDanhMuc.map(dm => dm.id || 0), 0) + 1;
+    return danhSachDanhMuc;
+}
+
 module.exports = {
     layTatCa,
     layTheoId,
     layTheoTen,
     taoMoi,
     capNhat,
-    xoa
+    xoa,
+    dongBoDanhSach
 };

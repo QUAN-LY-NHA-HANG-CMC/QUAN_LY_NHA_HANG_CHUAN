@@ -184,6 +184,26 @@ async function xoaMem(id) {
     return true;
 }
 
+async function dongBoDanhSach(danhSachMoi) {
+    if (!Array.isArray(danhSachMoi)) return danhSachMonAn;
+    danhSachMonAn = danhSachMoi.map((m, idx) => ({
+        id: Number(m.id) || (idx + 1),
+        tenMon: (m.tenMon || m.ten || `Món ${m.id}`).trim(),
+        danhMucId: m.danhMucId ? Number(m.danhMucId) : 1,
+        giaBan: m.giaBan !== undefined ? Number(m.giaBan) : 0,
+        donViTinh: (m.donViTinh || 'Phần').trim(),
+        hinhAnh: m.hinhAnh || '',
+        moTa: (m.moTa || '').trim(),
+        trangThai: (m.trangThai === 1 || m.trangThai === 'DangBan' || m.trangThai === 'HoatDong') ? 'DangBan' : (m.trangThai === 'DaXoa' ? 'DaXoa' : 'TamHet'),
+        laMonBanChay: Boolean(m.laMonBanChay || m.noiBat),
+        tuyChon: Array.isArray(m.tuyChon) ? m.tuyChon : [],
+        ngayTao: m.ngayTao ? new Date(m.ngayTao) : new Date(),
+        ngayCapNhat: new Date()
+    }));
+    tuTangId = Math.max(...danhSachMonAn.map(m => m.id || 0), 0) + 1;
+    return danhSachMonAn;
+}
+
 module.exports = {
     layDanhSach,
     layTheoId,
@@ -192,5 +212,7 @@ module.exports = {
     capNhat,
     doiTrangThai,
     danhDauBanChay,
-    xoaMem
+    xoaMem,
+    dongBoDanhSach
 };
+

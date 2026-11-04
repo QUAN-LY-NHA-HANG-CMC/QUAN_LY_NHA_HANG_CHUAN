@@ -6,6 +6,7 @@ const { kiemTraVaiTro } = require('../../middleware/phanQuyen');
 
 // Xem danh sách bàn và chi tiết bàn (Thu ngân, Phục vụ, Quản lý)
 router.get('/', banAnController.layTatCa);
+router.post('/dong-bo', banAnController.dongBo);
 router.get('/:id', banAnController.layChiTiet);
 
 // Quản lý QR

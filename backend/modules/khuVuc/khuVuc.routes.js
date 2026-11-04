@@ -5,6 +5,7 @@ const xacThuc = require('../../middleware/xacThuc');
 const { kiemTraVaiTro } = require('../../middleware/phanQuyen');
 
 router.get('/', khuVucController.layTatCa);
+router.post('/dong-bo', khuVucController.dongBo);
 router.get('/:id', khuVucController.layChiTiet);
 
 router.post('/', xacThuc, kiemTraVaiTro('QuanLy'), khuVucController.taoMoi);

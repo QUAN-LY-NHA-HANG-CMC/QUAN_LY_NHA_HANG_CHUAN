@@ -2,6 +2,7 @@ const thucDonModel = require('./thucDon.model');
 const thucDonService = require('./thucDon.service');
 const danhMucModel = require('../danhMucMon/danhMucMon.model');
 const banAnModel = require('../banAn/banAn.model');
+const cauHinhModel = require('../cauHinhNhaHang/cauHinh.model');
 const { phanHoiThanhCong, phanHoiLoi } = require('../../tienIch/dinhDangPhanHoi');
 
 // US-050: Lấy toàn bộ thông tin E-Menu khi khách quét mã QR
@@ -34,12 +35,17 @@ async function layTrangChuEMenu(req, res, next) {
         const ketQuaMon = await thucDonModel.layDanhSach({ chiLayDangBan: true, soLuong: 50 });
         const monBanChay = ketQuaMon.danhSach.filter(m => m.laMonBanChay);
 
+        const cauHinh = await cauHinhModel.layCauHinh();
         const thongTinNhaHang = {
-            tenQuan: 'Nhà Hàng Quán Mộc',
-            diaChi: '123 Đường Ẩm Thực, Quận 1, TP.HCM',
-            hotline: '1900 6868',
-            wifi: 'QuanMoc_Guest (Pass: 88888888)',
-            banner: '/tepTaiLen/banner-quanmoc.jpg'
+            tenQuan: cauHinh.ten || 'Nhà Hàng Quán Mộc',
+            chiNhanh: cauHinh.chiNhanh || '',
+            diaChi: cauHinh.diaChi || '123 Đường Ẩm Thực, Quận 1, TP.HCM',
+            hotline: cauHinh.hotline || '1900 6868',
+            wifi: `${cauHinh.wifiTen || 'QuanMoc_Guest'} (Pass: ${cauHinh.wifiMatKhau || '88888888'})`,
+            banner: cauHinh.banner || '/tepTaiLen/banner-quanmoc.jpg',
+            khauHieu: cauHinh.khauHieu || '',
+            thueVat: cauHinh.thueVat || 8,
+            nganHang: cauHinh.nganHang
         };
 
         const thongTinBan = {

@@ -55,11 +55,26 @@ async function xoa(id) {
     return true;
 }
 
+async function dongBoDanhSach(danhSachMoi) {
+    if (!Array.isArray(danhSachMoi)) return danhSachKhuVuc;
+    danhSachKhuVuc = danhSachMoi.map((kv, idx) => ({
+        id: Number(kv.id) || (idx + 1),
+        tenKhuVuc: (kv.tenKhuVuc || kv.ten || `Khu vực ${kv.id}`).trim(),
+        ghiChu: (kv.ghiChu || '').trim(),
+        trangThai: kv.trangThai || 'HoatDong',
+        ngayTao: kv.ngayTao ? new Date(kv.ngayTao) : new Date(),
+        ngayCapNhat: new Date()
+    }));
+    tuTangId = Math.max(...danhSachKhuVuc.map(kv => kv.id || 0), 0) + 1;
+    return danhSachKhuVuc;
+}
+
 module.exports = {
     layTatCa,
     layTheoId,
     layTheoTen,
     taoMoi,
     capNhat,
-    xoa
+    xoa,
+    dongBoDanhSach
 };

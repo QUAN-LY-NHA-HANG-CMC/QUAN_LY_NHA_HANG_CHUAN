@@ -6,6 +6,7 @@ const { kiemTraVaiTro } = require('../../middleware/phanQuyen');
 
 // Public hoặc cho phép khách xem danh mục
 router.get('/', danhMucController.layTatCa);
+router.post('/dong-bo', danhMucController.dongBo);
 router.get('/:id', danhMucController.layChiTiet);
 
 // Quản lý tạo, sửa, xóa
