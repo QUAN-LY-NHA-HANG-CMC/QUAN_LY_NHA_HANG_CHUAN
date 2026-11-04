@@ -151,7 +151,6 @@ class TheoDoiDonMonModule {
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <h2 class="ten-ban-tieu-de">${soBan || 'Bàn 03'}</h2>
                                 <span class="badge badge-xanh-la">${khuVucTen || 'Tầng 1'}</span>
-                                <span class="badge badge-cam">Sprint 2 • Phong</span>
                             </div>
                             <p class="mo-ta-phien-ban">
                                 ⏱️ Phiên ngồi tại bàn: Đang hoạt động • Mã phiên: <strong>SES-B${this.banIdHienTai}-LIVE</strong>
@@ -182,7 +181,7 @@ class TheoDoiDonMonModule {
                 <!-- BẢNG CÔNG CỤ GIẢ LẬP REAL-TIME (TEST SIMULATOR CHO GIẢNG VIÊN / TESTER) -->
                 <div class="bang-dieu-khien-gia-lap-s2">
                     <div class="tieu-de-gia-lap">
-                        <span>🧪 <strong>Thanh kiểm thử tương tác Real-time (Sprint 2 - Phong):</strong></span>
+                        <span>🧪 <strong>Thanh kiểm thử tương tác Real-time:</strong></span>
                         <small style="color: var(--mau-chu-phu);">Click để mô phỏng tương tác từ Bếp/Thu ngân ngay trên trình duyệt mà không cần Backend thật</small>
                     </div>
                     <div class="cac-nut-gia-lap">
@@ -316,7 +315,7 @@ class TheoDoiDonMonModule {
                         <div style="font-size: 54px; margin-bottom: 12px;">🍲</div>
                         <h3>Bàn này chưa có đơn gọi món trong phiên</h3>
                         <p style="color: var(--mau-chu-phu); max-width: 520px; margin: 8px auto 20px; line-height: 1.6;">
-                            Bàn <strong>${soBan}</strong> hiện chưa phát sinh đơn hàng nào. Bạn có thể bấm nút bên dưới để nạp 2 lượt gọi món mẫu kiểm thử ngay (Sprint 2 - Phong) hoặc bắt đầu đặt món mới:
+                            Bàn <strong>${soBan}</strong> hiện chưa phát sinh đơn hàng nào. Bạn có thể bấm nút bên dưới để nạp 2 lượt gọi món mẫu kiểm thử ngay hoặc bắt đầu đặt món mới:
                         </p>
                         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                             <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.napDonMauChoBanNay()">

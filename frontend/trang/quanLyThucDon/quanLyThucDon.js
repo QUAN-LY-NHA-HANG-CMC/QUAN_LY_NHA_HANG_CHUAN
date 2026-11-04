@@ -30,13 +30,18 @@ class QuanLyThucDonModule {
     }
 
     async taiDuLieu() {
-        this.danhSachDanhMuc = await window.api.layDanhSachDanhMuc();
-        this.danhSachMonAn = await window.api.layDanhSachMonAn();
+        const dsDm = await window.api.layDanhSachDanhMuc();
+        this.danhSachDanhMuc = Array.isArray(dsDm) ? dsDm : [];
+        const dsMon = await window.api.layDanhSachMonAn();
+        this.danhSachMonAn = Array.isArray(dsMon) ? dsMon : [];
     }
 
     veGiaoDien() {
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
+
+        if (!Array.isArray(this.danhSachDanhMuc)) this.danhSachDanhMuc = [];
+        if (!Array.isArray(this.danhSachMonAn)) this.danhSachMonAn = [];
 
         // Thống kê nhanh
         const tongMon = this.danhSachMonAn.filter(m => m.trangThai !== -1).length;
@@ -45,6 +50,7 @@ class QuanLyThucDonModule {
         const monBanChay = this.danhSachMonAn.filter(m => m.laBanChay === 1 && m.trangThai !== -1).length;
 
         // Lọc món ăn (US-033)
+        const tk = (this.tuKhoaTimKiem || '').toLowerCase();
         const monLocDuoc = this.danhSachMonAn.filter(mon => {
             if (mon.trangThai === -1) return false; // Đã xóa mềm (US-040)
 
@@ -55,11 +61,9 @@ class QuanLyThucDonModule {
             else if (this.locTrangThai === 'TAM_HET') thoaTrangThai = (mon.trangThai === 0);
             else if (this.locTrangThai === 'BAN_CHAY') thoaTrangThai = (mon.laBanChay === 1);
 
-            const thoaTuKhoa = !this.tuKhoaTimKiem || 
-                mon.tenMon.toLowerCase().includes(this.tuKhoaTimKiem.toLowerCase()) || 
-                mon.maMon.toLowerCase().includes(this.tuKhoaTimKiem.toLowerCase());
-
-            return thoaDanhMuc && thoaTrangThai && thoaTuKhoa;
+            const tenMonStr = (mon.tenMon || '').toLowerCase();
+            const maMonStr = (mon.maMon || '').toLowerCase();
+            const thoaTuKhoa = !tk || tenMonStr.includes(tk) || maMonStr.includes(tk);
         });
 
         // Phân trang (US-033)

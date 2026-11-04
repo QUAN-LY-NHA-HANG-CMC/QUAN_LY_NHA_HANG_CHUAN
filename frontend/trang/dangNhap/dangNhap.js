@@ -28,7 +28,7 @@ class DangNhapModule {
                         <div class="logo-dang-nhap">🍽️</div>
                         <h2>HỆ THỐNG QUẢN LÝ NHÀ HÀNG</h2>
                         <p class="khau-hieu-dang-nhap">QUÁN MỘC - NỀN TẢNG GỌI MÓN QR & ĐIỀU HÀNH TẬP TRUNG</p>
-                        <div class="badge-sprint-login">Sprint 1 • Phân hệ Quản trị & Xác thực (Phong FE)</div>
+                        <div class="badge-sprint-login">Cổng Đăng Nhập Hệ Thống Quản Trị</div>
                     </div>
 
                     <!-- Form đăng nhập -->
@@ -40,7 +40,7 @@ class DangNhapModule {
                             <input 
                                 type="text" 
                                 id="nhap-ten-dang-nhap" 
-                                placeholder="Ví dụ: quanly hoặc phong.admin@quanmoc.com" 
+                                placeholder="Ví dụ: quanly hoặc admin@quanmoc.com" 
                                 required 
                                 autocomplete="username"
                                 autofocus
@@ -206,7 +206,7 @@ class DangNhapModule {
         if (window.thongBao) {
             window.thongBao.thongTin(
                 'Quên mật khẩu?', 
-                'Vui lòng liên hệ Trưởng nhóm hoặc Quản trị viên (Phong Admin) để được cấp lại mật khẩu mới.'
+                'Vui lòng liên hệ Quản lý hoặc Quản trị viên hệ thống để được cấp lại mật khẩu mới.'
             );
         }
     }

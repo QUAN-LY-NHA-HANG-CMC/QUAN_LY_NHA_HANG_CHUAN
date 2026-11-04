@@ -143,7 +143,7 @@ class ThanhToanPosModule {
                 <div class="thanh-tieu-de-pos">
                     <div class="nhom-tieu-de">
                         <h2>💵 Quầy Thu Ngân & Thanh Toán Hóa Đơn (POS)</h2>
-                        <p class="mo-ta-phu">Phân hệ Sprint 3 (US-099 → US-110) • In hóa đơn K80, Chiết khấu/Voucher, VietQR Động Napas 247, Tách Bill</p>
+                        <p class="mo-ta-phu">In hóa đơn K80, Chiết khấu/Voucher, VietQR Động Napas 247, Tách Bill</p>
                     </div>
                     <div class="nhom-nut-hanh-dong-pos">
                         <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('soDoBanPos')">

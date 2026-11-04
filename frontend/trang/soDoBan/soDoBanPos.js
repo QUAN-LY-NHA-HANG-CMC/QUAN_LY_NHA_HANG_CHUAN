@@ -161,7 +161,7 @@ class SoDoBanPosModule {
                 <div class="thanh-tieu-de-pos">
                     <div class="nhom-tieu-de">
                         <h2>🗺️ Sơ Đồ Bàn POS & Vận Hành Phục Vụ</h2>
-                        <p class="mo-ta-phu">Phân hệ Sprint 3 (US-089 → US-098) • Quản lý thời gian thực, mở bàn, gọi món hộ khách, chuyển/ghép bàn</p>
+                        <p class="mo-ta-phu">Quản lý trạng thái bàn theo thời gian thực, mở bàn, gọi món hộ khách, chuyển và ghép bàn</p>
                     </div>
                     <div class="nhom-nut-hanh-dong-pos">
                         <button class="nut nut-phu" onclick="window.soDoBanPos.moModalNhatKyHuyTra()">
@@ -291,9 +291,10 @@ class SoDoBanPosModule {
         `;
 
         dsKhuVuc.forEach(kv => {
+            const tenKv = kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`;
             html += `
                 <button class="nut-tab-khu-vuc ${this.boLocKhuVuc == kv.id ? 'kich-hoat' : ''}" onclick="window.soDoBanPos.chuyenLocKhuVuc(${kv.id})">
-                    ${kv.ten}
+                    ${tenKv}
                 </button>
             `;
         });
@@ -374,7 +375,7 @@ class SoDoBanPosModule {
         }
 
         const mapKhuVuc = {};
-        dsKhuVuc.forEach(kv => mapKhuVuc[kv.id] = kv.ten);
+        dsKhuVuc.forEach(kv => mapKhuVuc[kv.id] = kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`);
 
         let html = '';
         ds.forEach(ban => {

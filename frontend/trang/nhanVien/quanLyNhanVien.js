@@ -24,13 +24,18 @@ class QuanLyNhanVienModule {
     }
 
     async taiDuLieu() {
-        this.danhSachNhanVien = await window.api.layDanhSachNhanVien();
-        this.danhSachVaiTro = await window.api.layDanhSachVaiTro();
+        const dsNv = await window.api.layDanhSachNhanVien();
+        this.danhSachNhanVien = Array.isArray(dsNv) ? dsNv : [];
+        const dsVt = await window.api.layDanhSachVaiTro();
+        this.danhSachVaiTro = Array.isArray(dsVt) ? dsVt : [];
     }
 
     veGiaoDien() {
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
+
+        if (!Array.isArray(this.danhSachNhanVien)) this.danhSachNhanVien = [];
+        if (!Array.isArray(this.danhSachVaiTro)) this.danhSachVaiTro = [];
 
         // Thống kê nhanh
         const tongNhanVien = this.danhSachNhanVien.length;
