@@ -14,4 +14,14 @@ const mayChu = ungDung.listen(cauHinhChung.congBackend, () => {
     console.log(`================================================================`);
 });
 
+mayChu.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`\n❌ Cổng ${cauHinhChung.congBackend} đang bị chiếm dụng bởi một tiến trình khác.`);
+        console.error(`💡 Để giải phóng cổng và chạy lại, bạn chạy lệnh: npx kill-port ${cauHinhChung.congBackend} hoặc lsof -ti :${cauHinhChung.congBackend} | xargs kill -9\n`);
+    } else {
+        console.error('Lỗi khởi động máy chủ:', err);
+    }
+    process.exit(1);
+});
+
 module.exports = mayChu;
