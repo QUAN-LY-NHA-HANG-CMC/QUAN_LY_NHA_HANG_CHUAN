@@ -12,6 +12,7 @@ const thucDonModule = require('./modules/thucDon');
 const khuVucModule = require('./modules/khuVuc');
 const banAnModule = require('./modules/banAn');
 const nhanVienModule = require('./modules/nhanVien');
+const cauHinhModule = require('./modules/cauHinhNhaHang');
 
 // Nạp các module phụ trách của Minh (Sprint 2)
 const thucDonPublicRoutes = require('./modules/thucDon/thucDonPublic.routes');
@@ -128,6 +129,7 @@ ungDung.use('/api/thuc-don', thucDonModule.router);
 ungDung.use('/api/khu-vuc', khuVucModule.router);
 ungDung.use('/api/ban-an', banAnModule.router);
 ungDung.use('/api/nhan-vien', nhanVienModule.router);
+ungDung.use('/api/cau-hinh', cauHinhModule.router);
 
 // API Sprint 2
 ungDung.use('/api/public/e-menu', thucDonPublicRoutes);

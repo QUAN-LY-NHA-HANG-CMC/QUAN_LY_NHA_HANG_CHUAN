@@ -162,6 +162,17 @@ async function xoaMem(req, res, next) {
     }
 }
 
+async function dongBo(req, res, next) {
+    try {
+        const { danhSach } = req.body;
+        const thucDonModel = require('./thucDon.model');
+        const dsMoi = await thucDonModel.dongBoDanhSach(Array.isArray(danhSach) ? danhSach : (Array.isArray(req.body) ? req.body : []));
+        return phanHoiThanhCong(res, dsMoi, 'Đồng bộ danh sách món ăn thành công');
+    } catch (loi) {
+        next(loi);
+    }
+}
+
 module.exports = {
     layDanhSach,
     layChiTiet,
@@ -171,5 +182,6 @@ module.exports = {
     doiTrangThai,
     doiMonBanChay,
     thietLapTuyChon,
-    xoaMem
+    xoaMem,
+    dongBo
 };

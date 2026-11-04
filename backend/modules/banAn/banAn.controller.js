@@ -91,6 +91,17 @@ async function layQrKhuVuc(req, res, next) {
     }
 }
 
+async function dongBo(req, res, next) {
+    try {
+        const { danhSach } = req.body;
+        const banAnModel = require('./banAn.model');
+        const dsMoi = await banAnModel.dongBoDanhSach(Array.isArray(danhSach) ? danhSach : (Array.isArray(req.body) ? req.body : []));
+        return phanHoiThanhCong(res, dsMoi, 'Đồng bộ danh sách bàn ăn thành công');
+    } catch (loi) {
+        next(loi);
+    }
+}
+
 module.exports = {
     layTatCa,
     layChiTiet,
@@ -99,5 +110,6 @@ module.exports = {
     xoa,
     layQr,
     lamMoiQr,
-    layQrKhuVuc
+    layQrKhuVuc,
+    dongBo
 };

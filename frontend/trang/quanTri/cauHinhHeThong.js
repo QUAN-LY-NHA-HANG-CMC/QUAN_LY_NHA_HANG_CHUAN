@@ -482,13 +482,17 @@ class CauHinhHeThongModule {
     }
 
     capNhatHeaderTrang() {
-        const head = document.querySelector('.thong-tin-nha-hang-head');
-        if (head && this.cauHinh) {
-            head.innerHTML = `
-                <span>🏢 <strong>${window.DinhDang.thoatHtml(this.cauHinh.ten)} - ${window.DinhDang.thoatHtml(this.cauHinh.chiNhanh || '')}</strong> (${window.DinhDang.thoatHtml(this.cauHinh.diaChi)})</span>
-                <span>📞 Hotline: <strong>${window.DinhDang.thoatHtml(this.cauHinh.hotline)}</strong></span>
-                <span>📶 Wi-Fi: <strong>${window.DinhDang.thoatHtml(this.cauHinh.wifiTen)}</strong> (${window.DinhDang.thoatHtml(this.cauHinh.wifiMatKhau)})</span>
-            `;
+        if (window.ungDung && typeof window.ungDung.dongBoThongTinNhaHangToanCuc === 'function') {
+            window.ungDung.dongBoThongTinNhaHangToanCuc(this.cauHinh);
+        } else {
+            const head = document.querySelector('.thong-tin-nha-hang-head');
+            if (head && this.cauHinh) {
+                head.innerHTML = `
+                    <span>🏢 <strong id="header-ten-quan">${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.ten) : this.cauHinh.ten} - ${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.chiNhanh || '') : (this.cauHinh.chiNhanh || '')}</strong> (<span id="header-dia-chi">${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.diaChi) : this.cauHinh.diaChi}</span>)</span>
+                    <span>📞 Hotline: <strong id="header-hotline">${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.hotline) : this.cauHinh.hotline}</strong></span>
+                    <span>📶 Wi-Fi: <strong id="header-wifi">${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.wifiTen) : this.cauHinh.wifiTen}</strong> (<span id="header-wifi-pass">${window.DinhDang ? window.DinhDang.thoatHtml(this.cauHinh.wifiMatKhau) : this.cauHinh.wifiMatKhau}</span>)</span>
+                `;
+            }
         }
     }
 }

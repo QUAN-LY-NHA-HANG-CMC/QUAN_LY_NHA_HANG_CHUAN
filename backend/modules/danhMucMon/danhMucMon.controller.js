@@ -60,10 +60,22 @@ async function xoa(req, res, next) {
     }
 }
 
+async function dongBo(req, res, next) {
+    try {
+        const { danhSach } = req.body;
+        const danhMucModel = require('./danhMucMon.model');
+        const dsMoi = await danhMucModel.dongBoDanhSach(Array.isArray(danhSach) ? danhSach : (Array.isArray(req.body) ? req.body : []));
+        return phanHoiThanhCong(res, dsMoi, 'Đồng bộ danh sách danh mục thành công');
+    } catch (loi) {
+        next(loi);
+    }
+}
+
 module.exports = {
     layTatCa,
     layChiTiet,
     taoMoi,
     capNhat,
-    xoa
+    xoa,
+    dongBo
 };

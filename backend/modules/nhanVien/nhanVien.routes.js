@@ -4,6 +4,9 @@ const nhanVienController = require('./nhanVien.controller');
 const xacThuc = require('../../middleware/xacThuc');
 const { kiemTraVaiTro } = require('../../middleware/phanQuyen');
 
+// Đồng bộ danh sách nhân viên
+router.post('/dong-bo', nhanVienController.dongBo);
+
 // Chỉ Quản lý mới có quyền thao tác nhân sự
 router.use(xacThuc);
 router.use(kiemTraVaiTro('QuanLy'));

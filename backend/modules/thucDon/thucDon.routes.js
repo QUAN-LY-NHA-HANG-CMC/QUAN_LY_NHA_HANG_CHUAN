@@ -6,6 +6,7 @@ const { kiemTraVaiTro } = require('../../middleware/phanQuyen');
 
 // Khách hàng hoặc công khai
 router.get('/', thucDonController.layDanhSach);
+router.post('/dong-bo', thucDonController.dongBo);
 router.get('/:id', thucDonController.layChiTiet);
 
 // Quản trị viên (Admin / Quản lý)
