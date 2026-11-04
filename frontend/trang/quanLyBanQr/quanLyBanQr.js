@@ -141,7 +141,7 @@ class QuanLyBanQrModule {
     veTheBan(ban) {
         const khuVuc = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
         const tenKhuVuc = khuVuc ? khuVuc.ten : 'Chưa phân khu';
-        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken, ban.id);
         const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 120);
 
         const thongTinTrangThai = window.HANG_SO.TRANG_THAI_BAN[ban.trangThai] || window.HANG_SO.TRANG_THAI_BAN.TRONG;
@@ -213,7 +213,7 @@ class QuanLyBanQrModule {
 
         const khuVuc = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
         const tenKhuVuc = khuVuc ? khuVuc.ten : 'Quán Mộc';
-        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+        const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken, ban.id);
         const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 280);
 
         const modal = document.getElementById('khung-modal-toan-cuc');
@@ -321,7 +321,7 @@ class QuanLyBanQrModule {
                         ${banIn.map(ban => {
                             const kv = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
                             const tenKv = kv ? kv.ten : 'Quán Mộc';
-                            const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken);
+                            const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, ban.qrToken, ban.id);
                             const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 200);
 
                             return `

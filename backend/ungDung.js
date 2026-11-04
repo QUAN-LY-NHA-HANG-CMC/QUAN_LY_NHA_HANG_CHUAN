@@ -145,6 +145,11 @@ ungDung.use('/api/danh-gia', danhGiaModule.router);
 ungDung.use('/api/ca-lam-viec', caLamViecModule.router);
 ungDung.use('/api/bao-cao', baoCaoModule.router);
 
+// Phục vụ giao diện E-Menu khi khách quét mã QR tại bàn (US-045 -> US-050)
+ungDung.get(['/e-menu', '/e-menu/*'], (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
 // Xử lý tuyến đường không tồn tại (404)
 ungDung.use((req, res) => {
     return phanHoiLoi(res, `Đường dẫn [${req.method}] ${req.originalUrl} không tồn tại`, 404);

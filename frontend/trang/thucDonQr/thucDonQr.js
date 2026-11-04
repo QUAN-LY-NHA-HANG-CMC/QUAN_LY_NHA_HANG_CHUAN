@@ -50,26 +50,30 @@ class ThucDonQrManager {
      * Nhận diện tham số banId & token từ URL (US-045, US-046, US-049)
      */
     nhanDienThamSoUrl(banIdChiDinh, tokenChiDinh) {
-        if (banIdChiDinh && tokenChiDinh) {
+        if (banIdChiDinh) {
             this.banId = banIdChiDinh;
-            this.token = tokenChiDinh;
+            if (tokenChiDinh) this.token = tokenChiDinh;
+            localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
+            if (this.token) localStorage.setItem('quanmoc_token_hien_tai', this.token);
             return;
         }
 
-        // Đọc từ URL query string (?banId=1&token=...)
+        // Đọc từ URL query string (?banId=1&ban=B101&token=...)
         const urlParams = new URLSearchParams(window.location.search);
-        const banIdUrl = urlParams.get('banId') || urlParams.get('ban');
+        const banIdUrl = urlParams.get('banId');
+        const banUrl = urlParams.get('ban');
         const tokenUrl = urlParams.get('token');
 
-        // Hoặc đọc từ URL Hash (#e-menu?banId=1&token=...)
-        let banIdHash = null, tokenHash = null;
+        // Hoặc đọc từ URL Hash (#e-menu?banId=1&ban=B101&token=...)
+        let banIdHash = null, banHash = null, tokenHash = null;
         if (window.location.hash.includes('?')) {
             const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-            banIdHash = hashParams.get('banId') || hashParams.get('ban');
+            banIdHash = hashParams.get('banId');
+            banHash = hashParams.get('ban');
             tokenHash = hashParams.get('token');
         }
 
-        this.banId = banIdUrl || banIdHash || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
+        this.banId = banIdUrl || banUrl || banIdHash || banHash || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
         this.token = tokenUrl || tokenHash || localStorage.getItem('quanmoc_token_hien_tai') || 'a405d1729525dfb8e91350df4e32b0da';
 
         // Lưu phiên bàn (US-049)
@@ -113,7 +117,7 @@ class ThucDonQrManager {
             else if (this.khoangGiaDangChon === 'TREN_200') { giaMin = 200000; }
 
             const res = await window.api.layDanhSachMonAnEMenu({
-                danhMucId: this.danhMucDangChon,
+                danhMucId: this.danhMucDangChon === 'TAT_CA' ? undefined : this.danhMucDangChon,
                 tuKhoa: this.tuKhoaTimKiem,
                 giaMin: giaMin,
                 giaMax: giaMax
@@ -160,6 +164,9 @@ class ThucDonQrManager {
                         </button>
                         <button class="nut ${!this.cheDoXemMobile ? 'nut-chinh' : 'nut-phu'}" onclick="window.thucDonQr.doiCheDoXem(false)">
                             💻 Toàn màn hình
+                        </button>
+                        <button class="nut nut-phu nut-quay-lai-admin" onclick="window.ungDung.thoatCheDoKhachHang()" title="Quay lại giao diện quản trị">
+                            🔙 Quản trị
                         </button>
                     </div>
                 </div>

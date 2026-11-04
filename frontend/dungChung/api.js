@@ -2049,7 +2049,7 @@ class ApiService {
      * URL: GET /api/public/e-menu?banId=...&token=...
      */
     async layThongTinEMenu(banId = 1, token = 'a405d1729525dfb8e91350df4e32b0da') {
-        const kq = await this.yeuCau(`/public/e-menu?banId=${encodeURIComponent(banId)}&token=${encodeURIComponent(token)}`);
+        const kq = await this.yeuCau(`/public/e-menu?banId=${encodeURIComponent(banId)}&ban=${encodeURIComponent(banId)}&token=${encodeURIComponent(token)}`);
         if (kq && kq.ok) return kq;
 
         // Fallback LocalStorage / Dữ liệu chuẩn theo đặc tả Minh

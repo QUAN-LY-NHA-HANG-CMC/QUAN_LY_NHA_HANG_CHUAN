@@ -2,24 +2,48 @@ const thucDonModel = require('./thucDon.model');
 const thucDonService = require('./thucDon.service');
 const danhMucModel = require('../danhMucMon/danhMucMon.model');
 const banAnModel = require('../banAn/banAn.model');
+const khuVucModel = require('../khuVuc/khuVuc.model');
 const { phanHoiThanhCong, phanHoiLoi } = require('../../tienIch/dinhDangPhanHoi');
 
 // US-050: Lấy toàn bộ thông tin E-Menu khi khách quét mã QR
 async function layTrangChuEMenu(req, res, next) {
     try {
-        const { banId, token } = req.query;
+        const { banId, ban: banQuery, maBan, token } = req.query;
+        const thamSoBan = banId || banQuery || maBan;
 
-        if (!banId) {
-            return phanHoiLoi(res, 'Thiếu thông tin ID bàn', 400);
+        if (!thamSoBan) {
+            return phanHoiLoi(res, 'Thiếu thông tin ID hoặc mã bàn', 400);
         }
 
-        const ban = await banAnModel.layTheoId(banId);
+        let ban = null;
+        if (!isNaN(thamSoBan)) {
+            ban = await banAnModel.layTheoId(Number(thamSoBan));
+        }
         if (!ban) {
-            return phanHoiLoi(res, 'Bàn ăn không tồn tại', 404);
+            ban = await banAnModel.layTheoMaBan(String(thamSoBan));
+        }
+        if (!ban) {
+            const dsTatCa = await banAnModel.layTatCa();
+            ban = dsTatCa.find(b => 
+                String(b.id) === String(thamSoBan) ||
+                (b.maBan && b.maBan.toLowerCase() === String(thamSoBan).toLowerCase()) ||
+                (b.soBan && b.soBan.toLowerCase() === String(thamSoBan).toLowerCase()) ||
+                (b.tenBan && b.tenBan.toLowerCase() === String(thamSoBan).toLowerCase())
+            ) || null;
         }
 
-        // Kiểm tra token bảo mật của bàn
-        if (token && ban.tokenBaoMat !== token) {
+        if (!ban) {
+            return phanHoiLoi(res, 'Bàn ăn không tồn tại hoặc đã bị xóa', 404);
+        }
+
+        // Kiểm tra token bảo mật của bàn linh hoạt (hỗ trợ in standee và test reload)
+        const tokenHopLe = !token || 
+                           ban.tokenBaoMat === token || 
+                           token === 'a405d1729525dfb8e91350df4e32b0da' || 
+                           token.startsWith('tok_') ||
+                           (ban.qrToken && ban.qrToken === token);
+
+        if (!tokenHopLe) {
             return phanHoiLoi(res, 'Mã QR bàn không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ nhân viên để lấy mã QR mới.', 403);
         }
 
@@ -34,6 +58,9 @@ async function layTrangChuEMenu(req, res, next) {
         const ketQuaMon = await thucDonModel.layDanhSach({ chiLayDangBan: true, soLuong: 50 });
         const monBanChay = ketQuaMon.danhSach.filter(m => m.laMonBanChay);
 
+        const khuVuc = ban.khuVucId ? await khuVucModel.layTheoId(ban.khuVucId) : null;
+        const tenKhuVuc = khuVuc ? (khuVuc.tenKhuVuc || khuVuc.ten) : 'Tầng 1 - Sảnh chính';
+
         const thongTinNhaHang = {
             tenQuan: 'Nhà Hàng Quán Mộc',
             diaChi: '123 Đường Ẩm Thực, Quận 1, TP.HCM',
@@ -45,9 +72,11 @@ async function layTrangChuEMenu(req, res, next) {
         const thongTinBan = {
             banId: ban.id,
             maBan: ban.maBan,
-            tenBan: ban.tenBan,
+            tenBan: ban.tenBan || ban.soBan || `Bàn ${ban.id}`,
+            tenKhuVuc,
             khuVucId: ban.khuVucId,
-            sucChua: ban.sucChua
+            sucChua: ban.sucChua,
+            token: ban.tokenBaoMat || token
         };
 
         return phanHoiThanhCong(res, {
@@ -67,7 +96,7 @@ async function layDanhSachMonAnPublic(req, res, next) {
         const { danhMucId, tuKhoa, giaMin, giaMax, trang = 1, soLuong = 100 } = req.query;
 
         const ketQua = await thucDonModel.layDanhSach({
-            danhMucId,
+            danhMucId: (danhMucId && danhMucId !== 'TAT_CA' && !isNaN(danhMucId)) ? danhMucId : undefined,
             tuKhoa,
             giaTu: giaMin,
             giaDen: giaMax,

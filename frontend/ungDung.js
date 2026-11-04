@@ -12,9 +12,34 @@ class UngDungFrontend {
     async khoiDong() {
         console.log('🚀 Khởi động Hệ thống Quản Lý Nhà Hàng & Gọi Món QR (Quán Mộc)');
 
-        // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
-        if (window.api && !window.api.layAccessToken()) {
-            await window.api.dangNhap('quanly', '123456');
+        // 1. Kiểm tra xem người dùng có đang truy cập qua link/quét QR E-Menu không (US-045 -> US-050)
+        const pathname = (window.location.pathname || '').toLowerCase();
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashRaw = (window.location.hash || '').replace('#', '').trim();
+        const hashBase = hashRaw.split('?')[0].toLowerCase();
+        const hashParams = hashRaw.includes('?') ? new URLSearchParams(hashRaw.split('?')[1]) : null;
+
+        const laTrangEMenu = pathname.includes('/e-menu') || 
+                             hashBase === 'e-menu' || 
+                             hashBase === 'emenukhachhang' ||
+                             searchParams.has('ban') || 
+                             searchParams.has('banId') ||
+                             (hashParams && (hashParams.has('ban') || hashParams.has('banId')));
+
+        // Trích xuất tham số bàn & token nếu có
+        const thamSoBan = searchParams.get('banId') || searchParams.get('ban') || (hashParams && (hashParams.get('banId') || hashParams.get('ban')));
+        const thamSoToken = searchParams.get('token') || (hashParams && hashParams.get('token'));
+        if (thamSoBan) localStorage.setItem('quanmoc_ban_id_hien_tai', thamSoBan);
+        if (thamSoToken) localStorage.setItem('quanmoc_token_hien_tai', thamSoToken);
+
+        if (laTrangEMenu) {
+            this.tabHienTai = 'eMenuKhachHang';
+            document.body.classList.add('che-do-khach-hang');
+        } else {
+            // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
+            if (window.api && !window.api.layAccessToken()) {
+                await window.api.dangNhap('quanly', '123456');
+            }
         }
 
         // Đồng bộ cấu hình thương hiệu nhà hàng toàn cục lên Header, Sidebar và Tiêu đề trang
@@ -37,7 +62,6 @@ class UngDungFrontend {
         }
 
         // Đọc URL hash nếu người dùng truy cập trực tiếp qua liên kết hoặc F5 (VD: #theo-doi-don, #bep-kds, #sprint2)
-        const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
         const banDoTab = {
             'theo-doi-don': 'theoDoiDonMon',
             'theodoidonmon': 'theoDoiDonMon',
@@ -64,32 +88,35 @@ class UngDungFrontend {
             'doanh-thu': 'baoCao',
             'sprint4': 'baoCao'
         };
-        if (hash && banDoTab[hash]) {
-            this.tabHienTai = banDoTab[hash];
+        if (!laTrangEMenu && hashBase && banDoTab[hashBase]) {
+            this.tabHienTai = banDoTab[hashBase];
         }
 
         // Nạp trang mặc định
-        this.chuyenTab(this.tabHienTai);
+        this.chuyenTab(this.tabHienTai, thamSoBan, thamSoToken);
 
         // Lắng nghe sự kiện hashchange để điều hướng mượt mà
         window.addEventListener('hashchange', () => {
-            const h = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+            const hRaw = (window.location.hash || '').replace('#', '').trim();
+            const h = hRaw.split('?')[0].toLowerCase();
             if (h && banDoTab[h] && banDoTab[h] !== this.tabHienTai) {
                 this.chuyenTab(banDoTab[h]);
             }
         });
 
-        // Thông báo chào mừng
-        setTimeout(() => {
-            if (window.thongBao) {
-                const user = window.api ? window.api.layThongTinNguoiDung() : null;
-                const ten = user ? user.hoTen : 'Quản trị viên';
-                window.thongBao.thongTin(
-                    `Xin chào ${ten}!`,
-                    'Chào mừng bạn đến với Hệ thống Quản lý Nhà hàng & Gọi món QR Quán Mộc.'
-                );
-            }
-        }, 500);
+        // Thông báo chào mừng (chỉ hiện khi nhân viên/quản trị viên đăng nhập)
+        if (!laTrangEMenu) {
+            setTimeout(() => {
+                if (window.thongBao) {
+                    const user = window.api ? window.api.layThongTinNguoiDung() : null;
+                    const ten = user ? user.hoTen : 'Quản trị viên';
+                    window.thongBao.thongTin(
+                        `Xin chào ${ten}!`,
+                        'Chào mừng bạn đến với Hệ thống Quản lý Nhà hàng & Gọi món QR Quán Mộc.'
+                    );
+                }
+            }, 500);
+        }
     }
 
     /**
@@ -138,7 +165,7 @@ class UngDungFrontend {
         });
     }
 
-    chuyenTab(tab) {
+    chuyenTab(tab, banIdChiDinh = null, tokenChiDinh = null) {
         // Đóng các modal đang mở nếu có
         const modal = document.getElementById('khung-modal-toan-cuc');
         if (modal) {
@@ -156,6 +183,13 @@ class UngDungFrontend {
             window.dieuPhoiBepModule.huyDongHo();
         }
 
+        // Quản lý chế độ khách hàng: Ẩn sidebar và header khi khách vào E-Menu
+        if (tab === 'eMenuKhachHang') {
+            document.body.classList.add('che-do-khach-hang');
+        } else {
+            document.body.classList.remove('che-do-khach-hang');
+        }
+
         this.tabHienTai = tab;
 
         // Cập nhật URL Hash tương ứng mà không làm giật trang
@@ -171,11 +205,15 @@ class UngDungFrontend {
             'posThuNgan': 'pos',
             'baoCao': 'bao-cao'
         };
-        if (banDoHash[tab] && window.location.hash !== '#' + banDoHash[tab]) {
-            try {
-                history.replaceState(null, '', '#' + banDoHash[tab]);
-            } catch {
-                window.location.hash = banDoHash[tab];
+        if (banDoHash[tab]) {
+            if (tab === 'eMenuKhachHang' && window.location.pathname.includes('/e-menu')) {
+                // Giữ nguyên path /e-menu
+            } else if (window.location.hash !== '#' + banDoHash[tab]) {
+                try {
+                    history.replaceState(null, '', '#' + banDoHash[tab]);
+                } catch {
+                    window.location.hash = banDoHash[tab];
+                }
             }
         }
 
@@ -243,7 +281,7 @@ class UngDungFrontend {
             }
         } else if (tab === 'eMenuKhachHang') {
             if (window.thucDonQr) {
-                window.thucDonQr.khoiTao();
+                window.thucDonQr.khoiTao(banIdChiDinh, tokenChiDinh);
             }
         } else if (tab === 'posThuNgan' || tab === 'soDoBanPos') {
             // US-089 -> US-098 (Sprint 3 - Quân: Sơ đồ bàn POS)
@@ -328,6 +366,15 @@ class UngDungFrontend {
                 </div>
             </div>
         `;
+    }
+
+    thoatCheDoKhachHang() {
+        document.body.classList.remove('che-do-khach-hang');
+        if (window.location.pathname.includes('/e-menu')) {
+            window.location.href = '/#ban-an';
+        } else {
+            this.chuyenTab('quanLyBanQr');
+        }
     }
 }
 

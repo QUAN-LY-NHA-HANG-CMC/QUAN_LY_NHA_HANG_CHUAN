@@ -9,13 +9,14 @@ async function layDanhSachDon(boLoc = {}) {
 }
 
 async function layDonCuaBan(banId) {
-    const ban = await banAnModel.layTheoId(banId);
+    let ban = !isNaN(banId) ? await banAnModel.layTheoId(Number(banId)) : null;
+    if (!ban) ban = await banAnModel.layTheoMaBan(String(banId));
     if (!ban) {
         const loi = new Error('Bàn ăn không tồn tại');
         loi.status = 404;
         throw loi;
     }
-    const danhSachDon = await donGoiMonModel.layDonCuaBan(banId);
+    const danhSachDon = await donGoiMonModel.layDonCuaBan(ban.id);
 
     // Tính tổng tiền lũy kế của bàn (US-070)
     let tongTienLuyKe = 0;
@@ -46,12 +47,14 @@ async function layDonCuaBan(banId) {
 }
 
 async function taoDonGoiMon(duLieu) {
-    const ban = await banAnModel.layTheoId(duLieu.banId);
+    let ban = !isNaN(duLieu.banId) ? await banAnModel.layTheoId(Number(duLieu.banId)) : null;
+    if (!ban) ban = await banAnModel.layTheoMaBan(String(duLieu.banId));
     if (!ban) {
         const loi = new Error('Bàn ăn không tồn tại');
         loi.status = 404;
         throw loi;
     }
+    duLieu.banId = ban.id;
 
     if (ban.trangThai === 'TamKhoa') {
         const loi = new Error('Bàn này đang tạm khóa phục vụ');

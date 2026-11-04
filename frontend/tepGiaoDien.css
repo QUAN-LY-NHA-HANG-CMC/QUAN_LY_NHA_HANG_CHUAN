@@ -5163,3 +5163,68 @@ input:checked + .slider-round:before {
     overflow-y: auto;
 }
 
+/* ==========================================================================
+   CHẾ ĐỘ KHÁCH HÀNG E-MENU (GỌI MÓN KHI QUÉT MÃ QR BÀN)
+   ========================================================================== */
+body.che-do-khach-hang {
+    background: #F3F4F6 !important;
+    overflow-x: hidden;
+}
+
+body.che-do-khach-hang .thanh-dieu-huong-doc,
+body.che-do-khach-hang .thanh-dau-trang {
+    display: none !important;
+}
+
+body.che-do-khach-hang .khung-ung-dung {
+    display: block !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+}
+
+body.che-do-khach-hang .vung-noi-dung-chinh {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    background: #F3F4F6 !important;
+}
+
+body.che-do-khach-hang #noi-dung-chinh {
+    padding: 0 !important;
+}
+
+body.che-do-khach-hang .khung-emenu-wrapper {
+    padding: 16px 12px 60px !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #F3F4F6;
+}
+
+@media (max-width: 768px) {
+    body.che-do-khach-hang .khung-emenu-wrapper {
+        padding: 0 !important;
+    }
+    body.che-do-khach-hang .thanh-dieu-khien-emenu {
+        display: none !important;
+    }
+    body.che-do-khach-hang .khung-dien-thoai-ngoai.che-do-mobile-phone {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        margin-bottom: 0 !important;
+    }
+    body.che-do-khach-hang .khung-dien-thoai-ngoai.che-do-mobile-phone .man-hinh-dien-thoai {
+        border-radius: 0 !important;
+        height: 100vh !important;
+    }
+}
+
+

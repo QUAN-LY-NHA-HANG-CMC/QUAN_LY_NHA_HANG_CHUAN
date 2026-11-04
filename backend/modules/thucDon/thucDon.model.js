@@ -76,7 +76,7 @@ async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang 
         ketQua = ketQua.filter(m => m.trangThai === 'DangBan');
     }
 
-    if (danhMucId) {
+    if (danhMucId && danhMucId !== 'TAT_CA' && !isNaN(danhMucId)) {
         ketQua = ketQua.filter(m => m.danhMucId === Number(danhMucId));
     }
 

@@ -442,11 +442,18 @@
             }
         },
 
-        taoDuongDanBanAn: function(maBan, token) {
+        taoDuongDanBanAn: function(maBan, token, banId) {
             var origin = (typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') 
                 ? window.location.origin 
                 : 'http://localhost:3001';
-            return origin + '/e-menu?ban=' + encodeURIComponent(maBan) + '&token=' + encodeURIComponent(token);
+            var duongDan = origin + '/e-menu?ban=' + encodeURIComponent(maBan);
+            if (banId) {
+                duongDan += '&banId=' + encodeURIComponent(banId);
+            }
+            if (token) {
+                duongDan += '&token=' + encodeURIComponent(token);
+            }
+            return duongDan;
         },
 
         taiAnhVeMay: function(urlAnh, tenTep) {
