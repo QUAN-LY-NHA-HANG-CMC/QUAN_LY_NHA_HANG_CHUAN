@@ -14,5 +14,10 @@
     "express": "^4.19.2",
     "multer": "^1.4.5-lts.1",
     "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "sql.js": "^1.15.2",
+    "supertest": "^7.3.1"
   }
 }

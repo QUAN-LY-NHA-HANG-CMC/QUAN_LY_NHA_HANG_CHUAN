@@ -84,11 +84,6 @@ ungDung.post(['/api/tai-khoan/dang-nhap', '/api/dang-nhap'], async (req, res) =>
             hopLe = (matKhau === nv.matKhau);
         }
 
-        // Chấp nhận mật khẩu test mặc định 123456
-        if (!hopLe && matKhau === '123456') {
-            hopLe = true;
-        }
-
         if (!hopLe) {
             return phanHoiLoi(res, 'Tên đăng nhập hoặc mật khẩu không chính xác', 401);
         }
