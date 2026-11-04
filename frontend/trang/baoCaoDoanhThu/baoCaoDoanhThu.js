@@ -95,7 +95,7 @@ class BaoCaoDoanhThuModule {
                 <div class="tieu-de-trang flex-giua-hai-dau">
                     <div>
                         <h2><i class="fas fa-chart-line text-primary"></i> Trung Tâm Báo Cáo & Thống Kê Doanh Thu</h2>
-                        <p class="van-ban-mo">Theo dõi KPIs vận hành, doanh thu theo ca/ngày, đối soát lịch sử hóa đơn và phân tích kinh doanh (Sprint 4)</p>
+                        <p class="van-ban-mo">Theo dõi KPIs vận hành, doanh thu theo ca/ngày, đối soát lịch sử hóa đơn và phân tích kinh doanh</p>
                     </div>
                     <div class="nhom-nut-hanh-dong">
                         <button id="btnXuatCsvDoanhThu" class="nut nut-phu" title="Xuất báo cáo doanh thu ra file Excel/CSV">

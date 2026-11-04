@@ -86,7 +86,7 @@ class UngDungFrontend {
                 const ten = user ? user.hoTen : 'Quản trị viên';
                 window.thongBao.thongTin(
                     `Xin chào ${ten}!`,
-                    'Sprint 1 hoàn chỉnh: Nhân sự, Phân quyền, Cấu hình, Quản lý Bàn & Thực đơn đã đồng bộ.'
+                    'Chào mừng bạn đến với Hệ thống Quản lý Nhà hàng & Gọi món QR Quán Mộc.'
                 );
             }
         }, 500);
@@ -314,16 +314,16 @@ class UngDungFrontend {
                 </p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button class="nut nut-chinh" onclick="window.ungDung.chuyenTab('quanLyBanQr')">
-                        🪑 Về Quản lý Bàn & QR (Sprint 1 - Quân)
+                        🪑 Về Quản lý Bàn & QR
                     </button>
                     <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('quanLyThucDon')">
-                        🍲 Về Quản lý Thực đơn (Sprint 1 - Quân)
+                        🍲 Về Quản lý Thực đơn
                     </button>
                     <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('quanLyNhanVien')">
-                        👥 Về Quản lý Nhân sự (Sprint 1 - Phong)
+                        👥 Về Quản lý Nhân sự
                     </button>
                     <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('phanQuyen')">
-                        🛡️ Về Phân quyền RBAC (Sprint 1 - Phong)
+                        🛡️ Về Phân quyền RBAC
                     </button>
                 </div>
             </div>

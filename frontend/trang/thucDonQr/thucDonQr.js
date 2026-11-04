@@ -147,7 +147,7 @@ class ThucDonQrManager {
                     <div class="nhom-chon-ban-demo">
                         <label for="select-ban-demo">🪑 <strong>Mô phỏng Bàn:</strong></label>
                         <select id="select-ban-demo" class="select-chon-ban-emenu" onchange="window.thucDonQr.chuyenBanDemo(this.value)">
-                            <option value="1" ${this.banId == 1 ? 'selected' : ''}>Bàn 01 (ID: 1) - Token test mẫu của Minh</option>
+                            <option value="1" ${this.banId == 1 ? 'selected' : ''}>Bàn 01 (ID: 1) - Tầng 1</option>
                             <option value="2" ${this.banId == 2 ? 'selected' : ''}>Bàn 02 (ID: 2) - Tầng 1</option>
                             <option value="7" ${this.banId == 7 ? 'selected' : ''}>Bàn 07 (ID: 7) - Tầng 2</option>
                             <option value="10" ${this.banId == 10 ? 'selected' : ''}>Bàn 10 (ID: 10) - Sân vườn</option>

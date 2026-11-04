@@ -65,7 +65,6 @@ class CaLamViecModule {
                         <div>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <h2>QUẢN LÝ CA LÀM VIỆC & KẾT CA THU NGÂN</h2>
-                                <span class="badge badge-cam">Sprint 4 • Phong</span>
                             </div>
                             <p class="mo-ta-s4">
                                 Quản lý ca trực, kiểm đếm tiền mặt đầu/cuối ca, ghi nhận thu chi phát sinh và đối soát chênh lệch két (US-117 ➔ US-122)
@@ -752,7 +751,7 @@ class CaLamViecModule {
                         <div>
                             <strong>Quản lý tiếp nhận</strong><br>
                             <small>(Ký ghi rõ họ tên)</small><br><br>
-                            <span>Phong (Quản lý)</span>
+                            <span>Quản lý tiếp nhận</span>
                         </div>
                     </div>
                 </div>

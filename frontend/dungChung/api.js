@@ -913,11 +913,26 @@ class ApiService {
     // =========================================================================
     async layDanhSachKhuVuc() {
         const kq = await this.yeuCau('/khu-vuc');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+            return kq.data.map(kv => ({
+                ...kv,
+                ten: kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`,
+                tenKhuVuc: kv.tenKhuVuc || kv.ten || `Khu vực ${kv.id}`
+            }));
+        }
 
         // Fallback LocalStorage
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachKhuVuc(ds) {
@@ -927,11 +942,39 @@ class ApiService {
 
     async layDanhSachBan() {
         const kq = await this.yeuCau('/ban-an');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+            const trangThaiMap = {
+                'Trong': 'TRONG',
+                'TRONG': 'TRONG',
+                'DangDung': 'DANG_DUNG',
+                'DANG_DUNG': 'DANG_DUNG',
+                'TamKhoa': 'TAM_KHOA',
+                'TAM_KHOA': 'TAM_KHOA',
+                'ChoThanhToan': 'CHO_THANH_TOAN',
+                'CHO_THANH_TOAN': 'CHO_THANH_TOAN'
+            };
+            return kq.data.map(b => ({
+                ...b,
+                soBan: b.soBan || b.tenBan || `Bàn ${b.id}`,
+                tenBan: b.tenBan || b.soBan || `Bàn ${b.id}`,
+                qrToken: b.qrToken || b.tokenBaoMat || `tok_b${b.id}`,
+                trangThai: trangThaiMap[b.trangThai] || b.trangThai || 'TRONG',
+                sucChua: b.sucChua || 4
+            }));
+        }
 
         // Fallback LocalStorage
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async layDanhSachBanAn() {
@@ -948,7 +991,7 @@ class ApiService {
     // =========================================================================
     async layDanhSachDanhMuc() {
         const kq = await this.yeuCau('/danh-muc');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok && Array.isArray(kq.data)) return kq.data;
 
         // Fallback LocalStorage
         const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc');
@@ -962,7 +1005,19 @@ class ApiService {
 
     async layDanhSachMonAn() {
         const kq = await this.yeuCau('/thuc-don');
-        if (kq && kq.ok && Array.isArray(kq.data)) return kq.data;
+        if (kq && kq.ok) {
+            const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || null);
+            if (rawList && rawList.length > 0) {
+                return rawList.map(m => ({
+                    ...m,
+                    maMon: m.maMon || `MON-${m.id}`,
+                    trangThai: m.trangThai === 'HoatDong' ? 1 : (m.trangThai === 'TamHet' ? 0 : (typeof m.trangThai === 'number' ? m.trangThai : 1)),
+                    laBanChay: m.laBanChay !== undefined ? m.laBanChay : (m.noiBat ? 1 : 0),
+                    tuyChonSize: m.tuyChonSize || [],
+                    tuyChonTopping: m.tuyChonTopping || []
+                }));
+            }
+        }
 
         // Fallback LocalStorage
         let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an');
@@ -1129,10 +1184,45 @@ class ApiService {
 
     async layDanhSachNhanVien() {
         const kq = await this.yeuCau('/nhan-vien');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok) {
+            const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
+            if (rawList.length > 0) {
+                const vaiTroMap = {
+                    'QuanLy': 'QUAN_LY',
+                    'ThuNgan': 'THU_NGAN',
+                    'Bep': 'BEP',
+                    'PhucVu': 'PHUC_VU',
+                    'QUAN_LY': 'QUAN_LY',
+                    'THU_NGAN': 'THU_NGAN',
+                    'BEP': 'BEP',
+                    'PHUC_VU': 'PHUC_VU'
+                };
+                const trangThaiMap = {
+                    'HoatDong': 'DANG_LAM_VIEC',
+                    'DANG_LAM_VIEC': 'DANG_LAM_VIEC',
+                    'Khoa': 'DA_KHOA',
+                    'DA_KHOA': 'DA_KHOA'
+                };
+                return rawList.map(nv => ({
+                    ...nv,
+                    vaiTro: vaiTroMap[nv.vaiTro] || nv.vaiTro || 'PHUC_VU',
+                    trangThai: trangThaiMap[nv.trangThai] || nv.trangThai || 'DANG_LAM_VIEC',
+                    matKhau: nv.matKhau || '123456'
+                }));
+            }
+        }
 
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachNhanVien(ds) {
@@ -1243,10 +1333,19 @@ class ApiService {
 
     async layDanhSachVaiTro() {
         const kq = await this.yeuCau('/vai-tro');
-        if (kq && kq.ok) return kq.data;
+        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) return kq.data;
 
-        const data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro');
-        return data ? JSON.parse(data) : [];
+        let data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro');
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_VAI_TRO || 'quanmoc_ds_vai_tro');
+        }
+        try {
+            const arr = data ? JSON.parse(data) : [];
+            return Array.isArray(arr) ? arr : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachVaiTro(ds) {

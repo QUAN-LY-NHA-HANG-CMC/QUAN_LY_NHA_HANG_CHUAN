@@ -26,13 +26,18 @@ class QuanLyBanQrModule {
     }
 
     async taiDuLieu() {
-        this.danhSachKhuVuc = await window.api.layDanhSachKhuVuc();
-        this.danhSachBan = await window.api.layDanhSachBan();
+        const dsKv = await window.api.layDanhSachKhuVuc();
+        this.danhSachKhuVuc = Array.isArray(dsKv) ? dsKv : [];
+        const dsBan = await window.api.layDanhSachBan();
+        this.danhSachBan = Array.isArray(dsBan) ? dsBan : [];
     }
 
     veGiaoDien() {
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
+
+        if (!Array.isArray(this.danhSachKhuVuc)) this.danhSachKhuVuc = [];
+        if (!Array.isArray(this.danhSachBan)) this.danhSachBan = [];
 
         // Thống kê nhanh
         const tongBan = this.danhSachBan.length;
@@ -41,11 +46,12 @@ class QuanLyBanQrModule {
         const banKhoa = this.danhSachBan.filter(b => b.trangThai === 'TAM_KHOA').length;
 
         // Lọc bàn theo khu vực và tìm kiếm
+        const tk = (this.tuKhoaTimKiem || '').toLowerCase();
         const banHienThi = this.danhSachBan.filter(ban => {
             const thoaKhuVuc = (this.khuVucDangChon === 'ALL') || (ban.khuVucId === Number(this.khuVucDangChon));
-            const thoaTuKhoa = !this.tuKhoaTimKiem || 
-                ban.soBan.toLowerCase().includes(this.tuKhoaTimKiem.toLowerCase()) || 
-                ban.maBan.toLowerCase().includes(this.tuKhoaTimKiem.toLowerCase());
+            const soBanStr = (ban.soBan || ban.tenBan || '').toLowerCase();
+            const maBanStr = (ban.maBan || '').toLowerCase();
+            const thoaTuKhoa = !tk || soBanStr.includes(tk) || maBanStr.includes(tk);
             return thoaKhuVuc && thoaTuKhoa;
         });
 

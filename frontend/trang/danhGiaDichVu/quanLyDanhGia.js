@@ -132,7 +132,7 @@ class QuanLyDanhGiaModule {
                 <div class="thanh-tieu-de-pos">
                     <div class="nhom-tieu-de">
                         <h2>⭐ Đánh Giá Khách Hàng & Quản Trị Phản Hồi</h2>
-                        <p class="mo-ta-phu">Phân hệ Sprint 4 (US-111 → US-116) • Điểm sao trung bình, Phản hồi khách hàng, Lọc đánh giá tiêu cực & Thống kê món ăn</p>
+                        <p class="mo-ta-phu">Điểm sao trung bình, phản hồi khách hàng, lọc đánh giá và thống kê chất lượng món ăn</p>
                     </div>
                     <div class="nhom-nut-hanh-dong-pos">
                         <button class="nut nut-chinh" onclick="window.quanLyDanhGia.moModalKhachDanhGia()">
