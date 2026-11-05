@@ -1,10 +1,18 @@
-let danhSachKhuVuc = [
-    { id: 1, tenKhuVuc: 'Tầng 1 - Sảnh chính', ghiChu: 'Khu vực máy lạnh, gần quầy thu ngân', trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 2, tenKhuVuc: 'Tầng 2 - Ngoài trời', ghiChu: 'Khu vực ban công thoáng mát', trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 3, tenKhuVuc: 'Phòng VIP', ghiChu: 'Khu vực riêng tư cho gia đình hoặc họp mặt', trangThai: 'HoatDong', ngayTao: new Date() }
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
+
+const duLieuKhuVucMacDinh = [
+    { id: 1, tenKhuVuc: 'Tầng 1 (Máy lạnh)', ghiChu: 'Không gian ấm cúng, phù hợp gia đình', trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 2, tenKhuVuc: 'Tầng 2 (Ngoài trời)', ghiChu: 'Thoáng đãng, ngắm phố xá về đêm', trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 3, tenKhuVuc: 'Khu Sân Vườn', ghiChu: 'Không gian xanh mát mẻ, tiệc nhóm', trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 4, tenKhuVuc: 'Phòng VIP', ghiChu: 'Không gian riêng tư, tiếp khách sang trọng', trangThai: 'HoatDong', ngayTao: new Date() }
 ];
 
-let tuTangId = 4;
+let danhSachKhuVuc = docDuLieu('khuVuc', duLieuKhuVucMacDinh);
+let tuTangId = Math.max(...danhSachKhuVuc.map(kv => kv.id || 0), 0) + 1;
+
+function luu() {
+    ghiDuLieu('khuVuc', danhSachKhuVuc);
+}
 
 async function layTatCa() {
     return danhSachKhuVuc.filter(kv => kv.trangThai !== 'DaXoa');
@@ -30,6 +38,7 @@ async function taoMoi(duLieu) {
         ngayCapNhat: new Date()
     };
     danhSachKhuVuc.push(banGhiMoi);
+    luu();
     return banGhiMoi;
 }
 
@@ -44,6 +53,7 @@ async function capNhat(id, duLieu) {
         trangThai: duLieu.trangThai || danhSachKhuVuc[viTri].trangThai,
         ngayCapNhat: new Date()
     };
+    luu();
     return danhSachKhuVuc[viTri];
 }
 
@@ -52,6 +62,7 @@ async function xoa(id) {
     if (viTri === -1) return false;
     danhSachKhuVuc[viTri].trangThai = 'DaXoa';
     danhSachKhuVuc[viTri].ngayCapNhat = new Date();
+    luu();
     return true;
 }
 
@@ -66,6 +77,7 @@ async function dongBoDanhSach(danhSachMoi) {
         ngayCapNhat: new Date()
     }));
     tuTangId = Math.max(...danhSachKhuVuc.map(kv => kv.id || 0), 0) + 1;
+    luu();
     return danhSachKhuVuc;
 }
 

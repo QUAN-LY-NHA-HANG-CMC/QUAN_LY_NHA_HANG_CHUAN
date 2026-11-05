@@ -1,4 +1,6 @@
-let cauHinhNhaHang = {
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
+
+const duLieuCauHinhMacDinh = {
     ten: 'Nhà Hàng Quán Mộc',
     chiNhanh: 'Chi nhánh 1 (Quận 1)',
     diaChi: '123 Đường Ẩm Thực, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
@@ -18,6 +20,12 @@ let cauHinhNhaHang = {
         cuPhapChuyenKhoan: 'QUANMOC {SO_BAN}'
     }
 };
+
+let cauHinhNhaHang = docDuLieu('cauHinhNhaHang', duLieuCauHinhMacDinh);
+
+function luu() {
+    ghiDuLieu('cauHinhNhaHang', cauHinhNhaHang);
+}
 
 async function layCauHinh() {
     let cauHinhChung = {};
@@ -41,6 +49,7 @@ async function capNhatCauHinh(duLieuMoi) {
             ...(duLieuMoi.nganHang || {})
         }
     };
+    luu();
     return { ...cauHinhNhaHang };
 }
 

@@ -3,7 +3,9 @@
  * Quản lý các lượt gọi món (Orders/Rounds) của từng bàn ăn trong phiên phục vụ
  */
 
-let danhSachDonGoi = [
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
+
+const duLieuDonGoiMacDinh = [
     {
         id: 1,
         maDon: 'ORD-20261028-001',
@@ -11,10 +13,10 @@ let danhSachDonGoi = [
         maBan: 'B101',
         tenBan: 'Bàn 01',
         khuVucId: 1,
-        tenKhuVuc: 'Tầng 1 - Trong nhà',
+        tenKhuVuc: 'Tầng 1 (Máy lạnh)',
         luotGoi: 1,
-        thoiGianTao: new Date(Date.now() - 35 * 60 * 1000), // 35 phút trước
-        trangThai: 'DANG_XU_LY', // 'CHO_XU_LY', 'DANG_XU_LY', 'HOAN_THANH', 'DA_HUY'
+        thoiGianTao: new Date(Date.now() - 35 * 60 * 1000),
+        trangThai: 'DANG_XU_LY',
         ghiChuDon: 'Khách ăn ít cay',
         danhSachMon: [
             {
@@ -27,7 +29,7 @@ let danhSachDonGoi = [
                 soLuong: 1,
                 thanhTien: 209000,
                 ghiChu: 'Chín vừa',
-                trangThai: 'DA_LEN_MON' // 'CHO_XAC_NHAN', 'DANG_CHE_BIEN', 'DA_NAU_XONG', 'DA_LEN_MON', 'DA_HUY'
+                trangThai: 'DA_LEN_MON'
             },
             {
                 id: 102,
@@ -52,9 +54,9 @@ let danhSachDonGoi = [
         maBan: 'B101',
         tenBan: 'Bàn 01',
         khuVucId: 1,
-        tenKhuVuc: 'Tầng 1 - Trong nhà',
+        tenKhuVuc: 'Tầng 1 (Máy lạnh)',
         luotGoi: 2,
-        thoiGianTao: new Date(Date.now() - 15 * 60 * 1000), // 15 phút trước
+        thoiGianTao: new Date(Date.now() - 15 * 60 * 1000),
         trangThai: 'DANG_XU_LY',
         ghiChuDon: 'Gọi thêm',
         danhSachMon: [
@@ -81,7 +83,7 @@ let danhSachDonGoi = [
         maBan: 'Q123',
         tenBan: 'Bàn 06',
         khuVucId: 1,
-        tenKhuVuc: 'Quân 1',
+        tenKhuVuc: 'Tầng 1 (Máy lạnh)',
         luotGoi: 1,
         thoiGianTao: new Date(Date.now() - 10 * 60 * 1000),
         trangThai: 'CHO_XU_LY',
@@ -105,8 +107,28 @@ let danhSachDonGoi = [
     }
 ];
 
-let tuTangId = 4;
-let tuTangItemId = 105;
+let danhSachDonGoi = docDuLieu('donGoiMon', duLieuDonGoiMacDinh);
+
+function tinhTuTangId() {
+    return Math.max(...danhSachDonGoi.map(d => d.id || 0), 0) + 1;
+}
+
+function tinhTuTangItemId() {
+    let maxItemId = 100;
+    danhSachDonGoi.forEach(d => {
+        (d.danhSachMon || []).forEach(m => {
+            if (m.id && m.id > maxItemId) maxItemId = m.id;
+        });
+    });
+    return maxItemId + 1;
+}
+
+let tuTangId = tinhTuTangId();
+let tuTangItemId = tinhTuTangItemId();
+
+function luu() {
+    ghiDuLieu('donGoiMon', danhSachDonGoi);
+}
 
 async function layTatCa({ banId, trangThai } = {}) {
     let ketQua = [...danhSachDonGoi];
@@ -131,6 +153,9 @@ async function taoDon(duLieu) {
     const banId = Number(duLieu.banId);
     const donHienCo = await layDonCuaBan(banId);
     const luotGoi = donHienCo.length + 1;
+
+    tuTangId = Math.max(tuTangId, tinhTuTangId());
+    tuTangItemId = Math.max(tuTangItemId, tinhTuTangItemId());
 
     const ngayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const maDon = `ORD-${ngayStr}-${String(tuTangId).padStart(3, '0')}`;
@@ -183,14 +208,16 @@ async function taoDon(duLieu) {
     };
 
     danhSachDonGoi.push(donMoi);
+    luu();
     return donMoi;
 }
 
 async function capNhatTrangThaiMon(itemId, trangThaiMoi) {
     for (const don of danhSachDonGoi) {
-        const mon = don.danhSachMon.find(m => m.id === Number(itemId));
+        const mon = (don.danhSachMon || []).find(m => m.id === Number(itemId));
         if (mon) {
             mon.trangThai = trangThaiMoi;
+            luu();
             return { don, mon };
         }
     }
@@ -199,7 +226,7 @@ async function capNhatTrangThaiMon(itemId, trangThaiMoi) {
 
 async function huyMon(itemId, lyDo = '') {
     for (const don of danhSachDonGoi) {
-        const mon = don.danhSachMon.find(m => m.id === Number(itemId));
+        const mon = (don.danhSachMon || []).find(m => m.id === Number(itemId));
         if (mon) {
             if (mon.trangThai !== 'CHO_XAC_NHAN') {
                 const loi = new Error('Không thể hủy món vì bếp đã bắt đầu chế biến hoặc đã lên món');
@@ -213,6 +240,7 @@ async function huyMon(itemId, lyDo = '') {
                 .filter(m => m.trangThai !== 'DA_HUY')
                 .reduce((tong, m) => tong + m.thanhTien, 0);
 
+            luu();
             return { don, mon };
         }
     }
@@ -225,6 +253,7 @@ async function dongDonCuaBan(banId) {
         d.trangThai = 'HOAN_THANH';
         d.thoiGianHoanThanh = new Date();
     });
+    luu();
     return cacDon.length;
 }
 

@@ -913,85 +913,79 @@ class ApiService {
     // =========================================================================
     async layDanhSachKhuVuc() {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc';
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/khu-vuc');
+            if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+                const parsed = kq.data.map(kv => ({
+                    ...kv,
+                    ten: kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`,
+                    tenKhuVuc: kv.tenKhuVuc || kv.ten || `Khu vực ${kv.id}`
+                }));
+                localStorage.setItem(key, JSON.stringify(parsed));
+                return parsed;
+            }
+        }
+
         let data = localStorage.getItem(key);
         if (!data) {
             this.khoiTaoDuLieuMauBanDau();
             data = localStorage.getItem(key);
         }
-        let list = [];
         try {
-            list = data ? JSON.parse(data) : [];
+            return data ? JSON.parse(data) : [];
         } catch {
-            list = [];
+            return [];
         }
-        if (Array.isArray(list) && list.length > 0) {
-            // Đồng bộ ngầm với Backend nếu máy chủ đang chạy
-            this.yeuCau('/khu-vuc/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
-            return list;
-        }
-
-        const kq = await this.yeuCau('/khu-vuc');
-        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
-            const parsed = kq.data.map(kv => ({
-                ...kv,
-                ten: kv.ten || kv.tenKhuVuc || `Khu vực ${kv.id}`,
-                tenKhuVuc: kv.tenKhuVuc || kv.ten || `Khu vực ${kv.id}`
-            }));
-            localStorage.setItem(key, JSON.stringify(parsed));
-            return parsed;
-        }
-        return [];
     }
 
     async luuDanhSachKhuVuc(ds) {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_KHU_VUC || 'quanmoc_ds_khu_vuc';
         localStorage.setItem(key, JSON.stringify(ds));
-        this.yeuCau('/khu-vuc/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        await this.yeuCau('/khu-vuc/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật khu vực bàn', 'INFO', `Cập nhật danh sách khu vực phục vụ (${ds.length} khu vực).`);
     }
 
     async layDanhSachBan() {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban';
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/ban-an');
+            if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+                const trangThaiMap = {
+                    'Trong': 'TRONG',
+                    'TRONG': 'TRONG',
+                    'DangDung': 'DANG_DUNG',
+                    'DangPhucVu': 'DANG_DUNG',
+                    'DANG_DUNG': 'DANG_DUNG',
+                    'TamKhoa': 'TAM_KHOA',
+                    'TAM_KHOA': 'TAM_KHOA',
+                    'ChoThanhToan': 'CHO_THANH_TOAN',
+                    'CHO_THANH_TOAN': 'CHO_THANH_TOAN'
+                };
+                const parsed = kq.data.map(b => ({
+                    ...b,
+                    soBan: b.soBan || b.tenBan || `Bàn ${b.id}`,
+                    tenBan: b.tenBan || b.soBan || `Bàn ${b.id}`,
+                    qrToken: b.qrToken || b.tokenBaoMat || `tok_b${b.id}`,
+                    trangThai: trangThaiMap[b.trangThai] || b.trangThai || 'TRONG',
+                    sucChua: b.sucChua || 4
+                }));
+                localStorage.setItem(key, JSON.stringify(parsed));
+                return parsed;
+            }
+        }
+
         let data = localStorage.getItem(key);
         if (!data) {
             this.khoiTaoDuLieuMauBanDau();
             data = localStorage.getItem(key);
         }
-        let list = [];
         try {
-            list = data ? JSON.parse(data) : [];
+            return data ? JSON.parse(data) : [];
         } catch {
-            list = [];
+            return [];
         }
-        if (Array.isArray(list) && list.length > 0) {
-            this.yeuCau('/ban-an/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
-            return list;
-        }
-
-        const kq = await this.yeuCau('/ban-an');
-        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
-            const trangThaiMap = {
-                'Trong': 'TRONG',
-                'TRONG': 'TRONG',
-                'DangDung': 'DANG_DUNG',
-                'DANG_DUNG': 'DANG_DUNG',
-                'TamKhoa': 'TAM_KHOA',
-                'TAM_KHOA': 'TAM_KHOA',
-                'ChoThanhToan': 'CHO_THANH_TOAN',
-                'CHO_THANH_TOAN': 'CHO_THANH_TOAN'
-            };
-            const parsed = kq.data.map(b => ({
-                ...b,
-                soBan: b.soBan || b.tenBan || `Bàn ${b.id}`,
-                tenBan: b.tenBan || b.soBan || `Bàn ${b.id}`,
-                qrToken: b.qrToken || b.tokenBaoMat || `tok_b${b.id}`,
-                trangThai: trangThaiMap[b.trangThai] || b.trangThai || 'TRONG',
-                sucChua: b.sucChua || 4
-            }));
-            localStorage.setItem(key, JSON.stringify(parsed));
-            return parsed;
-        }
-        return [];
     }
 
     async layDanhSachBanAn() {
@@ -1001,7 +995,7 @@ class ApiService {
     async luuDanhSachBan(ds) {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban';
         localStorage.setItem(key, JSON.stringify(ds));
-        this.yeuCau('/ban-an/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        await this.yeuCau('/ban-an/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật sơ đồ bàn', 'INFO', `Cập nhật sơ đồ bàn ăn (${ds.length} bàn).`);
     }
 
@@ -1031,80 +1025,78 @@ class ApiService {
     // =========================================================================
     async layDanhSachDanhMuc() {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc';
-        let data = localStorage.getItem(key);
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(key);
-        }
-        let list = [];
-        try {
-            list = data ? JSON.parse(data) : [];
-        } catch {
-            list = [];
-        }
-        if (Array.isArray(list) && list.length > 0) {
-            this.yeuCau('/danh-muc-mon/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
-            return list;
-        }
-
-        const kq = await this.yeuCau('/danh-muc');
-        if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
-            localStorage.setItem(key, JSON.stringify(kq.data));
-            return kq.data;
-        }
-        return [];
-    }
-
-    async luuDanhSachDanhMuc(ds) {
-        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc';
-        localStorage.setItem(key, JSON.stringify(ds));
-        this.yeuCau('/danh-muc-mon/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
-        this.ghiNhatKy('Cập nhật danh mục thực đơn', 'INFO', `Cập nhật danh mục thực đơn (${ds.length} danh mục).`);
-    }
-
-    async layDanhSachMonAn() {
-        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an';
-        let data = localStorage.getItem(key);
-        if (!data) {
-            this.khoiTaoDuLieuMauBanDau();
-            data = localStorage.getItem(key);
-        }
-        let list = [];
-        try {
-            list = data ? JSON.parse(data) : [];
-        } catch {
-            list = [];
-        }
-        if (Array.isArray(list) && list.length > 0) {
-            // Luôn đồng bộ danh sách món ăn từ LocalStorage sang Backend để E-Menu / Mobile thấy được các sửa đổi
-            this.yeuCau('/thuc-don/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
-            return list;
-        }
-
-        const kq = await this.yeuCau('/thuc-don');
-        if (kq && kq.ok) {
-            const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || null);
-            if (rawList && rawList.length > 0) {
-                const parsed = rawList.map(m => ({
-                    ...m,
-                    maMon: m.maMon || `MON-${m.id}`,
-                    trangThai: m.trangThai === 'HoatDong' ? 1 : (m.trangThai === 'TamHet' ? 0 : (typeof m.trangThai === 'number' ? m.trangThai : 1)),
-                    laBanChay: m.laBanChay !== undefined ? m.laBanChay : (m.noiBat ? 1 : 0),
-                    tuyChonSize: m.tuyChonSize || [],
-                    tuyChonTopping: m.tuyChonTopping || []
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/danh-muc');
+            if (kq && kq.ok && Array.isArray(kq.data) && kq.data.length > 0) {
+                const parsed = kq.data.map(dm => ({
+                    ...dm,
+                    ten: dm.ten || dm.tenDanhMuc || `Danh mục ${dm.id}`,
+                    tenDanhMuc: dm.tenDanhMuc || dm.ten || `Danh mục ${dm.id}`,
+                    bieuTuong: dm.bieuTuong || '🍽️'
                 }));
                 localStorage.setItem(key, JSON.stringify(parsed));
                 return parsed;
             }
         }
-        return [];
+
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        try {
+            return data ? JSON.parse(data) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    async luuDanhSachDanhMuc(ds) {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DANH_MUC || 'quanmoc_ds_danh_muc';
+        localStorage.setItem(key, JSON.stringify(ds));
+        await this.yeuCau('/danh-muc-mon/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        this.ghiNhatKy('Cập nhật danh mục thực đơn', 'INFO', `Cập nhật danh mục thực đơn (${ds.length} danh mục).`);
+    }
+
+    async layDanhSachMonAn() {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an';
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/thuc-don');
+            if (kq && kq.ok) {
+                const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || null);
+                if (rawList && rawList.length > 0) {
+                    const parsed = rawList.map(m => ({
+                        ...m,
+                        maMon: m.maMon || `MON-${m.id}`,
+                        trangThai: (m.trangThai === 'HoatDong' || m.trangThai === 'DangBan' || m.trangThai === 1) ? 1 : ((m.trangThai === 'TamHet' || m.trangThai === 0) ? 0 : (typeof m.trangThai === 'number' ? m.trangThai : 1)),
+                        laBanChay: m.laBanChay !== undefined ? m.laBanChay : (m.noiBat || m.laMonBanChay ? 1 : 0),
+                        tuyChonSize: m.tuyChonSize || [],
+                        tuyChonTopping: m.tuyChonTopping || []
+                    }));
+                    localStorage.setItem(key, JSON.stringify(parsed));
+                    return parsed;
+                }
+            }
+        }
+
+        let data = localStorage.getItem(key);
+        if (!data) {
+            this.khoiTaoDuLieuMauBanDau();
+            data = localStorage.getItem(key);
+        }
+        try {
+            return data ? JSON.parse(data) : [];
+        } catch {
+            return [];
+        }
     }
 
     async luuDanhSachMonAn(ds) {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_MON_AN || 'quanmoc_ds_mon_an';
         localStorage.setItem(key, JSON.stringify(ds));
-        // Đẩy đồng bộ ngay lập tức sang Backend API
-        this.yeuCau('/thuc-don/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        await this.yeuCau('/thuc-don/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
         this.ghiNhatKy('Cập nhật món ăn thực đơn', 'INFO', `Cập nhật danh sách món ăn (${ds.length} món).`);
     }
 
@@ -1254,59 +1246,57 @@ class ApiService {
 
     async layDanhSachNhanVien() {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien';
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/nhan-vien');
+            if (kq && kq.ok) {
+                const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
+                if (rawList.length > 0) {
+                    const vaiTroMap = {
+                        'QuanLy': 'QUAN_LY',
+                        'ThuNgan': 'THU_NGAN',
+                        'Bep': 'BEP',
+                        'PhucVu': 'PHUC_VU',
+                        'QUAN_LY': 'QUAN_LY',
+                        'THU_NGAN': 'THU_NGAN',
+                        'BEP': 'BEP',
+                        'PHUC_VU': 'PHUC_VU'
+                    };
+                    const trangThaiMap = {
+                        'HoatDong': 'DANG_LAM_VIEC',
+                        'DANG_LAM_VIEC': 'DANG_LAM_VIEC',
+                        'Khoa': 'DA_KHOA',
+                        'DA_KHOA': 'DA_KHOA'
+                    };
+                    const parsed = rawList.map(nv => ({
+                        ...nv,
+                        vaiTro: vaiTroMap[nv.vaiTro] || nv.vaiTro || 'PHUC_VU',
+                        trangThai: trangThaiMap[nv.trangThai] || nv.trangThai || 'DANG_LAM_VIEC',
+                        matKhau: nv.matKhau || '123456'
+                    }));
+                    localStorage.setItem(key, JSON.stringify(parsed));
+                    return parsed;
+                }
+            }
+        }
+
         let data = localStorage.getItem(key);
         if (!data) {
             this.khoiTaoDuLieuMauBanDau();
             data = localStorage.getItem(key);
         }
-        let list = [];
         try {
-            list = data ? JSON.parse(data) : [];
+            return data ? JSON.parse(data) : [];
         } catch {
-            list = [];
+            return [];
         }
-        if (Array.isArray(list) && list.length > 0) {
-            this.yeuCau('/nhan-vien/dong-bo', { method: 'POST', body: { danhSach: list } }).catch(() => {});
-            return list;
-        }
-
-        const kq = await this.yeuCau('/nhan-vien');
-        if (kq && kq.ok) {
-            const rawList = Array.isArray(kq.data) ? kq.data : (kq.data?.danhSach || []);
-            if (rawList.length > 0) {
-                const vaiTroMap = {
-                    'QuanLy': 'QUAN_LY',
-                    'ThuNgan': 'THU_NGAN',
-                    'Bep': 'BEP',
-                    'PhucVu': 'PHUC_VU',
-                    'QUAN_LY': 'QUAN_LY',
-                    'THU_NGAN': 'THU_NGAN',
-                    'BEP': 'BEP',
-                    'PHUC_VU': 'PHUC_VU'
-                };
-                const trangThaiMap = {
-                    'HoatDong': 'DANG_LAM_VIEC',
-                    'DANG_LAM_VIEC': 'DANG_LAM_VIEC',
-                    'Khoa': 'DA_KHOA',
-                    'DA_KHOA': 'DA_KHOA'
-                };
-                const parsed = rawList.map(nv => ({
-                    ...nv,
-                    vaiTro: vaiTroMap[nv.vaiTro] || nv.vaiTro || 'PHUC_VU',
-                    trangThai: trangThaiMap[nv.trangThai] || nv.trangThai || 'DANG_LAM_VIEC',
-                    matKhau: nv.matKhau || '123456'
-                }));
-                localStorage.setItem(key, JSON.stringify(parsed));
-                return parsed;
-            }
-        }
-        return [];
     }
 
     async luuDanhSachNhanVien(ds) {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_NHAN_VIEN || 'quanmoc_ds_nhan_vien';
         localStorage.setItem(key, JSON.stringify(ds));
-        this.yeuCau('/nhan-vien/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        await this.yeuCau('/nhan-vien/dong-bo', { method: 'POST', body: { danhSach: ds } }).catch(() => {});
+        this.ghiNhatKy('Cập nhật nhân sự', 'INFO', `Cập nhật danh sách nhân viên (${ds.length} người).`);
     }
 
     /**
@@ -1517,23 +1507,19 @@ class ApiService {
 
     async layCauHinhHeThong() {
         const key = window.HANG_SO?.KHOA_LUU_TRU?.CAU_HINH_HE_THONG || 'quanmoc_cau_hinh_he_thong';
+        const coServer = await this.kiemTraKetNoiServer();
+        if (coServer) {
+            const kq = await this.yeuCau('/cau-hinh');
+            if (kq && kq.ok && kq.data) {
+                localStorage.setItem(key, JSON.stringify(kq.data));
+                return kq.data;
+            }
+        }
+
         const raw = localStorage.getItem(key);
-        let localData = null;
         try {
-            localData = raw ? JSON.parse(raw) : null;
+            if (raw) return JSON.parse(raw);
         } catch {}
-
-        if (localData) {
-            // Đồng bộ sang Backend để E-Menu / Mobile nhận cấu hình mới
-            this.yeuCau('/cau-hinh', { method: 'POST', body: localData }).catch(() => {});
-            return localData;
-        }
-
-        const kq = await this.yeuCau('/cau-hinh');
-        if (kq && kq.ok && kq.data) {
-            localStorage.setItem(key, JSON.stringify(kq.data));
-            return kq.data;
-        }
 
         return (window.HANG_SO ? window.HANG_SO.NHA_HANG_MAC_DINH : {});
     }

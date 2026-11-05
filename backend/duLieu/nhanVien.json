@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "tenDangNhap": "quanly",
+    "matKhau": "$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe",
+    "hoTen": "Nguyễn Văn Quản Lý",
+    "soDienThoai": "0901234567",
+    "email": "quanly@quanmoc.com",
+    "vaiTro": "QuanLy",
+    "trangThai": "HoatDong",
+    "ngayTao": "2026-11-05T04:10:45.074Z",
+    "ngayCapNhat": "2026-11-05T04:10:45.074Z"
+  },
+  {
+    "id": 2,
+    "tenDangNhap": "thungan01",
+    "matKhau": "$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe",
+    "hoTen": "Trần Thị Thu Ngân",
+    "soDienThoai": "0912345678",
+    "email": "thungan@quanmoc.com",
+    "vaiTro": "ThuNgan",
+    "trangThai": "HoatDong",
+    "ngayTao": "2026-11-05T04:10:45.074Z",
+    "ngayCapNhat": "2026-11-05T04:10:45.074Z"
+  },
+  {
+    "id": 3,
+    "tenDangNhap": "bep01",
+    "matKhau": "$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe",
+    "hoTen": "Lê Văn Bếp Trưởng",
+    "soDienThoai": "0923456789",
+    "email": "bep@quanmoc.com",
+    "vaiTro": "Bep",
+    "trangThai": "HoatDong",
+    "ngayTao": "2026-11-05T04:10:45.074Z",
+    "ngayCapNhat": "2026-11-05T04:10:45.074Z"
+  },
+  {
+    "id": 4,
+    "tenDangNhap": "phucvu01",
+    "matKhau": "$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe",
+    "hoTen": "Phạm Văn Phục Vụ",
+    "soDienThoai": "0934567890",
+    "email": "phucvu@quanmoc.com",
+    "vaiTro": "PhucVu",
+    "trangThai": "HoatDong",
+    "ngayTao": "2026-11-05T04:10:45.074Z",
+    "ngayCapNhat": "2026-11-05T04:10:45.074Z"
+  }
+]

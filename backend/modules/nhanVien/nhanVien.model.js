@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
 
-let danhSachNhanVien = [
+const duLieuNhanVienMacDinh = [
     {
         id: 1,
         tenDangNhap: 'quanly',
@@ -8,8 +9,8 @@ let danhSachNhanVien = [
         hoTen: 'Nguyễn Văn Quản Lý',
         soDienThoai: '0901234567',
         email: 'quanly@quanmoc.com',
-        vaiTro: 'QuanLy', // 'QuanLy', 'ThuNgan', 'Bep', 'PhucVu'
-        trangThai: 'HoatDong', // 'HoatDong', 'Khoa'
+        vaiTro: 'QuanLy',
+        trangThai: 'HoatDong',
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     },
@@ -36,10 +37,27 @@ let danhSachNhanVien = [
         trangThai: 'HoatDong',
         ngayTao: new Date(),
         ngayCapNhat: new Date()
+    },
+    {
+        id: 4,
+        tenDangNhap: 'phucvu01',
+        matKhau: '$2a$10$w3a6zB2qLphF3kL4kOaPDeP46n9Gk1wD26dJ3j5aC3aE.vEw6G.Xe',
+        hoTen: 'Phạm Văn Phục Vụ',
+        soDienThoai: '0934567890',
+        email: 'phucvu@quanmoc.com',
+        vaiTro: 'PhucVu',
+        trangThai: 'HoatDong',
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
     }
 ];
 
-let tuTangId = 4;
+let danhSachNhanVien = docDuLieu('nhanVien', duLieuNhanVienMacDinh);
+let tuTangId = Math.max(...danhSachNhanVien.map(n => n.id || 0), 0) + 1;
+
+function luu() {
+    ghiDuLieu('nhanVien', danhSachNhanVien);
+}
 
 async function layDanhSach({ tuKhoa, vaiTro, trangThai, trang = 1, soLuong = 10 } = {}) {
     let ketQua = danhSachNhanVien.filter(nv => nv.trangThai !== 'DaXoa');
@@ -55,25 +73,26 @@ async function layDanhSach({ tuKhoa, vaiTro, trangThai, trang = 1, soLuong = 10 
     if (tuKhoa) {
         const tuKhoaChuan = tuKhoa.toLowerCase().trim();
         ketQua = ketQua.filter(
-            nv => nv.hoTen.toLowerCase().includes(tuKhoaChuan) ||
-                  nv.tenDangNhap.toLowerCase().includes(tuKhoaChuan) ||
+            nv => (nv.hoTen && nv.hoTen.toLowerCase().includes(tuKhoaChuan)) ||
+                  (nv.tenDangNhap && nv.tenDangNhap.toLowerCase().includes(tuKhoaChuan)) ||
                   (nv.soDienThoai && nv.soDienThoai.includes(tuKhoaChuan))
         );
     }
 
     const tongSo = ketQua.length;
-    const tongSoTrang = Math.ceil(tongSo / soLuong) || 1;
-    const viTriBatDau = (trang - 1) * soLuong;
-    const duLieuTrang = ketQua.slice(viTriBatDau, viTriBatDau + Number(soLuong));
+    const soLuongNum = Number(soLuong) || 10;
+    const trangNum = Number(trang) || 1;
+    const tongSoTrang = Math.ceil(tongSo / soLuongNum) || 1;
+    const viTriBatDau = (trangNum - 1) * soLuongNum;
+    const duLieuTrang = ketQua.slice(viTriBatDau, viTriBatDau + soLuongNum);
 
-    // Loại bỏ trường matKhau khi trả về danh sách
     const danhSachAnToan = duLieuTrang.map(({ matKhau, ...duLieuAnToan }) => duLieuAnToan);
 
     return {
         danhSach: danhSachAnToan,
         phanTrang: {
-            trangHienTai: Number(trang),
-            soLuongMoiTrang: Number(soLuong),
+            trangHienTai: trangNum,
+            soLuongMoiTrang: soLuongNum,
             tongSoBanGhi: tongSo,
             tongSoTrang
         }
@@ -92,6 +111,7 @@ async function layBanGhiGocTheoId(id) {
 }
 
 async function layTheoTenDangNhap(tenDangNhap) {
+    if (!tenDangNhap) return null;
     return danhSachNhanVien.find(
         n => n.tenDangNhap.toLowerCase() === tenDangNhap.toLowerCase().trim() && n.trangThai !== 'DaXoa'
     ) || null;
@@ -111,6 +131,7 @@ async function taoMoi(duLieu) {
         ngayCapNhat: new Date()
     };
     danhSachNhanVien.push(banGhiMoi);
+    luu();
 
     const { matKhau, ...duLieuAnToan } = banGhiMoi;
     return duLieuAnToan;
@@ -128,6 +149,7 @@ async function capNhat(id, duLieu) {
         vaiTro: duLieu.vaiTro !== undefined ? duLieu.vaiTro : danhSachNhanVien[viTri].vaiTro,
         ngayCapNhat: new Date()
     };
+    luu();
 
     const { matKhau, ...duLieuAnToan } = danhSachNhanVien[viTri];
     return duLieuAnToan;
@@ -139,6 +161,7 @@ async function doiTrangThai(id, trangThaiMoi) {
 
     danhSachNhanVien[viTri].trangThai = trangThaiMoi;
     danhSachNhanVien[viTri].ngayCapNhat = new Date();
+    luu();
 
     const { matKhau, ...duLieuAnToan } = danhSachNhanVien[viTri];
     return duLieuAnToan;
@@ -150,6 +173,7 @@ async function datLaiMatKhau(id, matKhauMoiDaBam) {
 
     danhSachNhanVien[viTri].matKhau = matKhauMoiDaBam;
     danhSachNhanVien[viTri].ngayCapNhat = new Date();
+    luu();
     return true;
 }
 
@@ -186,6 +210,7 @@ async function dongBoDanhSach(danhSachMoi) {
         ngayCapNhat: new Date()
     }));
     tuTangId = Math.max(...danhSachNhanVien.map(n => n.id || 0), 0) + 1;
+    luu();
     return danhSachNhanVien;
 }
 

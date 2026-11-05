@@ -1,17 +1,25 @@
-let danhSachDanhMuc = [
-    { id: 1, tenDanhMuc: 'Khai vị', thuTuHienThi: 1, trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 2, tenDanhMuc: 'Món chính', thuTuHienThi: 2, trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 3, tenDanhMuc: 'Lẩu', thuTuHienThi: 3, trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 4, tenDanhMuc: 'Đồ uống', thuTuHienThi: 4, trangThai: 'HoatDong', ngayTao: new Date() },
-    { id: 5, tenDanhMuc: 'Tráng miệng', thuTuHienThi: 5, trangThai: 'HoatDong', ngayTao: new Date() }
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
+
+const duLieuDanhMucMacDinh = [
+    { id: 1, tenDanhMuc: 'Khai Vị & Món Nhắm', bieuTuong: '🥗', thuTuHienThi: 1, trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 2, tenDanhMuc: 'Đặc Sản Quán Mộc', bieuTuong: '🍗', thuTuHienThi: 2, trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 3, tenDanhMuc: 'Lẩu & Nướng Than Hoa', bieuTuong: '🍲', thuTuHienThi: 3, trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 4, tenDanhMuc: 'Hải Sản Tươi Sống', bieuTuong: '🦐', thuTuHienThi: 4, trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 5, tenDanhMuc: 'Cơm, Mì & Rau Rừng', bieuTuong: '🍚', thuTuHienThi: 5, trangThai: 'HoatDong', ngayTao: new Date() },
+    { id: 6, tenDanhMuc: 'Đồ Uống & Tráng Miệng', bieuTuong: '🍹', thuTuHienThi: 6, trangThai: 'HoatDong', ngayTao: new Date() }
 ];
 
-let tuTangId = 6;
+let danhSachDanhMuc = docDuLieu('danhMucMon', duLieuDanhMucMacDinh);
+let tuTangId = Math.max(...danhSachDanhMuc.map(dm => dm.id || 0), 0) + 1;
+
+function luu() {
+    ghiDuLieu('danhMucMon', danhSachDanhMuc);
+}
 
 async function layTatCa() {
     return danhSachDanhMuc
         .filter(dm => dm.trangThai !== 'DaXoa')
-        .sort((a, b) => a.thuTuHienThi - b.thuTuHienThi);
+        .sort((a, b) => (a.thuTuHienThi || a.thuTu || 0) - (b.thuTuHienThi || b.thuTu || 0));
 }
 
 async function layTheoId(id) {
@@ -20,20 +28,22 @@ async function layTheoId(id) {
 
 async function layTheoTen(tenDanhMuc) {
     return danhSachDanhMuc.find(
-        dm => dm.tenDanhMuc.toLowerCase() === tenDanhMuc.toLowerCase().trim() && dm.trangThai !== 'DaXoa'
+        dm => (dm.tenDanhMuc || dm.ten || '').toLowerCase() === tenDanhMuc.toLowerCase().trim() && dm.trangThai !== 'DaXoa'
     ) || null;
 }
 
 async function taoMoi(duLieu) {
     const banGhiMoi = {
         id: tuTangId++,
-        tenDanhMuc: duLieu.tenDanhMuc.trim(),
-        thuTuHienThi: duLieu.thuTuHienThi || danhSachDanhMuc.length + 1,
+        tenDanhMuc: duLieu.tenDanhMuc ? duLieu.tenDanhMuc.trim() : (duLieu.ten ? duLieu.ten.trim() : 'Danh mục mới'),
+        bieuTuong: duLieu.bieuTuong || '🍽️',
+        thuTuHienThi: duLieu.thuTuHienThi || duLieu.thuTu || danhSachDanhMuc.length + 1,
         trangThai: 'HoatDong',
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     };
     danhSachDanhMuc.push(banGhiMoi);
+    luu();
     return banGhiMoi;
 }
 
@@ -43,11 +53,13 @@ async function capNhat(id, duLieu) {
 
     danhSachDanhMuc[viTri] = {
         ...danhSachDanhMuc[viTri],
-        tenDanhMuc: duLieu.tenDanhMuc !== undefined ? duLieu.tenDanhMuc.trim() : danhSachDanhMuc[viTri].tenDanhMuc,
-        thuTuHienThi: duLieu.thuTuHienThi !== undefined ? Number(duLieu.thuTuHienThi) : danhSachDanhMuc[viTri].thuTuHienThi,
+        tenDanhMuc: duLieu.tenDanhMuc !== undefined ? duLieu.tenDanhMuc.trim() : (duLieu.ten !== undefined ? duLieu.ten.trim() : danhSachDanhMuc[viTri].tenDanhMuc),
+        bieuTuong: duLieu.bieuTuong !== undefined ? duLieu.bieuTuong : danhSachDanhMuc[viTri].bieuTuong,
+        thuTuHienThi: duLieu.thuTuHienThi !== undefined ? Number(duLieu.thuTuHienThi) : (duLieu.thuTu !== undefined ? Number(duLieu.thuTu) : danhSachDanhMuc[viTri].thuTuHienThi),
         trangThai: duLieu.trangThai || danhSachDanhMuc[viTri].trangThai,
         ngayCapNhat: new Date()
     };
+    luu();
     return danhSachDanhMuc[viTri];
 }
 
@@ -56,6 +68,7 @@ async function xoa(id) {
     if (viTri === -1) return false;
     danhSachDanhMuc[viTri].trangThai = 'DaXoa';
     danhSachDanhMuc[viTri].ngayCapNhat = new Date();
+    luu();
     return true;
 }
 
@@ -64,12 +77,14 @@ async function dongBoDanhSach(danhSachMoi) {
     danhSachDanhMuc = danhSachMoi.map((dm, idx) => ({
         id: Number(dm.id) || (idx + 1),
         tenDanhMuc: (dm.tenDanhMuc || dm.ten || `Danh mục ${dm.id}`).trim(),
-        thuTuHienThi: Number(dm.thuTuHienThi) || (idx + 1),
+        bieuTuong: dm.bieuTuong || '🍽️',
+        thuTuHienThi: Number(dm.thuTuHienThi || dm.thuTu) || (idx + 1),
         trangThai: dm.trangThai || 'HoatDong',
         ngayTao: dm.ngayTao ? new Date(dm.ngayTao) : new Date(),
         ngayCapNhat: new Date()
     }));
     tuTangId = Math.max(...danhSachDanhMuc.map(dm => dm.id || 0), 0) + 1;
+    luu();
     return danhSachDanhMuc;
 }
 
