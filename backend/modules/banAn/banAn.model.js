@@ -22,7 +22,10 @@ async function layTatCa({ khuVucId, trangThai } = {}) {
 }
 
 async function layTheoId(id) {
-    return danhSachBanAn.find(b => b.id === Number(id) && b.trangThai !== 'DaXoa') || null;
+    if (!id) return null;
+    return danhSachBanAn.find(
+        b => (b.id === Number(id) || (b.maBan && b.maBan.toLowerCase() === String(id).toLowerCase().trim())) && b.trangThai !== 'DaXoa'
+    ) || null;
 }
 
 async function layTheoMaBan(maBan) {

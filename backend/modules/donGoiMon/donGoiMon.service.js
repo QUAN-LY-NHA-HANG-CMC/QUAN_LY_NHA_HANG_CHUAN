@@ -3,6 +3,7 @@
  */
 const donGoiMonModel = require('./donGoiMon.model');
 const banAnModel = require('../banAn/banAn.model');
+const khuVucModel = require('../khuVuc/khuVuc.model');
 
 async function layDanhSachDon(boLoc = {}) {
     return await donGoiMonModel.layTatCa(boLoc);
@@ -15,7 +16,13 @@ async function layDonCuaBan(banId) {
         loi.status = 404;
         throw loi;
     }
-    const danhSachDon = await donGoiMonModel.layDonCuaBan(banId);
+    const danhSachDon = await donGoiMonModel.layDonCuaBan(ban.id);
+
+    let khuVucTen = 'Tầng 1 - Sảnh chính';
+    if (ban.khuVucId) {
+        const kv = await khuVucModel.layTheoId(ban.khuVucId);
+        if (kv) khuVucTen = kv.tenKhuVuc || kv.ten || khuVucTen;
+    }
 
     // Tính tổng tiền lũy kế của bàn (US-070)
     let tongTienLuyKe = 0;
@@ -38,6 +45,8 @@ async function layDonCuaBan(banId) {
             khuVucId: ban.khuVucId,
             trangThai: ban.trangThai
         },
+        soBan: ban.tenBan || ban.maBan,
+        khuVucTen,
         tongSoDon: danhSachDon.length,
         tongSoMon,
         tongTienLuyKe,
@@ -67,11 +76,19 @@ async function taoDonGoiMon(duLieu) {
         });
     }
 
+    let khuVucTen = '';
+    if (ban.khuVucId) {
+        const kv = await khuVucModel.layTheoId(ban.khuVucId);
+        if (kv) khuVucTen = kv.tenKhuVuc || kv.ten || '';
+    }
+
     const duLieuDayDu = {
         ...duLieu,
+        banId: ban.id,
         maBan: ban.maBan,
         tenBan: ban.tenBan,
-        khuVucId: ban.khuVucId
+        khuVucId: ban.khuVucId,
+        tenKhuVuc: khuVucTen
     };
 
     return await donGoiMonModel.taoDon(duLieuDayDu);

@@ -978,7 +978,7 @@ input:checked + .con-lan-switch:before {
     inset: 0;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 100000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -991,6 +991,24 @@ input:checked + .con-lan-switch:before {
 .khung-modal-toan-cuc.mo {
     opacity: 1;
     pointer-events: auto;
+}
+
+.khung-modal-toan-cuc.co-bottom-sheet {
+    padding: 0 !important;
+    align-items: flex-end !important;
+}
+
+.hop-modal-lop-phu {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hop-modal-lop-phu.lop-phu-bottom-sheet {
+    align-items: flex-end !important;
+    padding: 0;
 }
 
 .hop-modal {
@@ -2623,10 +2641,13 @@ input:checked + .con-lan-switch:before {
 
 /* 7. Modal Tùy biến món ăn (US-057) */
 .modal-tuy-chinh-mon {
+    width: 100%;
     max-width: 440px;
+    background: #FFF;
     border-radius: 20px;
     padding: 0;
     overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
 .dau-modal-mon {
@@ -3581,11 +3602,15 @@ input:checked + .con-lan-switch:before {
     position: fixed;
     bottom: 28px;
     right: 28px;
-    z-index: 9999;
+    z-index: 900;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
+}
+
+body.che-do-khach-hang #khung-nut-noi-ho-tro {
+    display: none !important;
 }
 
 .nut-noi-chinh {

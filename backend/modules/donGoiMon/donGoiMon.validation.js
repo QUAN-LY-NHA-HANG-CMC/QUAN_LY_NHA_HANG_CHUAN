@@ -3,7 +3,7 @@ const { phanHoiLoi } = require('../../tienIch/dinhDangPhanHoi');
 function kiemTraTaoDon(req, res, next) {
     const { banId, danhSachMon } = req.body || {};
 
-    if (!banId || isNaN(Number(banId))) {
+    if (!banId) {
         return phanHoiLoi(res, 'Vui lòng cung cấp mã ID bàn ăn hợp lệ', 400);
     }
 

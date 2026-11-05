@@ -63,6 +63,10 @@ class HeThongThongBao {
         this.hienThi('thatBai', tieuDe, noiDung, 4500);
     }
 
+    loi(tieuDe, noiDung = '') {
+        this.thatBai(tieuDe, noiDung);
+    }
+
     canhBao(tieuDe, noiDung = '') {
         this.hienThi('canhBao', tieuDe, noiDung, 4000);
     }

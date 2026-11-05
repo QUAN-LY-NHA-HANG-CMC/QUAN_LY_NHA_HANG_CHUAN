@@ -1005,6 +1005,27 @@ class ApiService {
         this.ghiNhatKy('Cập nhật sơ đồ bàn', 'INFO', `Cập nhật sơ đồ bàn ăn (${ds.length} bàn).`);
     }
 
+    async capNhatTrangThaiBan(banId, trangThaiMoi) {
+        const key = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_BAN || 'quanmoc_ds_ban';
+        const dsBan = await this.layDanhSachBanAn();
+        const ban = dsBan.find(b => Number(b.id) === Number(banId) || (b.maBan && b.maBan === String(banId)));
+        if (ban) {
+            ban.trangThai = trangThaiMoi;
+            localStorage.setItem(key, JSON.stringify(dsBan));
+        }
+
+        try {
+            await this.yeuCau(`/ban-an/${ban ? ban.id : banId}/trang-thai`, {
+                method: 'PATCH',
+                body: { trangThai: trangThaiMoi }
+            });
+        } catch {
+            // Không chặn nếu server chưa hỗ trợ patch
+        }
+
+        return { ok: true };
+    }
+
     // =========================================================================
     // API DANH MỤC & THỰC ĐƠN (US-031 -> US-040)
     // =========================================================================
@@ -1596,49 +1617,83 @@ class ApiService {
         const dsDon = raw ? JSON.parse(raw) : [];
 
         // Lấy danh sách đơn của bàn này để tính lượt gọi món (US-067: Lượt 1, Lượt 2, ...)
-        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(donGoi.banId));
+        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(donGoi.banId) || String(d.banId) === String(donGoi.banId));
         const luotGoi = donCuaBan.length + 1;
 
         const idMoi = dsDon.length > 0 ? Math.max(...dsDon.map(d => d.id || 0)) + 1 : 1;
-        const maDon = `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(idMoi).padStart(3, '0')}`;
+        let maDon = `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(idMoi).padStart(3, '0')}`;
         const thoiGianTao = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
         // Chuẩn hóa từng món trong đơn với ID chi tiết và trạng thái mặc định "Chờ xác nhận"
         let baseItemId = Date.now();
         let tongTienDon = 0;
         const danhSachMonChuan = donGoi.danhSachMon.map(m => {
-            const thanhTien = Number(m.thanhTien || (m.donGia * m.soLuong));
+            const donGia = Number(m.donGia || 0);
+            const soLuong = Number(m.soLuong || 1);
+            const thanhTien = Number(m.thanhTien || (donGia * soLuong));
             tongTienDon += thanhTien;
+
+            let size = m.size || 'Tiêu chuẩn';
+            let topping = m.topping || '';
+            if (Array.isArray(m.tuyChonChon)) {
+                const sizeOpt = m.tuyChonChon.find(tc => tc.tenNhom?.toLowerCase().includes('size') || tc.tenNhom?.toLowerCase().includes('kích cỡ'));
+                if (sizeOpt) size = sizeOpt.ten;
+                const toppingOpts = m.tuyChonChon.filter(tc => !tc.tenNhom?.toLowerCase().includes('size') && !tc.tenNhom?.toLowerCase().includes('kích cỡ'));
+                if (toppingOpts.length > 0) topping = toppingOpts.map(t => t.ten).join(', ');
+            }
+
             return {
                 id: ++baseItemId,
-                monId: m.monId || m.id,
+                monId: Number(m.monId || m.monAnId || m.id || 0),
                 tenMon: m.tenMon,
-                size: m.size || 'Tiêu chuẩn',
-                topping: m.topping || '',
-                donGia: Number(m.donGia || 0),
-                soLuong: Number(m.soLuong || 1),
+                size,
+                topping,
+                donGia,
+                soLuong,
                 thanhTien,
                 ghiChu: m.ghiChu || '',
-                trangThai: 'CHO_XAC_NHAN', // US-066: Trạng thái ban đầu
+                trangThai: m.trangThai || 'CHO_XAC_NHAN',
                 thoiGianCapNhat: thoiGianTao
             };
         });
 
         // Tìm thông tin bàn để lưu tên khu vực
         const dsBan = await this.layDanhSachBanAn();
-        const thongTinBan = dsBan.find(b => Number(b.id) === Number(donGoi.banId));
-        const soBan = donGoi.soBan || (thongTinBan ? thongTinBan.soBan : `Bàn ${donGoi.banId}`);
-        const khuVucTen = thongTinBan ? (thongTinBan.khuVucTen || 'Tầng 1') : 'Nhà hàng';
+        const thongTinBan = dsBan.find(b => Number(b.id) === Number(donGoi.banId) || (b.maBan && b.maBan === donGoi.maBan));
+        const soBan = donGoi.soBan || (thongTinBan ? (thongTinBan.soBan || thongTinBan.tenBan) : `Bàn ${donGoi.banId}`);
+        const khuVucTen = thongTinBan ? (thongTinBan.khuVucTen || thongTinBan.tenKhuVuc || 'Tầng 1') : 'Nhà hàng';
 
-        const donMoi = {
+        // Gọi Backend API POST /api/don-goi-mon để đồng bộ thời gian thực cho Bếp & POS
+        let donTuServer = null;
+        try {
+            const bodyServer = {
+                banId: thongTinBan ? thongTinBan.id : (Number(donGoi.banId) || donGoi.banId),
+                maBan: donGoi.maBan || (thongTinBan ? thongTinBan.maBan : undefined),
+                tenBan: soBan,
+                ghiChuDon: donGoi.ghiChuDon || donGoi.ghiChuChung || '',
+                danhSachMon: danhSachMonChuan
+            };
+            const resServer = await this.yeuCau('/don-goi-mon', {
+                method: 'POST',
+                body: bodyServer
+            });
+            if (resServer && resServer.ok && resServer.data) {
+                donTuServer = resServer.data;
+                if (donTuServer.maDon) maDon = donTuServer.maDon;
+            }
+        } catch (errServer) {
+            console.warn('Lỗi đồng bộ đơn đặt món lên Backend Server:', errServer);
+        }
+
+        const donMoi = donTuServer || {
             id: idMoi,
             maDon,
-            banId: Number(donGoi.banId),
+            banId: Number(donGoi.banId) || (thongTinBan ? thongTinBan.id : donGoi.banId),
             soBan,
             khuVucTen,
             luotGoi,
             thoiGianTao,
-            ghiChuDon: donGoi.ghiChuDon || '',
+            ghiChuDon: donGoi.ghiChuDon || donGoi.ghiChuChung || '',
             tongTien: tongTienDon,
             danhSachMon: danhSachMonChuan
         };
@@ -1647,7 +1702,7 @@ class ApiService {
         localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
 
         // Cập nhật trạng thái bàn sang DANG_DUNG nếu bàn đang TRONG
-        if (thongTinBan && thongTinBan.trangThai === 'TRONG') {
+        if (thongTinBan && (thongTinBan.trangThai === 'TRONG' || thongTinBan.trangThai === 'Trong')) {
             await this.capNhatTrangThaiBan(donGoi.banId, 'DANG_DUNG');
         }
 
@@ -1675,9 +1730,28 @@ class ApiService {
      * @param {number|string} banId ID của bàn ăn
      */
     async layDanhSachDonTheoBan(banId) {
+        // 1. Thử lấy từ Backend API
+        let donServer = null;
+        try {
+            const kqServer = await this.yeuCau(`/don-goi-mon/ban/${encodeURIComponent(banId)}`);
+            if (kqServer && kqServer.ok && kqServer.data) {
+                donServer = kqServer.data;
+            }
+        } catch (e) {
+            console.warn('Lỗi gọi /api/don-goi-mon/ban:', e);
+        }
+
+        if (donServer) {
+            return {
+                ok: true,
+                data: donServer
+            };
+        }
+
+        // 2. Fallback sang localStorage nếu Server offline
         const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
         const dsDon = raw ? JSON.parse(raw) : [];
-        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(banId));
+        const donCuaBan = dsDon.filter(d => Number(d.banId) === Number(banId) || String(d.banId) === String(banId));
 
         let tongTienLuyKe = 0;
         let tongSoMon = 0;
@@ -1689,14 +1763,14 @@ class ApiService {
         let tuChoi = 0;
 
         donCuaBan.forEach(don => {
-            don.danhSachMon.forEach(m => {
-                tongSoMon += m.soLuong;
-                if (m.trangThai === 'CHO_XAC_NHAN') choXacNhan += m.soLuong;
-                else if (m.trangThai === 'DANG_CHE_BIEN') dangCheBien += m.soLuong;
-                else if (m.trangThai === 'DA_XONG') daXong += m.soLuong;
-                else if (m.trangThai === 'DA_LEN_MON') daLenMon += m.soLuong;
-                else if (m.trangThai === 'DA_HUY') daHuy += m.soLuong;
-                else if (m.trangThai === 'TU_CHOI') tuChoi += m.soLuong;
+            (don.danhSachMon || []).forEach(m => {
+                tongSoMon += (Number(m.soLuong) || 1);
+                if (m.trangThai === 'CHO_XAC_NHAN') choXacNhan += (Number(m.soLuong) || 1);
+                else if (m.trangThai === 'DANG_CHE_BIEN') dangCheBien += (Number(m.soLuong) || 1);
+                else if (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG') daXong += (Number(m.soLuong) || 1);
+                else if (m.trangThai === 'DA_LEN_MON') daLenMon += (Number(m.soLuong) || 1);
+                else if (m.trangThai === 'DA_HUY') daHuy += (Number(m.soLuong) || 1);
+                else if (m.trangThai === 'TU_CHOI') tuChoi += (Number(m.soLuong) || 1);
 
                 // Chỉ tính tiền các món không bị hủy hoặc từ chối
                 if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
@@ -1707,12 +1781,12 @@ class ApiService {
 
         // Lấy thông tin bàn
         const dsBan = await this.layDanhSachBanAn();
-        const ban = dsBan.find(b => Number(b.id) === Number(banId));
+        const ban = dsBan.find(b => Number(b.id) === Number(banId) || b.maBan === String(banId));
 
         return {
             ok: true,
             data: {
-                banId: Number(banId),
+                banId: Number(banId) || banId,
                 soBan: ban ? ban.soBan : `Bàn ${banId}`,
                 khuVucTen: ban ? (ban.khuVucTen || 'Tầng 1') : '',
                 danhSachDon: donCuaBan,

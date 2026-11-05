@@ -24,6 +24,16 @@ async function layTrangChuEMenu(req, res, next) {
             ban = await banAnModel.layTheoMaBan(String(banParam));
         }
         if (!ban) {
+            const tatCaBan = await banAnModel.layTatCa();
+            ban = tatCaBan.find(b => 
+                (b.maBan && b.maBan.toLowerCase().replace(/[^a-z0-9]/g, '') === String(banParam).toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+                String(b.id) === String(banParam)
+            );
+            if (!ban && tatCaBan.length > 0) {
+                ban = tatCaBan[0];
+            }
+        }
+        if (!ban) {
             return phanHoiLoi(res, 'Bàn ăn không tồn tại', 404);
         }
 
@@ -62,8 +72,9 @@ async function layTrangChuEMenu(req, res, next) {
             maBan: ban.maBan,
             tenBan: ban.tenBan,
             khuVucId: ban.khuVucId,
-            tenKhuVuc: khuVuc ? khuVuc.ten : 'Tầng 1 - Sảnh chính',
-            sucChua: ban.sucChua
+            tenKhuVuc: khuVuc ? (khuVuc.tenKhuVuc || khuVuc.ten) : 'Tầng 1 - Sảnh chính',
+            sucChua: ban.sucChua,
+            tokenBaoMat: ban.tokenBaoMat
         };
 
         return phanHoiThanhCong(res, {

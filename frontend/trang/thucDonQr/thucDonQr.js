@@ -94,12 +94,15 @@ class ThucDonQrManager {
 
                 if (this.thongTinBan) {
                     this.banId = this.thongTinBan.banId || this.thongTinBan.id || this.banId;
+                    this.token = this.token || this.thongTinBan.tokenBaoMat || '';
                     localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
+                    if (this.token) localStorage.setItem('quanmoc_token_hien_tai', this.token);
                 }
 
                 // Đồng bộ bàn với Giỏ hàng
                 if (window.gioHangManager) {
-                    window.gioHangManager.ganThongTinBan(this.thongTinBan, this.token);
+                    const tokenToUse = this.token || (this.thongTinBan ? this.thongTinBan.tokenBaoMat : null);
+                    window.gioHangManager.ganThongTinBan(this.thongTinBan, tokenToUse);
                 }
             }
         } catch (loi) {
@@ -572,6 +575,8 @@ class ThucDonQrManager {
                 </div>
             </div>
         `;
+        khungModal.classList.add('mo');
+        khungModal.classList.add('co-bottom-sheet');
     }
 
     chonNhanhLyDo(lyDo) {
@@ -626,7 +631,11 @@ class ThucDonQrManager {
 
     dongModal() {
         const khungModal = document.getElementById('khung-modal-toan-cuc');
-        if (khungModal) khungModal.innerHTML = '';
+        if (khungModal) {
+            khungModal.innerHTML = '';
+            khungModal.classList.remove('mo');
+            khungModal.classList.remove('co-bottom-sheet');
+        }
     }
 }
 

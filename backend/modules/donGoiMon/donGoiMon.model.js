@@ -111,12 +111,21 @@ async function taoDon(duLieu) {
         const thanhTien = Number(m.thanhTien) || (donGia * soLuong);
         tongTienDon += thanhTien;
 
+        let size = m.size || 'Tiêu chuẩn';
+        let topping = m.topping || '';
+        if (Array.isArray(m.tuyChonChon)) {
+            const sizeOpt = m.tuyChonChon.find(tc => tc.tenNhom?.toLowerCase().includes('size') || tc.tenNhom?.toLowerCase().includes('kích cỡ'));
+            if (sizeOpt) size = sizeOpt.ten;
+            const toppingOpts = m.tuyChonChon.filter(tc => !tc.tenNhom?.toLowerCase().includes('size') && !tc.tenNhom?.toLowerCase().includes('kích cỡ'));
+            if (toppingOpts.length > 0) topping = toppingOpts.map(t => t.ten).join(', ');
+        }
+
         return {
             id: tuTangItemId++,
-            monId: Number(m.monId || m.id),
+            monId: Number(m.monId || m.monAnId || m.id || 0),
             tenMon: m.tenMon,
-            size: m.size || 'Tiêu chuẩn',
-            topping: m.topping || '',
+            size,
+            topping,
             donGia,
             soLuong,
             thanhTien,
@@ -136,7 +145,7 @@ async function taoDon(duLieu) {
         luotGoi,
         thoiGianTao: new Date(),
         trangThai: 'CHO_XU_LY',
-        ghiChuDon: duLieu.ghiChuDon || '',
+        ghiChuDon: duLieu.ghiChuDon || duLieu.ghiChuChung || '',
         danhSachMon,
         tongTienDon
     };

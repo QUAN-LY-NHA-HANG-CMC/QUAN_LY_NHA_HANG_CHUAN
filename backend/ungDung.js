@@ -44,7 +44,7 @@ ungDung.use(express.urlencoded({ extended: true }));
 ungDung.use(express.static(path.join(__dirname, '../frontend')));
 
 // Cung cấp tệp tĩnh (hình ảnh món ăn tải lên)
-ungDung.use('/tepTaiLen', express.static(path.join(__dirname, 'tepTaiLen')));
+ungDung.use('/tepTaiLen', express.static(path.join(__dirname, '../tepTaiLen')));
 
 const nhanVienModel = require('./modules/nhanVien/nhanVien.model');
 const { soSanhMatKhau } = require('./tienIch/maHoaMatKhau');

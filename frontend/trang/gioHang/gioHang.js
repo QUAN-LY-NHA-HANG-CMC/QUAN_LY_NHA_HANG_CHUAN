@@ -26,9 +26,13 @@ class GioHangManager {
      */
     ganThongTinBan(ban, token) {
         this.thongTinBan = ban;
-        if (token) this.token = token;
+        if (token) {
+            this.token = token;
+        } else if (ban && ban.tokenBaoMat) {
+            this.token = ban.tokenBaoMat;
+        }
 
-        const maBanKey = ban ? (ban.banId || ban.maBan || '1') : '1';
+        const maBanKey = ban ? (ban.banId || ban.id || ban.maBan || '1') : '1';
         const data = localStorage.getItem(`quanmoc_gio_hang_ban_${maBanKey}`);
         this.cacMonTrongGio = data ? JSON.parse(data) : [];
         this.veThanhGioHangNoi();
@@ -38,7 +42,7 @@ class GioHangManager {
      * Lưu giỏ hàng vào LocalStorage (US-061)
      */
     luuGioHang() {
-        const maBanKey = this.thongTinBan ? (this.thongTinBan.banId || this.thongTinBan.maBan || '1') : '1';
+        const maBanKey = this.thongTinBan ? (this.thongTinBan.banId || this.thongTinBan.id || this.thongTinBan.maBan || '1') : '1';
         localStorage.setItem(`quanmoc_gio_hang_ban_${maBanKey}`, JSON.stringify(this.cacMonTrongGio));
         this.veThanhGioHangNoi();
     }
@@ -212,6 +216,8 @@ class GioHangManager {
             </div>
         `;
 
+        khungModal.classList.add('mo');
+        khungModal.classList.remove('co-bottom-sheet');
         this.capNhatGiaTamTinhModal();
     }
 
@@ -291,12 +297,15 @@ class GioHangManager {
         const itemMoi = {
             idTam: Date.now() + Math.random().toString(36).substr(2, 4),
             monAnId: mon.id,
+            monId: mon.id,
             tenMon: mon.tenMon,
             hinhAnh: mon.hinhAnh,
             donViTinh: mon.donViTinh || 'Đĩa',
             soLuong: soLuong,
             donGia: donGia,
             thanhTien: thanhTien,
+            size: radioSize ? (radioSize.dataset.ten || 'Tiêu chuẩn') : 'Tiêu chuẩn',
+            topping: Array.from(document.querySelectorAll('input[name="chk-topping-mon"]:checked')).map(c => c.dataset.ten).join(', '),
             tuyChonChon: tuyChonChon,
             ghiChu: ghiChu
         };
@@ -313,7 +322,11 @@ class GioHangManager {
     dongModal() {
         if (typeof document === 'undefined') return;
         const khungModal = document.getElementById('khung-modal-toan-cuc');
-        if (khungModal) khungModal.innerHTML = '';
+        if (khungModal) {
+            khungModal.innerHTML = '';
+            khungModal.classList.remove('mo');
+            khungModal.classList.remove('co-bottom-sheet');
+        }
         this.monDangTuyChinh = null;
     }
 
@@ -375,10 +388,10 @@ class GioHangManager {
         if (this.cacMonTrongGio.length > 0) {
             try {
                 const reqBody = {
-                    banId: this.thongTinBan ? this.thongTinBan.banId : 1,
-                    token: this.token,
+                    banId: this.thongTinBan ? (this.thongTinBan.banId || this.thongTinBan.id || this.thongTinBan.maBan || 1) : 1,
+                    token: this.token || (this.thongTinBan ? this.thongTinBan.tokenBaoMat : undefined),
                     danhSachMon: this.cacMonTrongGio.map(item => ({
-                        monAnId: item.monAnId,
+                        monAnId: item.monAnId || item.monId,
                         soLuong: item.soLuong,
                         tuyChonChon: (item.tuyChonChon || []).map(tc => ({
                             tenNhom: tc.tenNhom,
@@ -506,6 +519,9 @@ class GioHangManager {
                 </div>
             </div>
         `;
+
+        khungModal.classList.add('mo');
+        khungModal.classList.add('co-bottom-sheet');
     }
 
     thayDoiSoLuongItem(idx, delta) {
@@ -549,41 +565,84 @@ class GioHangManager {
 
         const tongSl = this.tinhTongSoLuong();
         const tongTienFmt = window.DinhDang.tienVnd(this.tinhTongTienClient());
-        const tenBan = this.thongTinBan ? this.thongTinBan.tenBan : 'Bàn 01';
+        const tenBan = this.thongTinBan ? (this.thongTinBan.tenBan || `Bàn ${this.thongTinBan.banId || 1}`) : 'Bàn 01';
+        const banId = this.thongTinBan ? (this.thongTinBan.banId || this.thongTinBan.id || 1) : 1;
+        const maBan = this.thongTinBan ? (this.thongTinBan.maBan || `B${banId}`) : 'B101';
 
-        const dongY = confirm(`XÁC NHẬN GỬI ĐƠN ĐẶT MÓN:\n- Bàn: ${tenBan}\n- Số lượng: ${tongSl} món\n- Tổng tiền tạm tính: ${tongTienFmt}\n\nBạn có chắc chắn muốn gửi đơn để Bếp bắt đầu chế biến?`);
-        if (!dongY) return;
+        // Đổi trạng thái nút gửi đơn để tránh spam click
+        const nutGui = document.querySelector('.nut-gui-don-hang-to');
+        if (nutGui) {
+            nutGui.disabled = true;
+            nutGui.innerHTML = '⏳ Đang gửi đơn xuống Bếp...';
+        }
 
-        // Lưu đơn hàng qua API
         try {
             const donHang = {
-                banId: this.thongTinBan ? this.thongTinBan.banId : 1,
-                maBan: this.thongTinBan ? this.thongTinBan.maBan : 'B101',
+                banId: banId,
+                maBan: maBan,
                 tenBan: tenBan,
                 danhSachMon: [...this.cacMonTrongGio],
                 tongSoLuong: tongSl,
                 tongTien: this.tinhTongTienClient(),
-                ghiChuChung: this.ghiChuChung
+                ghiChuChung: this.ghiChuChung,
+                ghiChuDon: this.ghiChuChung
             };
 
             const kq = await window.api.guiDonDatMon(donHang);
+            const maDon = (kq && kq.data && kq.data.maDon) ? kq.data.maDon : 'ORD-NEW';
 
             // Làm sạch giỏ hàng
             this.cacMonTrongGio = [];
             this.ghiChuChung = '';
             this.luuGioHang();
-            this.dongModal();
+            this.veThanhGioHangNoi();
 
             if (window.thongBao) {
-                window.thongBao.thanhCong('GỬI ĐƠN THÀNH CÔNG! 🎉', `Đơn hàng mã ${kq.data.maDon} đã được chuyển tới Bếp.`);
+                window.thongBao.thanhCong('GỬI ĐƠN THÀNH CÔNG! 🎉', `Đơn hàng mã ${maDon} đã được chuyển tới Bếp.`);
             }
 
-            alert(`🎉 ĐẶT MÓN THÀNH CÔNG!\n\nĐơn hàng của bạn đã được chuyển tới Bếp Quán Mộc.\n- Mã đơn: ${kq.data.maDon}\n- Bàn: ${tenBan}\n- Tổng tiền: ${tongTienFmt}\n\nBếp sẽ chuẩn bị món ngay cho quý khách. Chúc quý khách ngon miệng!`);
+            // Hiển thị modal thông báo đặt món thành công thân thiện trên di động
+            const khungModal = document.getElementById('khung-modal-toan-cuc');
+            if (khungModal) {
+                khungModal.innerHTML = `
+                    <div class="hop-modal-lop-phu" onclick="if(event.target === this) window.gioHangManager.dongModal()">
+                        <div class="hop-modal-noi-dung modal-thanh-cong-don" style="background:#FFF; max-width:420px; width:100%; border-radius:20px; padding:28px 24px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+                            <div style="font-size: 56px; margin-bottom: 12px;">🎉</div>
+                            <h3 style="font-size: 20px; font-weight: 800; color: #166534; margin: 0 0 6px;">ĐẶT MÓN THÀNH CÔNG!</h3>
+                            <p style="color: var(--mau-chu-phu); font-size: 13.5px; margin: 0 0 16px;">
+                                Đơn gọi món đã được gửi tức thời đến Nhà Bếp Quán Mộc.
+                            </p>
+                            
+                            <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left; font-size: 13px; line-height: 1.7;">
+                                <div>🏷️ <strong>Mã đơn:</strong> <span style="color:#B85D19; font-weight:700;">${maDon}</span></div>
+                                <div>🪑 <strong>Bàn phục vụ:</strong> ${window.DinhDang.thoatHtml(tenBan)}</div>
+                                <div>📦 <strong>Số lượng:</strong> ${tongSl} món</div>
+                                <div>💰 <strong>Tổng tiền:</strong> <span style="color:#DC2626; font-weight:700;">${tongTienFmt}</span></div>
+                            </div>
 
-            this.veThanhGioHangNoi();
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <button class="nut nut-chinh" style="padding: 12px; border-radius: 12px; font-size: 14px;"
+                                        onclick="window.gioHangManager.dongModal(); window.location.hash = '#theo-doi-don?ban=${encodeURIComponent(banId)}'">
+                                    🔔 Xem tiến độ làm món (KDS)
+                                </button>
+                                <button class="nut nut-phu" style="padding: 11px; border-radius: 12px; font-size: 13.5px;"
+                                        onclick="window.gioHangManager.dongModal()">
+                                    📖 Tiếp tục xem thực đơn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                khungModal.classList.add('mo');
+                khungModal.classList.remove('co-bottom-sheet');
+            }
         } catch (loi) {
             console.error('Lỗi gửi đơn hàng:', loi);
-            if (window.thongBao) window.thongBao.loi('Không thể gửi đơn hàng');
+            if (window.thongBao) window.thongBao.loi('Không thể gửi đơn hàng', loi.message || 'Vui lòng thử lại');
+            if (nutGui) {
+                nutGui.disabled = false;
+                nutGui.innerHTML = '🚀 Gửi Đơn Đặt Món';
+            }
         }
     }
 }
