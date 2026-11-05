@@ -36,6 +36,29 @@ async function taoMoi(req, res, next) {
     }
 }
 
+async function capNhatTrangThai(req, res, next) {
+    try {
+        const { id } = req.params;
+        const { trangThai } = req.body;
+        const banAnModel = require('./banAn.model');
+        const ban = await banAnModel.layTheoId(id);
+        if (!ban) {
+            return phanHoiLoi(res, 'Không tìm thấy bàn ăn', 404);
+        }
+        const trangThaiChuan = {
+            'TRONG': 'Trong',
+            'DANG_DUNG': 'DangPhucVu',
+            'CHO_THANH_TOAN': 'ChoThanhToan',
+            'CAN_HO_TRO': 'CanHoTro',
+            'TAM_KHOA': 'TamKhoa'
+        }[trangThai] || trangThai;
+        const banCapNhat = await banAnModel.capNhat(id, { trangThai: trangThaiChuan });
+        return phanHoiThanhCong(res, banCapNhat, 'Cập nhật trạng thái bàn thành công');
+    } catch (loi) {
+        next(loi);
+    }
+}
+
 async function capNhat(req, res, next) {
     try {
         const { id } = req.params;
@@ -104,6 +127,7 @@ async function dongBo(req, res, next) {
 
 module.exports = {
     layTatCa,
+    capNhatTrangThai,
     layChiTiet,
     taoMoi,
     capNhat,

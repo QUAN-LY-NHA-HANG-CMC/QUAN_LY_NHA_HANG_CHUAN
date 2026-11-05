@@ -182,9 +182,55 @@ class ThanhToanPosModule {
         await this.taiVaHienThi();
     }
 
+    async dongBoPhienVoiServer() {
+        const phienLocal = this.layTatCaPhienBan();
+        try {
+            if (window.api && window.api.layTatCaDonGoiMon) {
+                const dsDonServer = await window.api.layTatCaDonGoiMon();
+                if (Array.isArray(dsDonServer)) {
+                    dsDonServer.forEach(don => {
+                        const bId = Number(don.banId);
+                        if (!bId) return;
+                        if (!phienLocal[bId]) {
+                            phienLocal[bId] = {
+                                banId: bId,
+                                thoiGianBatDau: don.thoiGianDat || don.thoiGianTao || new Date().toISOString(),
+                                soKhach: don.soKhach || 2,
+                                danhSachMon: []
+                            };
+                        }
+                        if (Array.isArray(don.danhSachMon)) {
+                            don.danhSachMon.forEach(m => {
+                                const daCo = phienLocal[bId].danhSachMon.some(existing => 
+                                    (m.id && existing.id === m.id) || (existing.tenMon === m.tenMon && existing.donGia === m.donGia)
+                                );
+                                if (!daCo) {
+                                    phienLocal[bId].danhSachMon.push({
+                                        id: m.id || Date.now() + Math.random(),
+                                        monAnId: m.monAnId || m.monId,
+                                        tenMon: m.tenMon,
+                                        soLuong: m.soLuong || 1,
+                                        donGia: m.donGia || 0,
+                                        tuyChon: m.tuyChon || '',
+                                        ghiChu: m.ghiChu || '',
+                                        trangThai: m.trangThai || 'CHO_CHE_BIEN'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    this.luuTatCaPhienBan(phienLocal);
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi đồng bộ đơn đặt món từ server sang phiên thu ngân:', e);
+        }
+        return phienLocal;
+    }
+
     async taiVaHienThi() {
         const dsBan = await window.api.layDanhSachBan();
-        const dsPhien = this.layTatCaPhienBan();
+        const dsPhien = await this.dongBoPhienVoiServer();
 
         // Lọc các bàn đang có phiên (DANG_DUNG, CHO_THANH_TOAN, CAN_HO_TRO)
         const dsBanCoKhach = dsBan.filter(b => b.trangThai !== 'TRONG');
