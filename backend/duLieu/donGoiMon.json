@@ -1,0 +1,325 @@
+[
+  {
+    "id": 1,
+    "maDon": "ORD-20261028-001",
+    "banId": 1,
+    "maBan": "B101",
+    "tenBan": "Bàn 01",
+    "khuVucId": 1,
+    "tenKhuVuc": "Tầng 1 (Máy lạnh)",
+    "luotGoi": 1,
+    "thoiGianTao": "2026-11-05T03:35:44.914Z",
+    "trangThai": "DANG_XU_LY",
+    "ghiChuDon": "Khách ăn ít cay",
+    "danhSachMon": [
+      {
+        "id": 101,
+        "monId": 1,
+        "tenMon": "Bò nướng tảng sốt tiêu đen",
+        "size": "Tiêu chuẩn",
+        "topping": "Thêm khoai tây chiên (+20.000đ)",
+        "donGia": 189000,
+        "soLuong": 1,
+        "thanhTien": 209000,
+        "ghiChu": "Chín vừa",
+        "trangThai": "DA_LEN_MON"
+      },
+      {
+        "id": 102,
+        "monId": 4,
+        "tenMon": "Trà đào cam sả",
+        "size": "Size L (+10.000đ)",
+        "topping": "",
+        "donGia": 39000,
+        "soLuong": 2,
+        "thanhTien": 98000,
+        "ghiChu": "Ít đường nhiều đá",
+        "trangThai": "DA_LEN_MON"
+      }
+    ],
+    "tongTienDon": 307000,
+    "tongTien": 307000
+  },
+  {
+    "id": 2,
+    "maDon": "ORD-20261028-002",
+    "banId": 1,
+    "maBan": "B101",
+    "tenBan": "Bàn 01",
+    "khuVucId": 1,
+    "tenKhuVuc": "Tầng 1 (Máy lạnh)",
+    "luotGoi": 2,
+    "thoiGianTao": "2026-11-05T03:55:44.914Z",
+    "trangThai": "DANG_XU_LY",
+    "ghiChuDon": "Gọi thêm",
+    "danhSachMon": [
+      {
+        "id": 103,
+        "monId": 5,
+        "tenMon": "Khoai tây chiên lắc phô mai",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 45000,
+        "soLuong": 1,
+        "thanhTien": 45000,
+        "ghiChu": "Chiên giòn",
+        "trangThai": "DA_NAU_XONG"
+      }
+    ],
+    "tongTienDon": 45000,
+    "tongTien": 45000
+  },
+  {
+    "id": 3,
+    "maDon": "ORD-20261105-008",
+    "banId": 6,
+    "maBan": "Q123",
+    "tenBan": "Bàn 06",
+    "khuVucId": 1,
+    "tenKhuVuc": "Tầng 1 (Máy lạnh)",
+    "luotGoi": 1,
+    "thoiGianTao": "2026-11-05T04:00:44.914Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 104,
+        "monId": 1,
+        "tenMon": "Bò nướng tảng sốt tiêu đen",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 120000,
+        "soLuong": 1,
+        "thanhTien": 120000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      }
+    ],
+    "tongTienDon": 120000,
+    "tongTien": 120000
+  },
+  {
+    "id": 4,
+    "maDon": "ORD-20261105-004",
+    "banId": 910001,
+    "maBan": "TEST-910001",
+    "tenBan": "Bàn 910001",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 1,
+    "thoiGianTao": "2026-11-05T04:10:44.919Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 105,
+        "monId": 9001,
+        "tenMon": "Món kiểm thử A",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 25000,
+        "soLuong": 2,
+        "thanhTien": 50000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      },
+      {
+        "id": 106,
+        "monId": 9002,
+        "tenMon": "Món kiểm thử B",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 40000,
+        "soLuong": 1,
+        "thanhTien": 40000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      }
+    ],
+    "tongTien": 90000,
+    "tongTienDon": 90000
+  },
+  {
+    "id": 5,
+    "maDon": "ORD-20261105-005",
+    "banId": 910002,
+    "maBan": "Bàn 910002",
+    "tenBan": "Bàn 910002",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 1,
+    "thoiGianTao": "2026-11-05T04:10:44.919Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 107,
+        "monId": 9003,
+        "tenMon": "Món được giữ lại",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 30000,
+        "soLuong": 1,
+        "thanhTien": 30000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      },
+      {
+        "id": 108,
+        "monId": 9004,
+        "tenMon": "Món sẽ hủy",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 50000,
+        "soLuong": 1,
+        "thanhTien": 50000,
+        "ghiChu": "",
+        "trangThai": "DA_HUY",
+        "lyDoHuy": "Khách đổi ý"
+      }
+    ],
+    "tongTien": 80000,
+    "tongTienDon": 30000
+  },
+  {
+    "id": 6,
+    "maDon": "ORD-20261105-006",
+    "banId": 910003,
+    "maBan": "Bàn 910003",
+    "tenBan": "Bàn 910003",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 1,
+    "thoiGianTao": "2026-11-05T04:10:44.920Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 109,
+        "monId": 9005,
+        "tenMon": "Món đang chế biến",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 60000,
+        "soLuong": 1,
+        "thanhTien": 60000,
+        "ghiChu": "",
+        "trangThai": "DANG_CHE_BIEN"
+      }
+    ],
+    "tongTien": 60000,
+    "tongTienDon": 60000
+  },
+  {
+    "id": 7,
+    "maDon": "ORD-20261105-007",
+    "banId": 910001,
+    "maBan": "TEST-910001",
+    "tenBan": "Bàn 910001",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 2,
+    "thoiGianTao": "2026-11-05T04:13:55.644Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 110,
+        "monId": 9001,
+        "tenMon": "Món kiểm thử A",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 25000,
+        "soLuong": 2,
+        "thanhTien": 50000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      },
+      {
+        "id": 111,
+        "monId": 9002,
+        "tenMon": "Món kiểm thử B",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 40000,
+        "soLuong": 1,
+        "thanhTien": 40000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      }
+    ],
+    "tongTien": 90000,
+    "tongTienDon": 90000
+  },
+  {
+    "id": 8,
+    "maDon": "ORD-20261105-008",
+    "banId": 910002,
+    "maBan": "Bàn 910002",
+    "tenBan": "Bàn 910002",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 2,
+    "thoiGianTao": "2026-11-05T04:13:55.645Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 112,
+        "monId": 9003,
+        "tenMon": "Món được giữ lại",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 30000,
+        "soLuong": 1,
+        "thanhTien": 30000,
+        "ghiChu": "",
+        "trangThai": "CHO_XAC_NHAN"
+      },
+      {
+        "id": 113,
+        "monId": 9004,
+        "tenMon": "Món sẽ hủy",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 50000,
+        "soLuong": 1,
+        "thanhTien": 50000,
+        "ghiChu": "",
+        "trangThai": "DA_HUY",
+        "lyDoHuy": "Khách đổi ý"
+      }
+    ],
+    "tongTien": 80000,
+    "tongTienDon": 30000
+  },
+  {
+    "id": 9,
+    "maDon": "ORD-20261105-009",
+    "banId": 910003,
+    "maBan": "Bàn 910003",
+    "tenBan": "Bàn 910003",
+    "khuVucId": 1,
+    "tenKhuVuc": "",
+    "luotGoi": 2,
+    "thoiGianTao": "2026-11-05T04:13:55.646Z",
+    "trangThai": "CHO_XU_LY",
+    "ghiChuDon": "",
+    "danhSachMon": [
+      {
+        "id": 114,
+        "monId": 9005,
+        "tenMon": "Món đang chế biến",
+        "size": "Tiêu chuẩn",
+        "topping": "",
+        "donGia": 60000,
+        "soLuong": 1,
+        "thanhTien": 60000,
+        "ghiChu": "",
+        "trangThai": "DANG_CHE_BIEN"
+      }
+    ],
+    "tongTien": 60000,
+    "tongTienDon": 60000
+  }
+]

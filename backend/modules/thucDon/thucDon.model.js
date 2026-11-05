@@ -1,75 +1,251 @@
-let danhSachMonAn = [
+const { docDuLieu, ghiDuLieu } = require('../../tienIch/luuTruDuLieu');
+
+const duLieuThucDonMacDinh = [
     {
         id: 1,
-        tenMon: 'Gỏi Bò Bóp Thấu',
-        danhMucId: 1,
-        giaBan: 95000,
-        donViTinh: 'Đĩa',
-        hinhAnh: '/tepTaiLen/anhMonAn/goi-bo.jpg',
-        moTa: 'Thịt bò tươi mềm bóp thấu kèm bắp chuối, đậu phộng rang giòn thơm lừng.',
-        trangThai: 'DangBan', // 'DangBan', 'TamHet', 'DaXoa'
+        maMon: 'MON-01',
+        tenMon: 'Gà Nướng Ống Tre Tây Bắc',
+        danhMucId: 2,
+        giaBan: 245000,
+        donViTinh: 'Con',
+        hinhAnh: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Gà đồi thả vườn ướp hạt dổi, mắc khén nướng trong ống tre thơm lừng, thịt mềm ngọt đậm vị.',
+        trangThai: 'DangBan',
         laMonBanChay: true,
-        tuyChon: [
-            { tenNhom: 'Mức độ cay', batBuoc: false, loai: 'ChonMot', danhSach: [{ ten: 'Không cay', giaThem: 0 }, { ten: 'Cay vừa', giaThem: 0 }, { ten: 'Cay nhiều', giaThem: 0 }] }
+        tuyChonSize: [
+            { ten: 'Nửa con', giaCongThem: -100000 },
+            { ten: 'Nguyên con tiêu chuẩn', giaCongThem: 0 },
+            { ten: 'Nguyên con cỡ lớn (2kg)', giaCongThem: 60000 }
         ],
+        tuyChonTopping: [
+            { ten: 'Xôi nếp nương nướng', gia: 35000 },
+            { ten: 'Muối chấm chẩm chéo đặc biệt', gia: 15000 }
+        ],
+        tuyChon: [],
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     },
     {
         id: 2,
-        tenMon: 'Bò Tơ Hấp Cuốn Bánh Tráng',
-        danhMucId: 2,
-        giaBan: 185000,
-        donViTinh: 'Phần',
-        hinhAnh: '/tepTaiLen/anhMonAn/bo-to-hap.jpg',
-        moTa: 'Bò tơ mềm ngọt cuốn rau rừng Tây Ninh chấm mắm nêm đặc sản.',
+        maMon: 'MON-02',
+        tenMon: 'Lẩu Gà Lá É Tao Ngộ',
+        danhMucId: 3,
+        giaBan: 289000,
+        donViTinh: 'Nồi',
+        hinhAnh: 'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Hương vị chuẩn Đà Lạt, nước dùng thanh ngọt nấu nấm samco và thịt gà ta, dậy mùi thơm lá é.',
         trangThai: 'DangBan',
         laMonBanChay: true,
-        tuyChon: [
-            { tenNhom: 'Kích cỡ', batBuoc: true, loai: 'ChonMot', danhSach: [{ ten: 'Phần vừa (2 người)', giaThem: 0 }, { ten: 'Phần lớn (4 người)', giaThem: 80000 }] },
-            { tenNhom: 'Món thêm', batBuoc: false, loai: 'ChonNhieu', danhSach: [{ ten: 'Thêm bánh tráng', giaThem: 10000 }, { ten: 'Thêm rau rừng', giaThem: 20000 }] }
+        tuyChonSize: [
+            { ten: 'Nồi vừa (2 - 3 người)', giaCongThem: 0 },
+            { ten: 'Nồi lớn (4 - 6 người)', giaCongThem: 90000 }
         ],
+        tuyChonTopping: [
+            { ten: 'Đĩa lá é tươi thêm', gia: 25000 },
+            { ten: 'Bún tươi thêm', gia: 15000 },
+            { ten: 'Đĩa nấm samco thêm', gia: 35000 }
+        ],
+        tuyChon: [],
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     },
     {
         id: 3,
-        tenMon: 'Lẩu Bò Nhúng Dấm',
-        danhMucId: 3,
-        giaBan: 295000,
-        donViTinh: 'Nồi',
-        hinhAnh: '/tepTaiLen/anhMonAn/lau-bo.jpg',
-        moTa: 'Nước lẩu chua thanh dịu nhẹ từ nước dừa xiêm và dấm gạo thơm, kèm bắp bò hoa.',
+        maMon: 'MON-03',
+        tenMon: 'Bò Tơ Nướng Tảng Sốt Tiêu Rừng',
+        danhMucId: 2,
+        giaBan: 260000,
+        donViTinh: 'Phần',
+        hinhAnh: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Thịt bò tơ tươi nướng trên than hoa giữ trọn độ mọng nước, kèm sốt tiêu rừng cay the dịu dàng.',
         trangThai: 'DangBan',
-        laMonBanChay: false,
-        tuyChon: [
-            { tenNhom: 'Topping lẩu', batBuoc: false, loai: 'ChonNhieu', danhSach: [{ ten: 'Thêm bắp bò hoa', giaThem: 60000 }, { ten: 'Thêm mì trứng', giaThem: 15000 }] }
+        laMonBanChay: true,
+        tuyChonSize: [
+            { ten: 'Phần 300g', giaCongThem: 0 },
+            { ten: 'Phần 500g', giaCongThem: 140000 }
         ],
+        tuyChonTopping: [
+            { ten: 'Bánh mì nướng bơ tỏi', gia: 20000 },
+            { ten: 'Khoai tây múi cau chiên', gia: 35000 }
+        ],
+        tuyChon: [],
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     },
     {
         id: 4,
-        tenMon: 'Trà Vải Hoa Nhài',
+        maMon: 'MON-04',
+        tenMon: 'Cơm Cháy Kho Quẹt Nam Bộ',
+        danhMucId: 1,
+        giaBan: 95000,
+        donViTinh: 'Đĩa',
+        hinhAnh: 'https://images.unsplash.com/photo-1541832676-9b763b0239ab?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Cơm cháy đáy nồi giòn rụm chấm cùng niêu kho quẹt tôm khô tóp mỡ đậm đà, ăn kèm rau củ luộc.',
+        trangThai: 'DangBan',
+        laMonBanChay: true,
+        tuyChonSize: [],
+        tuyChonTopping: [
+            { ten: 'Tóp mỡ kho quẹt thêm', gia: 30000 },
+            { ten: 'Cơm cháy giòn thêm', gia: 25000 }
+        ],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 5,
+        maMon: 'MON-05',
+        tenMon: 'Mực Một Nắng Nướng Sa Tế',
         danhMucId: 4,
+        giaBan: 185000,
+        donViTinh: 'Con',
+        hinhAnh: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Mực câu Phan Thiết phơi một nắng dẻo thơm, tẩm ướp sa tế cay nồng nướng than hồng.',
+        trangThai: 'TamHet',
+        laMonBanChay: false,
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 6,
+        maMon: 'MON-06',
+        tenMon: 'Gỏi Ngó Sen Tôm Thịt Hoa Chuối',
+        danhMucId: 1,
+        giaBan: 110000,
+        donViTinh: 'Đĩa',
+        hinhAnh: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Ngó sen giòn sần sật, tôm sú bóc nõn, thịt ba chỉ luộc trộn cùng nước mắm chua ngọt và bánh phồng tôm.',
+        trangThai: 'DangBan',
+        laMonBanChay: false,
+        tuyChonSize: [],
+        tuyChonTopping: [
+            { ten: 'Bánh phồng tôm chiên thêm', gia: 15000 }
+        ],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 7,
+        maMon: 'MON-07',
+        tenMon: 'Rau Rừng Gia Lai Xào Tỏi',
+        danhMucId: 5,
+        giaBan: 75000,
+        donViTinh: 'Đĩa',
+        hinhAnh: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Rau dớn, rau lủi hái trên nương rẫy xanh mướt, xào thơm nức mũi với tỏi Lý Sơn giã dập.',
+        trangThai: 'DangBan',
+        laMonBanChay: false,
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 8,
+        maMon: 'MON-08',
+        tenMon: 'Trà Sen Vàng Củ Năng Hạt Sen',
+        danhMucId: 6,
+        giaBan: 45000,
+        donViTinh: 'Ly',
+        hinhAnh: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Trà ô long ướp hoa sen thanh nhã, thạch củ năng giòn ngọt và hạt sen bùi béo, phủ lớp kem sữa.',
+        trangThai: 'DangBan',
+        laMonBanChay: true,
+        tuyChonSize: [
+            { ten: 'Size M (Tiêu chuẩn)', giaCongThem: 0 },
+            { ten: 'Size L (Khổng lồ)', giaCongThem: 10000 }
+        ],
+        tuyChonTopping: [
+            { ten: 'Thạch củ năng thêm', gia: 10000 },
+            { ten: 'Kem cheese béo ngậy', gia: 12000 }
+        ],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 9,
+        maMon: 'MON-09',
+        tenMon: 'Trà Vải Hoa Nhài',
+        danhMucId: 6,
         giaBan: 35000,
         donViTinh: 'Ly',
-        hinhAnh: '/tepTaiLen/anhMonAn/tra-vai.jpg',
+        hinhAnh: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80',
         moTa: 'Trà lài ủ lạnh thơm mát kết hợp vị vải ngọt thanh mọng nước.',
         trangThai: 'DangBan',
         laMonBanChay: true,
-        tuyChon: [
-            { tenNhom: 'Mức đường', batBuoc: true, loai: 'ChonMot', danhSach: [{ ten: '100% đường', giaThem: 0 }, { ten: '50% đường', giaThem: 0 }, { ten: 'Không đường', giaThem: 0 }] },
-            { tenNhom: 'Mức đá', batBuoc: true, loai: 'ChonMot', danhSach: [{ ten: 'Đầy đá', giaThem: 0 }, { ten: 'Ít đá', giaThem: 0 }, { ten: 'Không đá', giaThem: 0 }] }
-        ],
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 10,
+        maMon: 'MON-10',
+        tenMon: 'Lẩu Bò Nhúng Dấm',
+        danhMucId: 3,
+        giaBan: 295000,
+        donViTinh: 'Nồi',
+        hinhAnh: 'https://images.unsplash.com/photo-1547928576-a4a33237cbc3?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Nước lẩu chua thanh dịu nhẹ từ nước dừa xiêm và dấm gạo thơm, kèm bắp bò hoa.',
+        trangThai: 'DangBan',
+        laMonBanChay: false,
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 11,
+        maMon: 'MON-11',
+        tenMon: 'Bò Tơ Hấp Cuốn Bánh Tráng',
+        danhMucId: 2,
+        giaBan: 185000,
+        donViTinh: 'Phần',
+        hinhAnh: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Bò tơ mềm ngọt cuốn rau rừng Tây Ninh chấm mắm nêm đặc sản.',
+        trangThai: 'DangBan',
+        laMonBanChay: true,
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
+        ngayTao: new Date(),
+        ngayCapNhat: new Date()
+    },
+    {
+        id: 12,
+        maMon: 'MON-12',
+        tenMon: 'Gỏi Bò Bóp Thấu',
+        danhMucId: 1,
+        giaBan: 95000,
+        donViTinh: 'Đĩa',
+        hinhAnh: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+        moTa: 'Thịt bò tươi mềm bóp thấu kèm bắp chuối, đậu phộng rang giòn thơm lừng.',
+        trangThai: 'DangBan',
+        laMonBanChay: false,
+        tuyChonSize: [],
+        tuyChonTopping: [],
+        tuyChon: [],
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     }
 ];
 
-let tuTangId = 5;
+let danhSachMonAn = docDuLieu('thucDon', duLieuThucDonMacDinh);
+let tuTangId = Math.max(...danhSachMonAn.map(m => m.id || 0), 0) + 1;
 
-async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang = 1, soLuong = 10, chiLayDangBan = false }) {
+function luu() {
+    ghiDuLieu('thucDon', danhSachMonAn);
+}
+
+async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang = 1, soLuong = 20, chiLayDangBan = false } = {}) {
     let ketQua = danhSachMonAn.filter(m => m.trangThai !== 'DaXoa');
 
     if (chiLayDangBan) {
@@ -86,7 +262,7 @@ async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang 
 
     if (tuKhoa) {
         const tuKhoaChuan = tuKhoa.toLowerCase().trim();
-        ketQua = ketQua.filter(m => m.tenMon.toLowerCase().includes(tuKhoaChuan) || (m.moTa && m.moTa.toLowerCase().includes(tuKhoaChuan)));
+        ketQua = ketQua.filter(m => (m.tenMon && m.tenMon.toLowerCase().includes(tuKhoaChuan)) || (m.moTa && m.moTa.toLowerCase().includes(tuKhoaChuan)));
     }
 
     if (giaTu !== undefined && !isNaN(Number(giaTu))) {
@@ -98,15 +274,17 @@ async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang 
     }
 
     const tongSo = ketQua.length;
-    const tongSoTrang = Math.ceil(tongSo / soLuong) || 1;
-    const viTriBatDau = (trang - 1) * soLuong;
-    const duLieuTrang = ketQua.slice(viTriBatDau, viTriBatDau + Number(soLuong));
+    const soLuongNum = Number(soLuong) || 20;
+    const trangNum = Number(trang) || 1;
+    const tongSoTrang = Math.ceil(tongSo / soLuongNum) || 1;
+    const viTriBatDau = (trangNum - 1) * soLuongNum;
+    const duLieuTrang = ketQua.slice(viTriBatDau, viTriBatDau + soLuongNum);
 
     return {
         danhSach: duLieuTrang,
         phanTrang: {
-            trangHienTai: Number(trang),
-            soLuongMoiTrang: Number(soLuong),
+            trangHienTai: trangNum,
+            soLuongMoiTrang: soLuongNum,
             tongSoBanGhi: tongSo,
             tongSoTrang
         }
@@ -114,16 +292,19 @@ async function layDanhSach({ danhMucId, trangThai, tuKhoa, giaTu, giaDen, trang 
 }
 
 async function layTheoId(id) {
-    return danhSachMonAn.find(m => m.id === Number(id) && m.trangThai !== 'DaXoa') || null;
+    if (!id) return null;
+    return danhSachMonAn.find(m => (m.id === Number(id) || (m.maMon && m.maMon.toLowerCase() === String(id).toLowerCase().trim())) && m.trangThai !== 'DaXoa') || null;
 }
 
 async function layTheoTen(tenMon) {
-    return danhSachMonAn.find(m => m.tenMon.toLowerCase() === tenMon.toLowerCase().trim() && m.trangThai !== 'DaXoa') || null;
+    if (!tenMon) return null;
+    return danhSachMonAn.find(m => m.tenMon && m.tenMon.toLowerCase() === tenMon.toLowerCase().trim() && m.trangThai !== 'DaXoa') || null;
 }
 
 async function taoMoi(duLieu) {
     const banGhiMoi = {
         id: tuTangId++,
+        maMon: duLieu.maMon || `MON-${tuTangId}`,
         tenMon: duLieu.tenMon.trim(),
         danhMucId: Number(duLieu.danhMucId),
         giaBan: Number(duLieu.giaBan),
@@ -133,10 +314,13 @@ async function taoMoi(duLieu) {
         trangThai: duLieu.trangThai || 'DangBan',
         laMonBanChay: Boolean(duLieu.laMonBanChay),
         tuyChon: Array.isArray(duLieu.tuyChon) ? duLieu.tuyChon : [],
+        tuyChonSize: Array.isArray(duLieu.tuyChonSize) ? duLieu.tuyChonSize : [],
+        tuyChonTopping: Array.isArray(duLieu.tuyChonTopping) ? duLieu.tuyChonTopping : [],
         ngayTao: new Date(),
         ngayCapNhat: new Date()
     };
     danhSachMonAn.push(banGhiMoi);
+    luu();
     return banGhiMoi;
 }
 
@@ -155,8 +339,11 @@ async function capNhat(id, duLieu) {
         trangThai: duLieu.trangThai !== undefined ? duLieu.trangThai : danhSachMonAn[viTri].trangThai,
         laMonBanChay: duLieu.laMonBanChay !== undefined ? Boolean(duLieu.laMonBanChay) : danhSachMonAn[viTri].laMonBanChay,
         tuyChon: duLieu.tuyChon !== undefined && Array.isArray(duLieu.tuyChon) ? duLieu.tuyChon : danhSachMonAn[viTri].tuyChon,
+        tuyChonSize: duLieu.tuyChonSize !== undefined && Array.isArray(duLieu.tuyChonSize) ? duLieu.tuyChonSize : danhSachMonAn[viTri].tuyChonSize,
+        tuyChonTopping: duLieu.tuyChonTopping !== undefined && Array.isArray(duLieu.tuyChonTopping) ? duLieu.tuyChonTopping : danhSachMonAn[viTri].tuyChonTopping,
         ngayCapNhat: new Date()
     };
+    luu();
     return danhSachMonAn[viTri];
 }
 
@@ -165,6 +352,7 @@ async function doiTrangThai(id, trangThaiMoi) {
     if (!mon) return null;
     mon.trangThai = trangThaiMoi;
     mon.ngayCapNhat = new Date();
+    luu();
     return mon;
 }
 
@@ -173,6 +361,7 @@ async function danhDauBanChay(id, laBanChay) {
     if (!mon) return null;
     mon.laMonBanChay = Boolean(laBanChay);
     mon.ngayCapNhat = new Date();
+    luu();
     return mon;
 }
 
@@ -181,6 +370,7 @@ async function xoaMem(id) {
     if (!mon) return false;
     mon.trangThai = 'DaXoa';
     mon.ngayCapNhat = new Date();
+    luu();
     return true;
 }
 
@@ -188,6 +378,7 @@ async function dongBoDanhSach(danhSachMoi) {
     if (!Array.isArray(danhSachMoi)) return danhSachMonAn;
     danhSachMonAn = danhSachMoi.map((m, idx) => ({
         id: Number(m.id) || (idx + 1),
+        maMon: (m.maMon || `MON-${m.id || (idx + 1)}`).trim(),
         tenMon: (m.tenMon || m.ten || `Món ${m.id}`).trim(),
         danhMucId: m.danhMucId ? Number(m.danhMucId) : 1,
         giaBan: m.giaBan !== undefined ? Number(m.giaBan) : 0,
@@ -197,10 +388,13 @@ async function dongBoDanhSach(danhSachMoi) {
         trangThai: (m.trangThai === 1 || m.trangThai === 'DangBan' || m.trangThai === 'HoatDong') ? 'DangBan' : (m.trangThai === 'DaXoa' ? 'DaXoa' : 'TamHet'),
         laMonBanChay: Boolean(m.laMonBanChay || m.noiBat),
         tuyChon: Array.isArray(m.tuyChon) ? m.tuyChon : [],
+        tuyChonSize: Array.isArray(m.tuyChonSize) ? m.tuyChonSize : [],
+        tuyChonTopping: Array.isArray(m.tuyChonTopping) ? m.tuyChonTopping : [],
         ngayTao: m.ngayTao ? new Date(m.ngayTao) : new Date(),
         ngayCapNhat: new Date()
     }));
     tuTangId = Math.max(...danhSachMonAn.map(m => m.id || 0), 0) + 1;
+    luu();
     return danhSachMonAn;
 }
 
@@ -215,4 +409,3 @@ module.exports = {
     xoaMem,
     dongBoDanhSach
 };
-

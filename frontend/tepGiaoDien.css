@@ -4183,6 +4183,30 @@ body.che-do-khach-hang #khung-nut-noi-ho-tro {
     animation: pulseBorderRed 2s infinite;
 }
 
+.kds-card-cho-bung {
+    border-color: #3B82F6;
+    background: #F8FAFC;
+}
+
+.kds-card-cho-bung .kds-card-head {
+    background: #EFF6FF;
+}
+
+.kds-card-hoan-tat {
+    border-color: #10B981;
+    background: #F0FDF4;
+    opacity: 0.95;
+}
+
+.kds-card-hoan-tat .kds-card-head {
+    background: #ECFDF5;
+}
+
+.kds-counter-green {
+    background: #10B981 !important;
+    color: #FFFFFF !important;
+}
+
 @keyframes pulseBorderRed {
     0% {
         box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
