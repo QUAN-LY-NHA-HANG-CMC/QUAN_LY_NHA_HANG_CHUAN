@@ -1845,21 +1845,52 @@ class ApiService {
             }
         });
 
-        // ĐỒNG BỘ: Đọc thêm các đơn đang mở trong POS sơ đồ bàn của Quân ('quanmoc_pos_phien_ban')
+        // ĐỒNG BỘ: Gộp toàn diện các món từ phiên bàn POS ('quanmoc_pos_phien_ban') vào cùng 1 bill của bàn
         const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');
         if (rawPosPhien) {
             try {
                 const phienMap = JSON.parse(rawPosPhien);
                 Object.values(phienMap).forEach(phien => {
                     if (phien && Array.isArray(phien.danhSachMon) && phien.danhSachMon.length > 0) {
-                        const maDonPhien = `DON-POS-BAN-${phien.banId}`;
+                        const bId = Number(phien.banId);
                         const thoiGian = phien.thoiGianBatDau || new Date().toISOString().replace('T', ' ').substring(0, 19);
-                        if (!ds.some(d => d.maDon === maDonPhien || (Number(d.banId) === Number(phien.banId) && d.phienPos))) {
+                        const donCungBan = ds.find(d => Number(d.banId) === bId);
+
+                        if (donCungBan) {
+                            // Bàn đã có đơn -> Gộp toàn bộ món ăn vào chung 1 đơn duy nhất của bàn
+                            if (!Array.isArray(donCungBan.danhSachMon)) donCungBan.danhSachMon = [];
+                            phien.danhSachMon.forEach((m, idx) => {
+                                const daCo = donCungBan.danhSachMon.some(existing => 
+                                    (m.id && Number(existing.id) === Number(m.id)) ||
+                                    (existing.tenMon === m.tenMon && Number(existing.donGia) === Number(m.donGia))
+                                );
+                                if (!daCo) {
+                                    let ttChuan = m.trangThai || 'CHO_XAC_NHAN';
+                                    if (ttChuan === 'CHO_CHE_BIEN') ttChuan = 'CHO_XAC_NHAN';
+                                    else if (ttChuan === 'DA_CHE_BIEN') ttChuan = 'DA_XONG';
+                                    else if (ttChuan === 'DA_PHUC_VU') ttChuan = 'DA_LEN_MON';
+                                    donCungBan.danhSachMon.push({
+                                        id: m.id || (bId * 100 + donCungBan.danhSachMon.length + 1),
+                                        monAnId: m.monAnId,
+                                        tenMon: m.tenMon,
+                                        soLuong: m.soLuong || 1,
+                                        donGia: m.donGia || 0,
+                                        thanhTien: (m.soLuong || 1) * (m.donGia || 0),
+                                        tuyChon: m.tuyChon || '',
+                                        ghiChu: m.ghiChu || '',
+                                        trangThai: ttChuan,
+                                        thoiGianCapNhat: thoiGian
+                                    });
+                                }
+                            });
+                        } else {
+                            // Chưa có đơn nào của bàn này -> Tạo thẻ đơn mới chuẩn hóa
+                            const maDonPhien = `DON-POS-BAN-${bId}`;
                             ds.push({
-                                id: `pos_phien_${phien.banId}`,
+                                id: `pos_phien_${bId}`,
                                 maDon: maDonPhien,
-                                banId: phien.banId,
-                                soBan: `Bàn ${String(phien.banId).padStart(2, '0')}`,
+                                banId: bId,
+                                soBan: `Bàn ${String(bId).padStart(2, '0')}`,
                                 thoiGianDat: thoiGian,
                                 thoiGianTao: thoiGian,
                                 khuVucTen: 'Tầng 1',
@@ -1870,7 +1901,7 @@ class ApiService {
                                     else if (ttChuan === 'DA_CHE_BIEN') ttChuan = 'DA_XONG';
                                     else if (ttChuan === 'DA_PHUC_VU') ttChuan = 'DA_LEN_MON';
                                     return {
-                                        id: m.id || (phien.banId * 100 + idx + 1),
+                                        id: m.id || (bId * 100 + idx + 1),
                                         monAnId: m.monAnId,
                                         tenMon: m.tenMon,
                                         soLuong: m.soLuong || 1,

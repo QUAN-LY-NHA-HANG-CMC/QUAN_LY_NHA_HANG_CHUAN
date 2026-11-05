@@ -16,6 +16,7 @@ router.patch('/:id/lam-moi-qr', xacThuc, kiemTraVaiTro('QuanLy'), banAnControlle
 
 // Quản lý tạo, sửa, xóa bàn
 router.post('/', xacThuc, kiemTraVaiTro('QuanLy'), banAnController.taoMoi);
+router.patch('/:id/trang-thai', banAnController.capNhatTrangThai);
 router.put('/:id', xacThuc, kiemTraVaiTro('QuanLy'), banAnController.capNhat);
 router.delete('/:id', xacThuc, kiemTraVaiTro('QuanLy'), banAnController.xoa);
 

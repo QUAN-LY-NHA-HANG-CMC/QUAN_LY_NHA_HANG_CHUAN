@@ -400,32 +400,91 @@ class DieuPhoiBepModule {
     }
 
     /**
-     * Lấy số đơn đang có món cần bếp xử lý hoặc chờ phục vụ bưng món
+     * Gộp tất cả các đơn / lượt gọi món của CÙNG 1 BÀN thành MỘT BILL DUY NHẤT
+     */
+    gopDonTheoBan(danhSach) {
+        if (!Array.isArray(danhSach)) return [];
+        const banMap = new Map();
+        const danhSachGop = [];
+
+        danhSach.forEach(don => {
+            if (!don) return;
+            const soBanSo = this.laySoThuTuBan(don);
+            const banKey = don.banId ? Number(don.banId) : soBanSo;
+
+            if (!banMap.has(banKey)) {
+                const tenBanChuan = `Bàn ${String(soBanSo).padStart(2, "0")}`;
+                const donGop = {
+                    ...don,
+                    id: don.id,
+                    banId: banKey,
+                    soBan: tenBanChuan,
+                    cacDonGocIds: [don.id],
+                    cacMaDon: don.maDon ? [don.maDon] : [],
+                    soLuotGoi: 1,
+                    danhSachMon: [...(don.danhSachMon || [])]
+                };
+                banMap.set(banKey, donGop);
+                danhSachGop.push(donGop);
+            } else {
+                const donGop = banMap.get(banKey);
+                if (!donGop.cacDonGocIds.includes(don.id)) {
+                    donGop.cacDonGocIds.push(don.id);
+                }
+                if (don.maDon && !donGop.cacMaDon.includes(don.maDon)) {
+                    donGop.cacMaDon.push(don.maDon);
+                }
+                donGop.soLuotGoi += 1;
+
+                (don.danhSachMon || []).forEach(m => {
+                    const daTonTai = donGop.danhSachMon.some(ex => 
+                        (m.id && Number(ex.id) === Number(m.id))
+                    );
+                    if (!daTonTai) {
+                        donGop.danhSachMon.push(m);
+                    }
+                });
+
+                const timeDon = new Date(String(don.thoiGianTao || don.thoiGianDat || '').replace(' ', 'T')).getTime() || 0;
+                const timeGop = new Date(String(donGop.thoiGianTao || donGop.thoiGianDat || '').replace(' ', 'T')).getTime() || 0;
+                if (timeDon > 0 && (timeGop === 0 || timeDon < timeGop)) {
+                    donGop.thoiGianTao = don.thoiGianTao || don.thoiGianDat;
+                }
+            }
+        });
+
+        return danhSachGop;
+    }
+
+    /**
+     * Lấy số bàn đang có bill cần bếp xử lý hoặc chờ phục vụ bưng món
      */
     laySoDonDangXuLy() {
         if (!Array.isArray(this.danhSachDon)) return 0;
-        return this.danhSachDon.filter(don => 
+        const dsDangXuLy = this.danhSachDon.filter(don => 
             don && Array.isArray(don.danhSachMon) && don.danhSachMon.length > 0 &&
             don.danhSachMon.some(m => m && (
                 m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' ||
                 m.trangThai === 'DANG_CHE_BIEN' ||
                 m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN'
             ))
-        ).length;
+        );
+        return this.gopDonTheoBan(dsDangXuLy).length;
     }
 
     /**
-     * Lấy số đơn đã hoàn thành và bưng món xong toàn bộ
+     * Lấy số bàn đã hoàn thành và bưng món xong toàn bộ
      */
     laySoDonDaHoanTat() {
         if (!Array.isArray(this.danhSachDon)) return 0;
-        return this.danhSachDon.filter(don => 
+        const dsHoanTat = this.danhSachDon.filter(don => 
             don && Array.isArray(don.danhSachMon) && don.danhSachMon.length > 0 &&
             don.danhSachMon.every(m => m && (
                 m.trangThai === 'DA_LEN_MON' || m.trangThai === 'DA_PHUC_VU' ||
                 m.trangThai === 'DA_HUY' || m.trangThai === 'TU_CHOI'
             ))
-        ).length;
+        );
+        return this.gopDonTheoBan(dsHoanTat).length;
     }
 
     /**
@@ -489,8 +548,9 @@ class DieuPhoiBepModule {
             ));
         };
 
-        const dsDonDangXuLy = (this.danhSachDon || []).filter(kiemTraDonDangXuLy);
-        const dsDonDaHoanTat = (this.danhSachDon || []).filter(kiemTraDonHoanTat);
+        // GỘP CÁC LƯỢT GỌI MÓN VÀ CÁC ĐƠN CỦA CÙNG 1 BÀN THÀNH 1 BILL DUY NHẤT
+        const dsDonDangXuLy = this.gopDonTheoBan((this.danhSachDon || []).filter(kiemTraDonDangXuLy));
+        const dsDonDaHoanTat = this.gopDonTheoBan((this.danhSachDon || []).filter(kiemTraDonHoanTat));
 
         // Mặc định: Chỉ hiển thị các đơn đang cần xử lý (loại bỏ đơn đã bưng xong khỏi bảng FIFO)
         let danhSachHienThi = [];
@@ -499,6 +559,7 @@ class DieuPhoiBepModule {
         } else {
             danhSachHienThi = [...dsDonDangXuLy];
         }
+        this.danhSachDonGopHienThi = danhSachHienThi;
 
         // Lọc theo khu vực
         if (this.boLocKhuVuc !== 'ALL') {
@@ -680,8 +741,8 @@ class DieuPhoiBepModule {
 
                     <div class="kds-card-info-row">
                         <div class="kds-order-code">
-                            <span>Mã: <strong>${don.maDon}</strong></span>
-                            <span class="kds-luot-badge">Lượt ${don.luotGoi || 1}</span>
+                            <span>Mã: <strong>${don.cacMaDon && don.cacMaDon.length > 1 ? don.cacMaDon[0] + ' (+' + (don.cacMaDon.length - 1) + ')' : don.maDon}</strong></span>
+                            <span class="kds-luot-badge">${don.soLuotGoi && don.soLuotGoi > 1 ? `${don.soLuotGoi} lượt (Gộp 1 Bill)` : `Lượt ${don.luotGoi || 1}`}</span>
                         </div>
                         <div class="kds-time-badge ${thongTinCanhBao.lopBadge}">
                             <span class="kds-dong-ho-troi-qua" data-time="${thoiGianStr}">⏱️ ${thoiGianTroiQua}</span>
@@ -1360,7 +1421,8 @@ class DieuPhoiBepModule {
      * US-082: Bắt đầu nấu toàn bộ phiếu order
      */
     async batDauNauCaPhieu(donId) {
-        const don = this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonDaNhan = 0;
@@ -1406,7 +1468,8 @@ class DieuPhoiBepModule {
      * US-083 & US-084: Đánh dấu hoàn thành toàn bộ phiếu
      */
     async hoanThanhCaPhieu(donId) {
-        const don = this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonHoanThanh = 0;
@@ -1450,7 +1513,8 @@ class DieuPhoiBepModule {
      * US-084: Xác nhận Phục vụ đã bưng toàn bộ món trong phiếu lên bàn (Chuyển phiếu sang Lịch sử)
      */
     async xacNhanDaLenMonCaPhieu(donId) {
-        const don = this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonDaBung = 0;
