@@ -50,11 +50,11 @@ class QuanLyThucDonModule {
         const monBanChay = this.danhSachMonAn.filter(m => m.laBanChay === 1 && m.trangThai !== -1).length;
 
         // Lọc món ăn (US-033)
-        const tk = (this.tuKhoaTimKiem || '').toLowerCase();
+        const tk = (this.tuKhoaTimKiem || '').toLowerCase().trim();
         const monLocDuoc = this.danhSachMonAn.filter(mon => {
             if (mon.trangThai === -1) return false; // Đã xóa mềm (US-040)
 
-            const thoaDanhMuc = (this.danhMucDangChon === 'ALL') || (mon.danhMucId === Number(this.danhMucDangChon));
+            const thoaDanhMuc = (this.danhMucDangChon === 'ALL') || (String(mon.danhMucId) === String(this.danhMucDangChon));
             
             let thoaTrangThai = true;
             if (this.locTrangThai === 'DANG_BAN') thoaTrangThai = (mon.trangThai === 1);
@@ -64,6 +64,8 @@ class QuanLyThucDonModule {
             const tenMonStr = (mon.tenMon || '').toLowerCase();
             const maMonStr = (mon.maMon || '').toLowerCase();
             const thoaTuKhoa = !tk || tenMonStr.includes(tk) || maMonStr.includes(tk);
+
+            return thoaDanhMuc && thoaTrangThai && thoaTuKhoa;
         });
 
         // Phân trang (US-033)
