@@ -20,6 +20,7 @@ class DieuPhoiBepModule {
         this.cheDoXem = 'THE_DON'; // 'THE_DON' | 'GOM_MON' | 'LICH_SU' | 'HET_MON'
         this.boLocTrangThai = 'TAT_CA'; // 'TAT_CA' | 'CHO_CHE_BIEN' | 'DANG_CHE_BIEN' | 'DA_XONG'
         this.boLocKhuVuc = 'ALL';
+        this.kieuSapXep = 'THEO_BAN'; // 'THEO_BAN' | 'UU_TIEN_NAU' | 'FIFO'
         this.tuKhoaMonHet = '';
         this.danhMucMonHet = 'ALL';
         this.danhSachDon = [];
@@ -438,13 +439,39 @@ class DieuPhoiBepModule {
             );
         }
 
-        // US-079: Sắp xếp theo FIFO (First-In First-Out) - Đơn đặt sớm nhất hiển thị trước
+        // Sắp xếp đơn hàng logic theo Bàn & Nghiệp vụ bếp
         danhSachHienThi.sort((a, b) => {
-            const timeAStr = a ? (a.thoiGianTao || a.thoiGianDat || a.thoiGian || '') : '';
-            const timeBStr = b ? (b.thoiGianTao || b.thoiGianDat || b.thoiGian || '') : '';
-            const timeA = timeAStr ? new Date(String(timeAStr).replace(' ', 'T')).getTime() || 0 : 0;
-            const timeB = timeBStr ? new Date(String(timeBStr).replace(' ', 'T')).getTime() || 0 : 0;
-            return timeA - timeB; // Cũ nhất đứng đầu
+            if (this.kieuSapXep === 'THEO_BAN') {
+                // 1. Ưu tiên số bàn tăng dần (Bàn 01 -> Bàn 02 -> Bàn 03 -> ... -> Bàn 11)
+                const soBanA = this.laySoThuTuBan(a);
+                const soBanB = this.laySoThuTuBan(b);
+                if (soBanA !== soBanB) return soBanA - soBanB;
+
+                // 2. Nếu cùng bàn: xếp theo Lượt gọi (Lượt 1 trước, Lượt 2 sau)
+                const luotA = Number(a.luotGoi || 1);
+                const luotB = Number(b.luotGoi || 1);
+                if (luotA !== luotB) return luotA - luotB;
+
+                // 3. Nếu cùng lượt: đơn cũ hơn xếp trước
+                const timeA = new Date(String(a.thoiGianTao || a.thoiGianDat || a.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                const timeB = new Date(String(b.thoiGianTao || b.thoiGianDat || b.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                return timeA - timeB;
+            } else if (this.kieuSapXep === 'UU_TIEN_NAU') {
+                // Đơn còn món chờ nấu / đang nấu được ưu tiên lên đầu
+                const conMonA = (a.danhSachMon || []).some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN') ? 1 : 0;
+                const conMonB = (b.danhSachMon || []).some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN') ? 1 : 0;
+                if (conMonA !== conMonB) return conMonB - conMonA;
+
+                const soBanA = this.laySoThuTuBan(a);
+                const soBanB = this.laySoThuTuBan(b);
+                if (soBanA !== soBanB) return soBanA - soBanB;
+                return (Number(a.luotGoi || 1) - Number(b.luotGoi || 1));
+            } else {
+                // FIFO: Thời gian gọi cũ nhất lên trước
+                const timeA = new Date(String(a.thoiGianTao || a.thoiGianDat || a.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                const timeB = new Date(String(b.thoiGianTao || b.thoiGianDat || b.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                return timeA - timeB;
+            }
         });
 
         return `
@@ -473,6 +500,15 @@ class DieuPhoiBepModule {
                         ${cacKhuVuc.map(kv => `<option value="${kv}" ${this.boLocKhuVuc === kv ? 'selected' : ''}>${kv}</option>`).join('')}
                     </select>
                 </div>
+
+                <div class="kds-filter-group">
+                    <span class="kds-filter-label">Sắp xếp:</span>
+                    <select class="o-nhap o-nhap-nho" onchange="window.dieuPhoiBepModule.doiKieuSapXep(this.value)">
+                        <option value="THEO_BAN" ${this.kieuSapXep === 'THEO_BAN' ? 'selected' : ''}>🏷️ Số Bàn (Bàn 01 ➔ 12)</option>
+                        <option value="UU_TIEN_NAU" ${this.kieuSapXep === 'UU_TIEN_NAU' ? 'selected' : ''}>🔥 Cần nấu gấp lên đầu</option>
+                        <option value="FIFO" ${this.kieuSapXep === 'FIFO' ? 'selected' : ''}>⏱️ Thời gian đặt (FIFO)</option>
+                    </select>
+                </div>
             </div>
 
             <!-- LƯỚI THẺ ĐƠN HÀNG FIFO (ORDER CARDS) -->
@@ -491,6 +527,22 @@ class DieuPhoiBepModule {
                 </div>
             `}
         `;
+    }
+
+    
+    /**
+     * Tách số thứ tự bàn từ chuỗi tên bàn (ví dụ 'Bàn 01' -> 1, 'Bàn 11' -> 11)
+     */
+    laySoThuTuBan(don) {
+        if (!don) return 999;
+        const text = String(don.soBan || don.banId || '');
+        const match = text.match(/\d+/);
+        return match ? parseInt(match[0], 10) : 999;
+    }
+
+    doiKieuSapXep(kieu) {
+        this.kieuSapXep = kieu;
+        this.render();
     }
 
     doiBoLocTrangThai(tt) {
@@ -519,6 +571,9 @@ class DieuPhoiBepModule {
 
         // Trạng thái chung của thẻ
         let tongSoMonConLai = monCho + monDangNau;
+        const tongSoLuongPhan = danhSachMon.reduce((sum, m) => sum + (Number(m.soLuong) || 1), 0);
+        const monChuaXongDs = danhSachMon.filter(m => m.trangThai !== 'DA_XONG' && m.trangThai !== 'DA_CHE_BIEN' && m.trangThai !== 'DA_LEN_MON');
+        const soPhanChuaXong = monChuaXongDs.reduce((sum, m) => sum + (Number(m.soLuong) || 1), 0);
 
         return `
             <div class="kds-order-card ${thongTinCanhBao.lopCss}" id="card-don-${don.id}">
@@ -530,7 +585,7 @@ class DieuPhoiBepModule {
                             <span class="kds-table-area">${don.khuVucTen || 'Khu vực chính'}</span>
                         </div>
                         <div class="kds-fifo-badge" title="Thứ tự nhận đơn theo chuẩn FIFO (First-In, First-Out)">
-                            #FIFO ${viTri + 1}
+                            ${this.kieuSapXep === 'FIFO' ? `#FIFO ${viTri + 1}` : `#${viTri + 1}`}
                         </div>
                     </div>
 
@@ -578,9 +633,9 @@ class DieuPhoiBepModule {
                 <!-- CHÂN THẺ -->
                 <div class="kds-card-foot">
                     <div class="kds-card-summary">
-                        <span>Tổng: <strong>${danhSachMon.length} món</strong></span>
+                        <span>Tổng: <strong>${danhSachMon.length} món (${tongSoLuongPhan} phần)</strong></span>
                         <span style="color: ${tongSoMonConLai === 0 ? '#10B981' : '#F59E0B'}; font-weight: 600;">
-                            ${tongSoMonConLai === 0 ? '🎉 Đã hoàn tất chế biến' : `Còn ${tongSoMonConLai} món chưa xong`}
+                            ${tongSoMonConLai === 0 ? '🎉 Đã hoàn tất chế biến' : `Còn ${tongSoMonConLai} món (${soPhanChuaXong} phần) chưa xong`}
                         </span>
                     </div>
                 </div>
