@@ -5,10 +5,11 @@ let danhSachBanAn = [
     { id: 2, maBan: 'B102', tenBan: 'Bàn 02', khuVucId: 1, sucChua: 4, tokenBaoMat: taoTokenBaoMatQr(), trangThai: 'Trong', daPhatSinhGiaoDich: false, ngayTao: new Date() },
     { id: 3, maBan: 'B103', tenBan: 'Bàn 03', khuVucId: 1, sucChua: 6, tokenBaoMat: taoTokenBaoMatQr(), trangThai: 'Trong', daPhatSinhGiaoDich: false, ngayTao: new Date() },
     { id: 4, maBan: 'B201', tenBan: 'Bàn 11 (Tầng 2)', khuVucId: 2, sucChua: 4, tokenBaoMat: taoTokenBaoMatQr(), trangThai: 'Trong', daPhatSinhGiaoDich: false, ngayTao: new Date() },
-    { id: 5, maBan: 'VIP1', tenBan: 'Phòng VIP 1', khuVucId: 3, sucChua: 10, tokenBaoMat: taoTokenBaoMatQr(), trangThai: 'Trong', daPhatSinhGiaoDich: false, ngayTao: new Date() }
+    { id: 5, maBan: 'VIP1', tenBan: 'Phòng VIP 1', khuVucId: 3, sucChua: 10, tokenBaoMat: taoTokenBaoMatQr(), trangThai: 'Trong', daPhatSinhGiaoDich: false, ngayTao: new Date() },
+    { id: 6, maBan: 'Q123', tenBan: 'Bàn 06', khuVucId: 1, sucChua: 4, tokenBaoMat: 'tok_UPkcC3fpL9eq', trangThai: 'DangPhucVu', daPhatSinhGiaoDich: true, ngayTao: new Date() }
 ];
 
-let tuTangId = 6;
+let tuTangId = 7;
 
 async function layTatCa({ khuVucId, trangThai } = {}) {
     let ketQua = danhSachBanAn.filter(b => b.trangThai !== 'DaXoa');

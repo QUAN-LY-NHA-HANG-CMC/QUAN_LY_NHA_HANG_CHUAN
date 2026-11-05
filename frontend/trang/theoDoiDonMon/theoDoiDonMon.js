@@ -22,14 +22,23 @@ class TheoDoiDonMonModule {
         this.duLieuDonBan = null;
         this.danhSachBan = [];
         this.dangLangNghe = false;
+        this.intervalDongBo = null;
     }
 
     /**
      * Khởi tạo giao diện trang theo dõi đơn món
      */
     async khoiTao(banId = null) {
+        // Ưu tiên 1: banId truyền trực tiếp
+        // Ưu tiên 2: param trong URL (?banId=6 hoặc ?ban=Q123 hoặc hash ?banId=6)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+        const paramBanId = urlParams.get('banId') || hashParams.get('banId') || urlParams.get('ban') || hashParams.get('ban');
+
         if (banId) {
             this.banIdHienTai = Number(banId);
+        } else if (paramBanId && !isNaN(Number(paramBanId))) {
+            this.banIdHienTai = Number(paramBanId);
         } else {
             // Lấy từ session bàn đang được quét hoặc chọn gần nhất
             const banLuu = localStorage.getItem('quanmoc_ban_id_hien_tai');
@@ -46,6 +55,7 @@ class TheoDoiDonMonModule {
         this.dangKySuKienSocket();
         await this.taiDanhSachBan();
         await this.taiDuLieuVaVe();
+        this.batDauTuDongDongBo();
     }
 
     /**
@@ -134,11 +144,28 @@ class TheoDoiDonMonModule {
      * Render toàn bộ trang
      */
     veGiaoDien(vungChua, data, dsYeuCau) {
-        const soBan = data?.soBan || `Bàn ${this.banIdHienTai}`;
+        const soBan = data?.soBan || (data?.ban?.tenBan || data?.ban?.maBan) || `Bàn ${this.banIdHienTai}`;
         const khuVucTen = data?.khuVucTen || 'Tầng 1';
         const danhSachDon = Array.isArray(data?.danhSachDon) ? data.danhSachDon : [];
         const tongTienLuyKe = Number(data?.tongTienLuyKe || 0);
-        const thongKe = data?.thongKe || {};
+
+        let thongKe = data?.thongKe;
+        if (!thongKe || Object.keys(thongKe).length === 0) {
+            thongKe = { tongSoMon: 0, choXacNhan: 0, dangCheBien: 0, daXong: 0, daLenMon: 0, daHuy: 0, tuChoi: 0 };
+            danhSachDon.forEach(don => {
+                (don.danhSachMon || []).forEach(m => {
+                    const sl = Number(m.soLuong) || 1;
+                    if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') thongKe.tongSoMon += sl;
+                    if (m.trangThai === 'CHO_XAC_NHAN') thongKe.choXacNhan += sl;
+                    else if (m.trangThai === 'DANG_CHE_BIEN') thongKe.dangCheBien += sl;
+                    else if (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG') thongKe.daXong += sl;
+                    else if (m.trangThai === 'DA_LEN_MON') thongKe.daLenMon += sl;
+                    else if (m.trangThai === 'DA_HUY') thongKe.daHuy += sl;
+                    else if (m.trangThai === 'TU_CHOI') thongKe.tuChoi += sl;
+                });
+            });
+        }
+
         const yeuCauDangCho = (dsYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY');
 
         vungChua.innerHTML = `
@@ -163,11 +190,16 @@ class TheoDoiDonMonModule {
                         <div class="hop-chon-ban-test">
                             <label for="chon-ban-theo-doi" style="font-size: 12px; font-weight: 600; color: var(--mau-chu-phu);">Xem đơn bàn:</label>
                             <select id="chon-ban-theo-doi" class="nut-select-ban" onchange="window.theoDoiDonMonModule.chuyenBanTheoDoi(this.value)">
-                                ${this.danhSachBan.map(b => `
-                                    <option value="${b.id}" ${Number(b.id) === Number(this.banIdHienTai) ? 'selected' : ''}>
-                                        ${b.soBan} (${b.khuVucTen || 'KV'}) - ${b.trangThai}
-                                    </option>
-                                `).join('')}
+                                ${this.danhSachBan.map(b => {
+                                    const tenHienThi = b.soBan || b.tenBan || b.maBan || (`Bàn ` + b.id);
+                                    const tenKhuVuc = b.khuVucTen || b.tenKhuVuc || 'KV';
+                                    const trangThaiBan = b.trangThai || 'Trống';
+                                    return `
+                                        <option value="${b.id}" ${Number(b.id) === Number(this.banIdHienTai) ? 'selected' : ''}>
+                                            ${tenHienThi} (${tenKhuVuc}) - ${trangThaiBan}
+                                        </option>
+                                    `;
+                                }).join('')}
                             </select>
                         </div>
 
@@ -345,7 +377,7 @@ class TheoDoiDonMonModule {
         // Áp dụng bộ lọc
         let dsMon = don.danhSachMon || [];
         if (this.boLocTrangThai === 'CHO_XAC_NHAN') dsMon = dsMon.filter(m => m.trangThai === 'CHO_XAC_NHAN');
-        else if (this.boLocTrangThai === 'DANG_CHE_BIEN') dsMon = dsMon.filter(m => m.trangThai === 'DANG_CHE_BIEN' || m.trangThai === 'DA_XONG');
+        else if (this.boLocTrangThai === 'DANG_CHE_BIEN') dsMon = dsMon.filter(m => m.trangThai === 'DANG_CHE_BIEN' || m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG');
         else if (this.boLocTrangThai === 'DA_LEN_MON') dsMon = dsMon.filter(m => m.trangThai === 'DA_LEN_MON');
         else if (this.boLocTrangThai === 'DA_HUY') dsMon = dsMon.filter(m => m.trangThai === 'DA_HUY' || m.trangThai === 'TU_CHOI');
 
@@ -353,7 +385,7 @@ class TheoDoiDonMonModule {
             return ''; // Không có món nào thỏa mãn bộ lọc trong lượt này
         }
 
-        const tongTienDon = Number(don.tongTien || 0);
+        const tongTienDon = Number(don.tongTien !== undefined ? don.tongTien : (don.tongTienDon || 0));
 
         return `
             <div class="the-luot-goi-mon">
@@ -389,7 +421,7 @@ class TheoDoiDonMonModule {
     veDongMonAn(mon, don) {
         const laChoXacNhan = mon.trangThai === 'CHO_XAC_NHAN';
         const laDangNau = mon.trangThai === 'DANG_CHE_BIEN';
-        const laDaXong = mon.trangThai === 'DA_XONG';
+        const laDaXong = mon.trangThai === 'DA_XONG' || mon.trangThai === 'DA_NAU_XONG';
         const laDaLenMon = mon.trangThai === 'DA_LEN_MON';
         const laDaHuy = mon.trangThai === 'DA_HUY';
         const laTuChoi = mon.trangThai === 'TU_CHOI';
@@ -478,6 +510,7 @@ class TheoDoiDonMonModule {
      */
     chuyenBanTheoDoi(banId) {
         this.banIdHienTai = Number(banId);
+        localStorage.setItem('quanmoc_ban_id_hien_tai', this.banIdHienTai);
         if (window.hoTroTaiBan) {
             window.hoTroTaiBan.datBanHienTai(this.banIdHienTai);
         }
@@ -906,6 +939,45 @@ class TheoDoiDonMonModule {
         if (modal) {
             modal.classList.remove('mo');
             modal.innerHTML = '';
+        }
+    }
+
+    /**
+     * Tự động đồng bộ thời gian thực mỗi 3s (Cross-device real-time sync)
+     * Giúp POS / màn hình theo dõi trên máy tính tự động cập nhật khi khách đặt món từ điện thoại
+     */
+    batDauTuDongDongBo() {
+        if (this.intervalDongBo) clearInterval(this.intervalDongBo);
+        this.intervalDongBo = setInterval(async () => {
+            const vungChua = document.getElementById('noi-dung-chinh');
+            const coTrangTheoDoi = document.querySelector('.trang-theo-doi-don-mon');
+            const coModalMo = document.querySelector('.khung-modal.mo, #khung-modal-toan-cuc.mo');
+
+            // Chỉ poll khi trang theo dõi đơn đang hiển thị và không có modal mở
+            if (!vungChua || !coTrangTheoDoi || coModalMo) return;
+
+            try {
+                const phanHoi = await window.api.layDanhSachDonTheoBan(this.banIdHienTai);
+                if (phanHoi && phanHoi.ok && phanHoi.data) {
+                    const duLieuMoi = phanHoi.data;
+                    const jsonMoi = JSON.stringify(duLieuMoi);
+                    const jsonCu = JSON.stringify(this.duLieuDonBan);
+                    if (jsonMoi !== jsonCu) {
+                        this.duLieuDonBan = duLieuMoi;
+                        const dsYeuCau = await window.api.layDanhSachYeuCauHoTro(this.banIdHienTai);
+                        this.veGiaoDien(vungChua, this.duLieuDonBan, dsYeuCau || []);
+                    }
+                }
+            } catch (e) {
+                // Background poll silent
+            }
+        }, 3000);
+    }
+
+    huyTuDongDongBo() {
+        if (this.intervalDongBo) {
+            clearInterval(this.intervalDongBo);
+            this.intervalDongBo = null;
         }
     }
 }

@@ -42,7 +42,8 @@ let danhSachDonGoi = [
                 trangThai: 'DA_LEN_MON'
             }
         ],
-        tongTienDon: 307000
+        tongTienDon: 307000,
+        tongTien: 307000
     },
     {
         id: 2,
@@ -70,12 +71,42 @@ let danhSachDonGoi = [
                 trangThai: 'DA_NAU_XONG'
             }
         ],
-        tongTienDon: 45000
+        tongTienDon: 45000,
+        tongTien: 45000
+    },
+    {
+        id: 3,
+        maDon: 'ORD-20261105-008',
+        banId: 6,
+        maBan: 'Q123',
+        tenBan: 'Bàn 06',
+        khuVucId: 1,
+        tenKhuVuc: 'Quân 1',
+        luotGoi: 1,
+        thoiGianTao: new Date(Date.now() - 10 * 60 * 1000),
+        trangThai: 'CHO_XU_LY',
+        ghiChuDon: '',
+        danhSachMon: [
+            {
+                id: 104,
+                monId: 1,
+                tenMon: 'Bò nướng tảng sốt tiêu đen',
+                size: 'Tiêu chuẩn',
+                topping: '',
+                donGia: 120000,
+                soLuong: 1,
+                thanhTien: 120000,
+                ghiChu: '',
+                trangThai: 'CHO_XAC_NHAN'
+            }
+        ],
+        tongTienDon: 120000,
+        tongTien: 120000
     }
 ];
 
-let tuTangId = 3;
-let tuTangItemId = 104;
+let tuTangId = 4;
+let tuTangItemId = 105;
 
 async function layTatCa({ banId, trangThai } = {}) {
     let ketQua = [...danhSachDonGoi];
@@ -147,6 +178,7 @@ async function taoDon(duLieu) {
         trangThai: 'CHO_XU_LY',
         ghiChuDon: duLieu.ghiChuDon || duLieu.ghiChuChung || '',
         danhSachMon,
+        tongTien: tongTienDon,
         tongTienDon
     };
 

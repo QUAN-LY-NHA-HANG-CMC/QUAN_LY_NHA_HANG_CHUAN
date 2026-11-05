@@ -1742,6 +1742,30 @@ class ApiService {
         }
 
         if (donServer) {
+            // Đảm bảo thongKe và tongTien luôn có đầy đủ
+            if (!donServer.thongKe || Object.keys(donServer.thongKe).length === 0) {
+                const tk = { tongSoMon: 0, choXacNhan: 0, dangCheBien: 0, daXong: 0, daLenMon: 0, daHuy: 0, tuChoi: 0 };
+                (donServer.danhSachDon || []).forEach(don => {
+                    if (don.tongTien === undefined && don.tongTienDon !== undefined) don.tongTien = don.tongTienDon;
+                    else if (don.tongTienDon === undefined && don.tongTien !== undefined) don.tongTienDon = don.tongTien;
+                    (don.danhSachMon || []).forEach(m => {
+                        const sl = Number(m.soLuong) || 1;
+                        if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') tk.tongSoMon += sl;
+                        if (m.trangThai === 'CHO_XAC_NHAN') tk.choXacNhan += sl;
+                        else if (m.trangThai === 'DANG_CHE_BIEN') tk.dangCheBien += sl;
+                        else if (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG') tk.daXong += sl;
+                        else if (m.trangThai === 'DA_LEN_MON') tk.daLenMon += sl;
+                        else if (m.trangThai === 'DA_HUY') tk.daHuy += sl;
+                        else if (m.trangThai === 'TU_CHOI') tk.tuChoi += sl;
+                    });
+                });
+                donServer.thongKe = tk;
+            } else {
+                (donServer.danhSachDon || []).forEach(don => {
+                    if (don.tongTien === undefined && don.tongTienDon !== undefined) don.tongTien = don.tongTienDon;
+                    else if (don.tongTienDon === undefined && don.tongTien !== undefined) don.tongTienDon = don.tongTien;
+                });
+            }
             return {
                 ok: true,
                 data: donServer
@@ -1809,14 +1833,31 @@ class ApiService {
      * ĐỒNG BỘ: Tự động tổng hợp từ cả đơn gọi món QR và phiên bàn POS của Quân ('quanmoc_pos_phien_ban')
      */
     async layTatCaDonGoiMon() {
-        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
         let ds = [];
         try {
-            ds = raw ? JSON.parse(raw) : [];
-            if (!Array.isArray(ds)) ds = [];
-        } catch {
-            ds = [];
+            const resServer = await this.yeuCau('/don-goi-mon');
+            if (resServer && resServer.ok && Array.isArray(resServer.data)) {
+                ds = resServer.data;
+            }
+        } catch (e) {
+            console.warn('Lỗi lấy đơn từ server, dùng fallback localStorage:', e);
         }
+
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        let dsLocal = [];
+        try {
+            dsLocal = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(dsLocal)) dsLocal = [];
+        } catch {
+            dsLocal = [];
+        }
+
+        // Hợp nhất đơn từ localStorage vào ds nếu chưa có
+        dsLocal.forEach(localItem => {
+            if (!ds.some(d => (localItem.id && d.id === localItem.id) || (localItem.maDon && d.maDon === localItem.maDon))) {
+                ds.push(localItem);
+            }
+        });
 
         // ĐỒNG BỘ: Đọc thêm các đơn đang mở trong POS sơ đồ bàn của Quân ('quanmoc_pos_phien_ban')
         const rawPosPhien = localStorage.getItem('quanmoc_pos_phien_ban');

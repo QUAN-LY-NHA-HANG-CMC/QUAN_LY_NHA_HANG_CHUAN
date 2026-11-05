@@ -27,15 +27,49 @@ async function layDonCuaBan(banId) {
     // Tính tổng tiền lũy kế của bàn (US-070)
     let tongTienLuyKe = 0;
     let tongSoMon = 0;
+    const thongKe = {
+        tongSoMon: 0,
+        choXacNhan: 0,
+        dangCheBien: 0,
+        daXong: 0,
+        daLenMon: 0,
+        daHuy: 0,
+        tuChoi: 0
+    };
 
     danhSachDon.forEach(don => {
-        don.danhSachMon.forEach(m => {
-            if (m.trangThai !== 'DA_HUY') {
-                tongTienLuyKe += m.thanhTien;
-                tongSoMon += m.soLuong;
+        if (don.tongTien === undefined && don.tongTienDon !== undefined) {
+            don.tongTien = don.tongTienDon;
+        } else if (don.tongTienDon === undefined && don.tongTien !== undefined) {
+            don.tongTienDon = don.tongTien;
+        }
+
+        (don.danhSachMon || []).forEach(m => {
+            const sl = Number(m.soLuong) || 1;
+            const tt = Number(m.thanhTien) || (Number(m.donGia || m.gia || 0) * sl);
+
+            if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
+                tongTienLuyKe += tt;
+                tongSoMon += sl;
+            }
+
+            if (m.trangThai === 'CHO_XAC_NHAN') {
+                thongKe.choXacNhan += sl;
+            } else if (m.trangThai === 'DANG_CHE_BIEN') {
+                thongKe.dangCheBien += sl;
+            } else if (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG') {
+                thongKe.daXong += sl;
+            } else if (m.trangThai === 'DA_LEN_MON') {
+                thongKe.daLenMon += sl;
+            } else if (m.trangThai === 'DA_HUY') {
+                thongKe.daHuy += sl;
+            } else if (m.trangThai === 'TU_CHOI') {
+                thongKe.tuChoi += sl;
             }
         });
     });
+
+    thongKe.tongSoMon = tongSoMon;
 
     return {
         ban: {
@@ -50,6 +84,7 @@ async function layDonCuaBan(banId) {
         tongSoDon: danhSachDon.length,
         tongSoMon,
         tongTienLuyKe,
+        thongKe,
         danhSachDon
     };
 }
@@ -95,6 +130,7 @@ async function taoDonGoiMon(duLieu) {
 }
 
 async function capNhatTrangThaiMon(itemId, trangThaiMoi) {
+    if (trangThaiMoi === 'DA_XONG') trangThaiMoi = 'DA_NAU_XONG';
     const cacTrangThaiHopLe = ['CHO_XAC_NHAN', 'DANG_CHE_BIEN', 'DA_NAU_XONG', 'DA_LEN_MON', 'DA_HUY'];
     if (!cacTrangThaiHopLe.includes(trangThaiMoi)) {
         const loi = new Error(`Trạng thái không hợp lệ. Phải là một trong: ${cacTrangThaiHopLe.join(', ')}`);
