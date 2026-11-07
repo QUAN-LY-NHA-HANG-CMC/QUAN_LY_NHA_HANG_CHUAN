@@ -14,8 +14,7 @@ jobs:
       - name: 🚚 Lấy mã nguồn mới nhất từ GitHub
         uses: actions/checkout@v4
 
-      - name: 📂 Đồng bộ toàn bộ tệp lên cPanel qua FTP (Nếu đã cấu hình Secrets)
-        if: "${{ secrets.FTP_SERVER != '' && secrets.FTP_USERNAME != '' }}"
+      - name: 📂 Đồng bộ toàn bộ tệp lên cPanel qua FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
