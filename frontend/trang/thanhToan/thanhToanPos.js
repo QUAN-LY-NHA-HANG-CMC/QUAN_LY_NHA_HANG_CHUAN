@@ -35,6 +35,10 @@ class ThanhToanPosModule {
      * Khởi tạo danh mục mã khuyến mại và kho lịch sử hóa đơn
      */
     khoiTaoDuLieuKho() {
+        if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+            return;
+        }
+
         // 1. Danh sách Voucher khuyến mại (US-099)
         const KHOA_KM = 'quanmoc_pos_danh_sach_khuyen_mai';
         if (!localStorage.getItem(KHOA_KM)) {
@@ -191,6 +195,12 @@ class ThanhToanPosModule {
                     dsDonServer.forEach(don => {
                         const bId = Number(don.banId);
                         if (!bId) return;
+
+                        // BỎ QUA các đơn đã hoàn tất, đã thanh toán, hoặc đã hủy
+                        if (don.trangThai === 'HOAN_THANH' || don.trangThai === 'DA_THANH_TOAN' || don.trangThai === 'DA_HUY') {
+                            return;
+                        }
+
                         if (!phienLocal[bId]) {
                             phienLocal[bId] = {
                                 banId: bId,
@@ -201,10 +211,12 @@ class ThanhToanPosModule {
                         }
                         if (Array.isArray(don.danhSachMon)) {
                             don.danhSachMon.forEach(m => {
-                                const daCo = phienLocal[bId].danhSachMon.some(existing => 
-                                    (m.id && existing.id === m.id) || (existing.tenMon === m.tenMon && existing.donGia === m.donGia)
+                                const monDaCo = phienLocal[bId].danhSachMon.find(existing => 
+                                    (m.id && Number(existing.id) === Number(m.id)) || (m.id && String(existing.id) === String(m.id))
                                 );
-                                if (!daCo) {
+                                if (monDaCo) {
+                                    if (m.trangThai) monDaCo.trangThai = m.trangThai;
+                                } else {
                                     phienLocal[bId].danhSachMon.push({
                                         id: m.id || Date.now() + Math.random(),
                                         monAnId: m.monAnId || m.monId,
@@ -232,8 +244,14 @@ class ThanhToanPosModule {
         const dsBan = await window.api.layDanhSachBan();
         const dsPhien = await this.dongBoPhienVoiServer();
 
-        // Lọc các bàn đang có phiên (DANG_DUNG, CHO_THANH_TOAN, CAN_HO_TRO)
-        const dsBanCoKhach = dsBan.filter(b => b.trangThai !== 'TRONG');
+        // Lọc các bàn đang có phiên thực tế và đang phục vụ/chờ thanh toán
+        const dsBanCoKhach = dsBan.filter(b => {
+            const p = dsPhien[b.id];
+            const laDangDung = (b.trangThai === 'DANG_DUNG' || b.trangThai === 'DangDung' || b.trangThai === 'DangPhucVu');
+            const laChoThanhToan = (b.trangThai === 'CHO_THANH_TOAN' || b.trangThai === 'ChoThanhToan');
+            const laCanHoTro = (b.trangThai === 'CAN_HO_TRO' || b.trangThai === 'CanHoTro');
+            return (laDangDung || laChoThanhToan || laCanHoTro) && Boolean(p);
+        });
 
         // Cập nhật số lượng
         const badgeCount = document.getElementById('so-luong-ban-co-khach');
@@ -923,6 +941,7 @@ class ThanhToanPosModule {
 
         // 3. Chuyển trạng thái bàn về TRONG (US-110)
         ban.trangThai = 'TRONG';
+        await window.api.capNhatTrangThaiBan(banId, 'TRONG');
         await window.api.luuDanhSachBan(dsBan);
 
         // Thông báo thành công

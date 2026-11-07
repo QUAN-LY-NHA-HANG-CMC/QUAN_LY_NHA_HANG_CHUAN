@@ -9,14 +9,15 @@ WHERE gt.trang_thai = 'ThanhCong'
 GROUP BY date(gt.thoi_gian_thanh_toan), gt.phuong_thuc;
 
 CREATE VIEW IF NOT EXISTS vw_top_mon_ban_chay AS
-SELECT ct.mon_an_id,
+SELECT COALESCE(ctdh.mon_an_id, ct.id) AS mon_an_id,
        ct.ten_mon_snapshot AS ten_mon,
        SUM(ct.so_luong) AS so_luong_ban,
        SUM(ct.thanh_tien) AS doanh_thu
 FROM chi_tiet_hoa_don ct
 JOIN hoa_don hd ON hd.id = ct.hoa_don_id
+LEFT JOIN chi_tiet_don_hang ctdh ON ct.chi_tiet_don_hang_id = ctdh.id
 WHERE hd.trang_thai = 'DaThanhToan'
-GROUP BY ct.mon_an_id, ct.ten_mon_snapshot;
+GROUP BY ct.ten_mon_snapshot;
 
 CREATE VIEW IF NOT EXISTS vw_doanh_thu_khung_gio AS
 SELECT strftime('%H', gt.thoi_gian_thanh_toan) AS gio_trong_ngay,

@@ -1,0 +1,22 @@
+name: Tự Động Đồng Bộ cPanel (Auto Deploy to cPanel)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  dong-bo-cpanel:
+    name: Kích hoạt đồng bộ cPanel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gửi tín hiệu đồng bộ đến Website cPanel
+        run: |
+          echo "🚀 Đang gửi tín hiệu kích hoạt tự động đồng bộ code đến cPanel..."
+          PHAN_HOI=$(curl -s -X POST "https://tainguyenpremium.store/api/tu-dong-dong-bo" \
+            -H "Content-Type: application/json" \
+            --max-time 60 || curl -s -X GET "https://tainguyenpremium.store/api/tu-dong-dong-bo" --max-time 60 || true)
+          echo "📥 Phản hồi từ máy chủ cPanel:"
+          echo "$PHAN_HOI"
+          echo "✅ Đã kích hoạt đồng bộ thành công!"

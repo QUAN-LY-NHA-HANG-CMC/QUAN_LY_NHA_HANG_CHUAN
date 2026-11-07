@@ -59,6 +59,7 @@ const HANG_SO = {
         CHO_XAC_NHAN: { ma: 'CHO_XAC_NHAN', ten: 'Chờ xác nhận', mau: '#F59E0B', icon: '⏳', lopBadge: 'badge-vang', moTa: 'Đơn mới gửi, đang chờ Bếp/Thu ngân tiếp nhận' },
         DANG_CHE_BIEN: { ma: 'DANG_CHE_BIEN', ten: 'Đang chế biến', mau: '#3B82F6', icon: '👨‍🍳', lopBadge: 'badge-xanh-duong', moTa: 'Bếp đang chế biến món ăn' },
         DA_XONG: { ma: 'DA_XONG', ten: 'Đã nấu xong', mau: '#8B5CF6', icon: '🔔', lopBadge: 'badge-tim', moTa: 'Món ăn đã xong, chờ nhân viên bưng lên bàn' },
+        DA_NAU_XONG: { ma: 'DA_NAU_XONG', ten: 'Đã nấu xong', mau: '#8B5CF6', icon: '🔔', lopBadge: 'badge-tim', moTa: 'Món ăn đã xong, chờ nhân viên bưng lên bàn' },
         DA_LEN_MON: { ma: 'DA_LEN_MON', ten: 'Đã lên món', mau: '#10B981', icon: '✅', lopBadge: 'badge-xanh-la', moTa: 'Món ăn đã được phục vụ tại bàn' },
         DA_HUY: { ma: 'DA_HUY', ten: 'Đã hủy', mau: '#EF4444', icon: '❌', lopBadge: 'badge-do', moTa: 'Khách yêu cầu hủy khi chưa nấu' },
         TU_CHOI: { ma: 'TU_CHOI', ten: 'Bếp từ chối (Hết món)', mau: '#DC2626', icon: '🚫', lopBadge: 'badge-do', moTa: 'Bếp từ chối do vừa hết nguyên liệu' }

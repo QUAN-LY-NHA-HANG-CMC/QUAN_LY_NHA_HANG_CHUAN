@@ -148,11 +148,13 @@ class ThucDonQrManager {
 
         const ban = this.thongTinBan || { banId: 1, maBan: 'B101', tenBan: 'Bàn 01', tenKhuVuc: 'Tầng 1 - Sảnh chính' };
         const quan = this.thongTinNhaHang || { tenQuan: 'Nhà Hàng Quán Mộc', hotline: '1900 6868', diaChi: '123 Đường Ẩm Thực' };
+        const laKhach = this.laCheDoKhachHang();
 
         vungChua.innerHTML = `
             <div class="khung-emenu-wrapper">
                 
-                <!-- Thanh điều khiển Demo kiểm thử (Theo cấu hình Minh gửi) -->
+                ${!laKhach ? `
+                <!-- Thanh điều khiển Demo kiểm thử (Chỉ dành cho Quản trị / Tester nội bộ) -->
                 <div class="thanh-dieu-khien-emenu">
                     <div class="nhom-chon-ban-demo">
                         <label for="select-ban-demo">🪑 <strong>Mô phỏng Bàn:</strong></label>
@@ -173,6 +175,7 @@ class ThucDonQrManager {
                         </button>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- KHUNG CHÍNH E-MENU MOBILE -->
                 <div class="khung-dien-thoai-ngoai ${this.cheDoXemMobile ? 'che-do-mobile-phone' : 'che-do-full-screen'}">
@@ -474,7 +477,28 @@ class ThucDonQrManager {
         this.veGiaoDien();
     }
 
+    laCheDoKhachHang() {
+        if (window.ungDung && typeof window.ungDung.laCheDoKhachHang === 'function' && window.ungDung.laCheDoKhachHang()) {
+            return true;
+        }
+        if (typeof document !== 'undefined' && document.body.classList.contains('che-do-khach-hang')) {
+            return true;
+        }
+        if (typeof window !== 'undefined') {
+            const pathname = window.location.pathname.toLowerCase();
+            const urlParams = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+            if (pathname.includes('/e-menu') || pathname.includes('/menu')) return true;
+            if (urlParams.has('token') || hashParams.has('token') || urlParams.has('ban') || hashParams.has('ban') || urlParams.has('banId') || hashParams.has('banId')) return true;
+        }
+        return false;
+    }
+
     async chuyenBanDemo(banId) {
+        if (this.laCheDoKhachHang()) {
+            console.warn('Khách hàng không được phép đổi bàn');
+            return;
+        }
         this.banId = banId;
         await this.taiThongTinTrangChu();
         await this.taiDanhSachMonAn();

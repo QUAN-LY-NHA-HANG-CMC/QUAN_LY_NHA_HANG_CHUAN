@@ -48,18 +48,85 @@ ungDung.use('/tepTaiLen', express.static(path.join(__dirname, '../tepTaiLen')));
 
 const nhanVienModel = require('./modules/nhanVien/nhanVien.model');
 const { soSanhMatKhau } = require('./tienIch/maHoaMatKhau');
+const { kiemTraKetNoiCoSoDuLieu } = require('./cauHinh/ketNoiCoSoDuLieu');
 
-// Tuyến đường kiểm tra sức khỏe hệ thống
-ungDung.get(['/api/kiem-tra-he-thong', '/api/kiem-tra-suc-khoe'], (req, res) => {
+// Tuyến đường kiểm tra sức khỏe hệ thống & CSDL
+ungDung.get(['/api/kiem-tra-he-thong', '/api/kiem-tra-suc-khoe'], async (req, res) => {
+    const csdl = await kiemTraKetNoiCoSoDuLieu();
     res.json({
         ok: true,
         thoiGian: new Date().toISOString(),
         duAn: 'Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM)',
-        tacGia: 'Minh - Backend API',
-        sprint: 'Sprint 2 (E-Menu QR, Giỏ hàng & Hỗ trợ)',
+        tacGia: 'Minh - Backend API & Phát - Database DBA',
+        sprint: 'Sprint 4 (Kết nối CSDL SQLite hoàn chỉnh)',
         lanIp: cauHinhChung.lanIp,
         congBackend: cauHinhChung.congBackend,
-        qrBaseUrl: cauHinhChung.qrBaseUrl
+        qrBaseUrl: cauHinhChung.qrBaseUrl,
+        coSoDuLieu: csdl
+    });
+});
+
+// Tuyến đường Webhook tự động đồng bộ mã nguồn từ GitHub sang cPanel
+ungDung.all(['/api/tu-dong-dong-bo', '/api/webhook/dong-bo-git'], (req, res) => {
+    const { exec } = require('child_process');
+    const path = require('path');
+    const fs = require('fs');
+    const thuMucGoc = path.join(__dirname, '..');
+
+    console.log(`[AUTO-DEPLOY] Kích hoạt đồng bộ GitHub lúc: ${new Date().toISOString()}`);
+
+    const env = Object.assign({}, process.env, {
+        PATH: `${process.env.PATH || ''}:/usr/bin:/usr/local/bin:/bin:/usr/sbin:/sbin`
+    });
+
+    const lenhGit = 'git pull origin main';
+
+    exec(lenhGit, { cwd: thuMucGoc, env }, (err, stdout, stderr) => {
+        const ketQuaLog = stdout ? stdout.toString() : '';
+        const loiLog = stderr ? stderr.toString() : '';
+
+        // Tự động khởi động lại Node.js trên cPanel (LiteSpeed / Phusion Passenger)
+        try {
+            const homeDir = process.env.HOME || '';
+            const publicHtmlDir = homeDir ? path.join(homeDir, 'public_html') : '';
+
+            // Nếu repo nằm ngoài public_html và có public_html, đồng bộ tệp sang public_html
+            if (publicHtmlDir && thuMucGoc !== publicHtmlDir && fs.existsSync(publicHtmlDir)) {
+                try {
+                    exec(`/bin/cp -R "${path.join(thuMucGoc, 'backend')}" "${publicHtmlDir}/" && /bin/cp -R "${path.join(thuMucGoc, 'frontend')}" "${publicHtmlDir}/" && /bin/cp -R "${path.join(thuMucGoc, 'database')}" "${publicHtmlDir}/"`, () => {});
+                } catch (e) {}
+            }
+
+            // Ghi file restart.txt ở cả thư mục hiện tại lẫn public_html
+            [path.join(thuMucGoc, 'tmp'), publicHtmlDir ? path.join(publicHtmlDir, 'tmp') : null].filter(Boolean).forEach(tmpDir => {
+                try {
+                    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+                    fs.writeFileSync(path.join(tmpDir, 'restart.txt'), String(Date.now()));
+                } catch (e) {}
+            });
+            console.log('[AUTO-DEPLOY] Đã tạo restart.txt để làm mới Node.js!');
+        } catch (e) {
+            console.error('[AUTO-DEPLOY] Lỗi chạm restart.txt:', e.message);
+        }
+
+        if (err) {
+            console.error('[AUTO-DEPLOY] Lỗi thực thi git pull:', err.message, loiLog);
+            return res.status(500).json({
+                ok: false,
+                loi: err.message,
+                stderr: loiLog,
+                stdout: ketQuaLog,
+                thoiGian: new Date().toISOString()
+            });
+        }
+
+        console.log('[AUTO-DEPLOY] Đồng bộ GitHub thành công:', ketQuaLog);
+        return res.json({
+            ok: true,
+            thongBao: 'Hệ thống đã tự động kéo toàn bộ code mới nhất từ GitHub và khởi động lại!',
+            chiTiet: ketQuaLog,
+            thoiGian: new Date().toISOString()
+        });
     });
 });
 
