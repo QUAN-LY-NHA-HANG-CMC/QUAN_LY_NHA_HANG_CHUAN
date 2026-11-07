@@ -14,22 +14,20 @@ jobs:
       - name: 🚚 Lấy mã nguồn mới nhất từ GitHub
         uses: actions/checkout@v4
 
-      - name: 📂 Đồng bộ toàn bộ tệp lên cPanel qua FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: public_html/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            cap_nhat_website.zip
-            test-results/**
-            playwright-report/**
-
-      - name: 🔄 Kích hoạt tự động đồng bộ & khởi động lại Node.js
+      - name: 📂 Đồng bộ mã nguồn lên cPanel qua LFTP
+        env:
+          FTP_SERVER_RAW: ${{ secrets.FTP_SERVER }}
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
         run: |
-          echo "🚀 Gửi tín hiệu tự động đồng bộ sang cPanel..."
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          HOST=$(echo "$FTP_SERVER_RAW" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
+          echo "🌐 Kết nối đến máy chủ FTP: $HOST"
+          echo "👤 Tài khoản: $FTP_USER"
+
+          lftp -e "set ftp:ssl-allow false; set net:timeout 30; set net:max-retries 3; mirror -R --verbose=1 --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob *.zip --exclude-glob test-results/ --exclude-glob playwright-report/ ./ public_html/ || mirror -R --verbose=1 --exclude-glob .git/ --exclude-glob .github/ --exclude-glob node_modules/ --exclude-glob *.zip --exclude-glob test-results/ --exclude-glob playwright-report/ ./ ./" -u "$FTP_USER","$FTP_PASS" "$HOST"
+
+      - name: 🔄 Kích hoạt làm mới ứng dụng trên cPanel
+        run: |
+          echo "🚀 Gửi yêu cầu làm mới đến máy chủ..."
           curl -s -X POST "https://tainguyenpremium.store/api/tu-dong-dong-bo" --max-time 30 || true
