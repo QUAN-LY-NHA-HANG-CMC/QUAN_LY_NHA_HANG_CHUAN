@@ -7,16 +7,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  dong-bo-cpanel:
-    name: Kích hoạt đồng bộ cPanel
+  dong-bo-ftp:
+    name: Tự động tải code lên cPanel qua FTP
     runs-on: ubuntu-latest
     steps:
-      - name: Gửi tín hiệu đồng bộ đến Website cPanel
+      - name: 🚚 Lấy mã nguồn mới nhất từ GitHub
+        uses: actions/checkout@v4
+
+      - name: 📂 Đồng bộ toàn bộ tệp lên cPanel qua FTP (Nếu đã cấu hình Secrets)
+        if: "${{ secrets.FTP_SERVER != '' && secrets.FTP_USERNAME != '' }}"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: public_html/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            cap_nhat_website.zip
+            test-results/**
+            playwright-report/**
+
+      - name: 🔄 Kích hoạt tự động đồng bộ & khởi động lại Node.js
         run: |
-          echo "🚀 Đang gửi tín hiệu kích hoạt tự động đồng bộ code đến cPanel..."
-          PHAN_HOI=$(curl -s -X POST "https://tainguyenpremium.store/api/tu-dong-dong-bo" \
-            -H "Content-Type: application/json" \
-            --max-time 60 || curl -s -X GET "https://tainguyenpremium.store/api/tu-dong-dong-bo" --max-time 60 || true)
-          echo "📥 Phản hồi từ máy chủ cPanel:"
-          echo "$PHAN_HOI"
-          echo "✅ Đã kích hoạt đồng bộ thành công!"
+          echo "🚀 Gửi tín hiệu tự động đồng bộ sang cPanel..."
+          curl -s -X POST "https://tainguyenpremium.store/api/tu-dong-dong-bo" --max-time 30 || true
