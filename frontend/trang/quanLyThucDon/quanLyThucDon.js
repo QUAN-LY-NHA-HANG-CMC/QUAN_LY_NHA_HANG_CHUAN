@@ -315,17 +315,27 @@ class QuanLyThucDonModule {
         }
     }
 
-    // US-040: Xóa mềm (ẩn) món ăn
+    // US-040: Xóa món ăn khỏi thực đơn
     async xoaMemMonAn(monId) {
         const mon = this.danhSachMonAn.find(m => m.id === monId);
         if (!mon) return;
 
-        if (confirm(`Bạn có chắc chắn muốn ngưng kinh doanh món "${mon.tenMon}"?\nMón này sẽ bị ẩn khỏi thực đơn để bảo toàn lịch sử hóa đơn trước đây.`)) {
-            mon.trangThai = -1; // Ẩn vĩnh viễn khỏi menu bán
+        if (confirm(`Bạn có chắc chắn muốn xóa món "${mon.tenMon}" khỏi thực đơn?`)) {
+            this.danhSachMonAn = this.danhSachMonAn.filter(m => m.id !== monId);
             await window.api.luuDanhSachMonAn(this.danhSachMonAn);
-            window.thongBao.thanhCong('Đã ẩn món thành công (Xóa mềm - US-040)');
+            await window.api.yeuCau(`/thuc-don/${monId}`, { method: 'DELETE' }).catch(() => {});
+            window.thongBao.thanhCong('Đã xóa món thành công!', `"${mon.tenMon}" đã được gỡ khỏi thực đơn.`);
             this.veGiaoDien();
         }
+    }
+
+    // Xóa toàn bộ món cũ để người dùng tự do nhập món mới từ đầu
+    async xoaSachMonCu() {
+        if (!confirm('Bạn có chắc chắn muốn XÓA SẠCH toàn bộ các món mẫu cũ trong thực đơn để nhập lại từ đầu không? Thao tác này sẽ làm trống danh sách món ăn.')) return;
+        this.danhSachMonAn = [];
+        await window.api.luuDanhSachMonAn([]);
+        window.thongBao.thanhCong('Đã làm trống thực đơn thành công!', 'Bây giờ bạn có thể bấm "Thêm món mới" để tạo món thực tế.');
+        this.veGiaoDien();
     }
 
     // =========================================================================

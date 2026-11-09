@@ -13,3 +13,10 @@ tepTaiLen/*
 .vscode/
 test-results/
 playwright-report/
+tmp/
+*.zip
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+
+

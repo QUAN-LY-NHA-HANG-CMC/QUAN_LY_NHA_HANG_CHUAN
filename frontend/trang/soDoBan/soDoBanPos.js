@@ -27,6 +27,11 @@ class SoDoBanPosModule {
      * Khởi tạo kho dữ liệu lưu trữ phiên bàn & đơn gọi món trong LocalStorage
      */
     khoiTaoDuLieuKho() {
+        // Khi chạy với backend server (http/https), KHÔNG nạp phiên bàn mẫu giả lập
+        if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
+            return;
+        }
+
         // 1. Khởi tạo danh sách phiên bàn đang hoạt động
         const KHOA_PHIEN = 'quanmoc_pos_phien_ban';
         if (!localStorage.getItem(KHOA_PHIEN)) {
@@ -199,43 +204,60 @@ class SoDoBanPosModule {
     }
 
     async dongBoPhienVoiServer() {
-        const phienLocal = this.layTatCaPhienBan();
+        let phienLocal = this.layTatCaPhienBan() || {};
         try {
             if (window.api && window.api.layTatCaDonGoiMon) {
                 const dsDonServer = await window.api.layTatCaDonGoiMon();
                 if (Array.isArray(dsDonServer)) {
+                    // Giữ lại toàn bộ các phiên bàn đang mở cục bộ (kể cả bàn mới mở chưa có món)
+                    const phienKetHop = { ...phienLocal };
+
                     dsDonServer.forEach(don => {
                         const bId = Number(don.banId);
                         if (!bId) return;
-                        if (!phienLocal[bId]) {
-                            phienLocal[bId] = {
+
+                        // KHÔNG phục hồi phiên từ các đơn đã hoàn tất, đã thanh toán, hoặc đã hủy
+                        if (don.trangThai === 'HOAN_THANH' || don.trangThai === 'DA_THANH_TOAN' || don.trangThai === 'DA_HUY') {
+                            return;
+                        }
+
+                        if (!phienKetHop[bId]) {
+                            phienKetHop[bId] = {
+                                id: bId,
                                 banId: bId,
                                 thoiGianBatDau: don.thoiGianDat || don.thoiGianTao || new Date().toISOString(),
                                 soKhach: don.soKhach || 2,
                                 danhSachMon: []
                             };
                         }
+
                         if (Array.isArray(don.danhSachMon)) {
                             don.danhSachMon.forEach(m => {
-                                const daCo = phienLocal[bId].danhSachMon.some(existing => 
-                                    (m.id && existing.id === m.id) || (existing.tenMon === m.tenMon && existing.donGia === m.donGia)
+                                const monDaCo = phienKetHop[bId].danhSachMon.find(ex => 
+                                    (m.id && Number(ex.id) === Number(m.id)) || (m.id && String(ex.id) === String(m.id))
                                 );
-                                if (!daCo) {
-                                    phienLocal[bId].danhSachMon.push({
-                                        id: m.id || Date.now() + Math.random(),
+                                if (monDaCo) {
+                                    if (m.trangThai) monDaCo.trangThai = m.trangThai;
+                                } else {
+                                    phienKetHop[bId].danhSachMon.push({
+                                        id: m.id || Date.now() + Math.floor(Math.random() * 1000),
                                         monAnId: m.monAnId || m.monId,
                                         tenMon: m.tenMon,
                                         soLuong: m.soLuong || 1,
                                         donGia: m.donGia || 0,
                                         tuyChon: m.tuyChon || '',
                                         ghiChu: m.ghiChu || '',
-                                        trangThai: m.trangThai || 'CHO_CHE_BIEN'
+                                        trangThai: m.trangThai || 'CHO_CHE_BIEN',
+                                        thoiGianTao: m.thoiGianTao,
+                                        thoiGianCapNhat: m.thoiGianCapNhat
                                     });
                                 }
                             });
                         }
                     });
-                    this.luuTatCaPhienBan(phienLocal);
+
+                    this.luuTatCaPhienBan(phienKetHop);
+                    return phienKetHop;
                 }
             }
         } catch (e) {
@@ -249,19 +271,22 @@ class SoDoBanPosModule {
         const dsKhuVuc = await window.api.layDanhSachKhuVuc();
         const dsPhien = await this.dongBoPhienVoiServer();
 
-        // Tự động đồng bộ trạng thái Bàn theo phiên: Nếu bàn có món đang ăn thì đổi trạng thái sang DANG_DUNG
-        Object.keys(dsPhien).forEach(bId => {
-            const p = dsPhien[bId];
-            const ban = dsBan.find(b => Number(b.id) === Number(bId));
-            if (ban && p && p.danhSachMon && p.danhSachMon.length > 0) {
+        // Đồng bộ trạng thái Bàn trong bộ nhớ giao diện theo phiên hoạt động thực tế
+        dsBan.forEach(ban => {
+            const p = dsPhien[ban.id];
+            if (p) {
+                // Có phiên đang hoạt động tại bàn -> Bàn đang phục vụ
                 if (ban.trangThai === 'TRONG' || ban.trangThai === 'Trong') {
                     ban.trangThai = 'DANG_DUNG';
-                    if (window.api && window.api.capNhatTrangThaiBan) {
-                        window.api.capNhatTrangThaiBan(ban.id, 'DANG_DUNG');
-                    }
+                }
+            } else {
+                // Không có phiên hoạt động -> Bàn phải ở trạng thái TRONG (trừ khi cố tình tạm khóa)
+                if (ban.trangThai === 'DANG_DUNG' || ban.trangThai === 'DangDung' || ban.trangThai === 'DangPhucVu') {
+                    ban.trangThai = 'TRONG';
                 }
             }
         });
+        this.luuTatCaPhienBan(dsPhien);
 
         this.veThongKeNhanh(dsBan, dsPhien);
         this.veBoLocKhuVuc(dsKhuVuc);
@@ -452,18 +477,28 @@ class SoDoBanPosModule {
                 : 0;
 
             // Xác định class và nhãn trạng thái
+            const laDangDung = (ban.trangThai === 'DANG_DUNG' || ban.trangThai === 'DangDung' || ban.trangThai === 'DangPhucVu');
+            const laChoThanhToan = (ban.trangThai === 'CHO_THANH_TOAN' || ban.trangThai === 'ChoThanhToan');
+            const laCanHoTro = (ban.trangThai === 'CAN_HO_TRO' || ban.trangThai === 'CanHoTro');
+            const laTamKhoa = (ban.trangThai === 'TAM_KHOA' || ban.trangThai === 'TamKhoa');
+
             let lopTrangThai = 'ban-trong';
             let nhanTrangThai = 'Bàn trống';
-            if (ban.trangThai === 'DANG_DUNG') {
+            if (laDangDung) {
                 lopTrangThai = 'ban-dang-dung';
                 nhanTrangThai = 'Đang phục vụ';
-            } else if (ban.trangThai === 'CHO_THANH_TOAN') {
+            } else if (laChoThanhToan) {
                 lopTrangThai = 'ban-cho-thanh-toan';
                 nhanTrangThai = 'Chờ thanh toán';
-            } else if (ban.trangThai === 'CAN_HO_TRO') {
+            } else if (laCanHoTro) {
                 lopTrangThai = 'ban-can-ho-tro';
                 nhanTrangThai = 'Cần hỗ trợ 🚨';
+            } else if (laTamKhoa) {
+                lopTrangThai = 'ban-tam-khoa';
+                nhanTrangThai = 'Tạm khóa';
             }
+
+            const laBanDangPhucVu = laDangDung || laChoThanhToan || laCanHoTro;
 
             html += `
                 <div class="the-ban-pos ${lopTrangThai}">
@@ -479,10 +514,10 @@ class SoDoBanPosModule {
                         <div class="ten-ban-lon">${ban.soBan}</div>
                         <div class="thong-tin-phu-ban">
                             <span>👥 ${ban.sucChua || 4} chỗ</span>
-                            ${ban.trangThai !== 'TRONG' ? `<span class="dong-ho-ngoi">⏱️ ${soPhut} phút</span>` : '<span>✨ Sẵn sàng đón khách</span>'}
+                            ${laBanDangPhucVu ? `<span class="dong-ho-ngoi">⏱️ ${soPhut} phút</span>` : '<span>✨ Sẵn sàng đón khách</span>'}
                         </div>
 
-                        ${ban.trangThai !== 'TRONG' ? `
+                        ${laBanDangPhucVu ? `
                             <div class="hop-chi-tiet-gia-ban">
                                 <div class="so-tien-tam-tinh">${window.DinhDang && window.DinhDang.tienVnd ? window.DinhDang.tienVnd(tongTien) : tongTien.toLocaleString() + ' đ'}</div>
                                 <div class="so-mon-badge">
@@ -498,7 +533,7 @@ class SoDoBanPosModule {
                     </div>
 
                     <div class="chan-the-ban">
-                        ${ban.trangThai === 'TRONG' ? `
+                        ${!laBanDangPhucVu ? `
                             <button class="nut-thao-tac-ban nut-mo-ban-nhanh" onclick="window.soDoBanPos.moModalMoBan(${ban.id})">
                                 ✨ Mở Bàn Mới
                             </button>
@@ -569,16 +604,16 @@ class SoDoBanPosModule {
         const soKhach = parseInt(document.getElementById('mo-ban-so-khach')?.value || '4');
         const ghiChu = document.getElementById('mo-ban-ghi-chu')?.value || '';
 
-        // 1. Cập nhật trạng thái bàn trong dsBan
+        // 1. Cập nhật trạng thái bàn trong dsBan và Server
         const dsBan = await window.api.layDanhSachBan();
         const ban = dsBan.find(b => b.id == banId);
         if (ban) {
             ban.trangThai = 'DANG_DUNG';
-            await window.api.luuDanhSachBan(dsBan);
+            await window.api.capNhatTrangThaiBan(banId, 'DANG_DUNG');
         }
 
         // 2. Tạo phiên bàn mới
-        const dsPhien = this.layTatCaPhienBan();
+        const dsPhien = this.layTatCaPhienBan() || {};
         dsPhien[banId] = {
             id: banId,
             banId: banId,
@@ -590,7 +625,7 @@ class SoDoBanPosModule {
         this.luuTatCaPhienBan(dsPhien);
 
         this.dongModal();
-        if (window.thongBao) window.thongBao.thanhCong('Mở bàn thành công', `${ban.soBan} đã chuyển sang trạng thái Đang phục vụ.`);
+        if (window.thongBao) window.thongBao.thanhCong('Mở bàn thành công', `${ban ? ban.soBan : 'Bàn ' + banId} đã chuyển sang trạng thái Đang phục vụ.`);
         await this.taiVaHienThi();
     }
 
@@ -922,22 +957,35 @@ class SoDoBanPosModule {
             dsPhien[banId] = phien;
         }
 
+        const thoiGianHienTai = new Date().toISOString();
         // Kiểm tra xem món đã có trong đơn chưa, nếu có thì tăng số lượng
         const monDaCo = phien.danhSachMon.find(m => m.monAnId == monId && m.trangThai !== 'DA_HUY');
         if (monDaCo) {
             monDaCo.soLuong += 1;
+            monDaCo.thoiGianTao = thoiGianHienTai;
+            monDaCo.thoiGianCapNhat = thoiGianHienTai;
+            monDaCo.lanGoiMoi = true;
+            // Nếu món trước đó đã phục vụ xong mà giờ khách gọi thêm thì chuyển lại thành CHO_XAC_NHAN
+            if (monDaCo.trangThai === 'DA_PHUC_VU' || monDaCo.trangThai === 'DA_LEN_MON') {
+                monDaCo.trangThai = 'CHO_XAC_NHAN';
+            }
         } else {
             phien.danhSachMon.push({
-                id: Date.now(),
+                id: Date.now() + Math.floor(Math.random() * 1000),
                 monAnId: mon.id,
                 tenMon: mon.tenMon,
                 soLuong: 1,
                 donGia: mon.giaBan,
                 tuyChon: '',
                 ghiChu: 'Nhân viên gọi hộ',
-                trangThai: 'CHO_XAC_NHAN'
+                trangThai: 'CHO_XAC_NHAN',
+                thoiGianTao: thoiGianHienTai,
+                thoiGianCapNhat: thoiGianHienTai,
+                lanGoiMoi: true
             });
         }
+        phien.thoiGianGoiMoiNhat = thoiGianHienTai;
+        phien.soLuotGoi = (phien.soLuotGoi || 1) + 1;
 
         this.luuTatCaPhienBan(dsPhien);
 
@@ -946,7 +994,7 @@ class SoDoBanPosModule {
         const ban = dsBan.find(b => b.id == banId);
         if (ban && ban.trangThai === 'TRONG') {
             ban.trangThai = 'DANG_DUNG';
-            await window.api.luuDanhSachBan(dsBan);
+            await window.api.capNhatTrangThaiBan(banId, 'DANG_DUNG');
         }
 
         if (window.thongBao) window.thongBao.thanhCong('Đã thêm món', `Đã thêm 1x "${mon.tenMon}" vào bàn.`);
@@ -1093,6 +1141,8 @@ class SoDoBanPosModule {
         // Cập nhật trạng thái bàn
         banDich.trangThai = banNguon.trangThai;
         banNguon.trangThai = 'TRONG';
+        await window.api.capNhatTrangThaiBan(banDichId, banNguon.trangThai);
+        await window.api.capNhatTrangThaiBan(banNguonId, 'TRONG');
         await window.api.luuDanhSachBan(dsBan);
 
         this.dongModal();
@@ -1134,6 +1184,7 @@ class SoDoBanPosModule {
                 // Xóa phiên bàn phụ và trả bàn phụ về TRONG
                 delete dsPhien[banPhuId];
                 banPhu.trangThai = 'TRONG';
+                window.api.capNhatTrangThaiBan(banPhuId, 'TRONG');
             }
         });
 

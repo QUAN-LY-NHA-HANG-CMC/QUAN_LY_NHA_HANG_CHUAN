@@ -385,7 +385,7 @@ async function dongBoDanhSach(danhSachMoi) {
         donViTinh: (m.donViTinh || 'Phần').trim(),
         hinhAnh: m.hinhAnh || '',
         moTa: (m.moTa || '').trim(),
-        trangThai: (m.trangThai === 1 || m.trangThai === 'DangBan' || m.trangThai === 'HoatDong') ? 'DangBan' : (m.trangThai === 'DaXoa' ? 'DaXoa' : 'TamHet'),
+        trangThai: (m.trangThai === -1 || m.trangThai === 'DaXoa' || m.trangThai === 'da_xoa') ? 'DaXoa' : ((m.trangThai === 1 || m.trangThai === 'DangBan' || m.trangThai === 'HoatDong') ? 'DangBan' : 'TamHet'),
         laMonBanChay: Boolean(m.laMonBanChay || m.noiBat),
         tuyChon: Array.isArray(m.tuyChon) ? m.tuyChon : [],
         tuyChonSize: Array.isArray(m.tuyChonSize) ? m.tuyChonSize : [],

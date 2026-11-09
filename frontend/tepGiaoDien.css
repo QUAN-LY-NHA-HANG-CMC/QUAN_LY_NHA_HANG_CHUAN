@@ -5975,8 +5975,25 @@ body.che-do-khach-hang {
 }
 
 body.che-do-khach-hang .thanh-dieu-huong-doc,
-body.che-do-khach-hang .thanh-dau-trang {
+body.che-do-khach-hang .thanh-dau-trang,
+body.che-do-khach-hang .hop-chon-ban-test,
+body.che-do-khach-hang .bang-dieu-khien-gia-lap-s2,
+body.che-do-khach-hang .nut-test-nap-mau,
+body.che-do-khach-hang .thanh-dieu-khien-emenu {
     display: none !important;
+}
+
+.the-ban-khach-hang {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #9A3412;
 }
 
 body.che-do-khach-hang .khung-ung-dung {

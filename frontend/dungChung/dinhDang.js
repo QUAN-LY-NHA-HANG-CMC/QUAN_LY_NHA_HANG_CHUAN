@@ -15,33 +15,76 @@ const DinhDang = {
     },
 
     /**
-     * Định dạng ngày giờ chuẩn Việt Nam (DD/MM/YYYY HH:mm)
-     * @param {string|Date} thoiGian 
-     * @returns {string} Ví dụ: 19/10/2026 10:30
+     * Chuẩn hóa đối tượng Date từ chuỗi, số hoặc Date
      */
-    ngayGio(thoiGian) {
-        if (!thoiGian) return '---';
-        const d = new Date(thoiGian);
-        if (isNaN(d.getTime())) return '---';
-        const ngay = String(d.getDate()).padStart(2, '0');
-        const thang = String(d.getMonth() + 1).padStart(2, '0');
-        const nam = d.getFullYear();
-        const gio = String(d.getHours()).padStart(2, '0');
-        const phut = String(d.getMinutes()).padStart(2, '0');
-        return `${ngay}/${thang}/${nam} ${gio}:${phut}`;
+    chuanHoaDate(thoiGian) {
+        if (!thoiGian) return null;
+        if (thoiGian instanceof Date) return isNaN(thoiGian.getTime()) ? null : thoiGian;
+        let str = String(thoiGian).trim();
+        if (!isNaN(Number(str)) && str.length >= 10) {
+            const num = Number(str);
+            return new Date(str.length === 10 ? num * 1000 : num);
+        }
+        let d = new Date(str);
+        if (isNaN(d.getTime())) {
+            d = new Date(str.replace(' ', 'T'));
+        }
+        return isNaN(d.getTime()) ? null : d;
     },
 
     /**
-     * Định dạng chỉ ngày (DD/MM/YYYY)
+     * Định dạng ngày giờ chuẩn Việt Nam (HH:mm DD/MM/YYYY hoặc HH:mm:ss DD/MM/YYYY)
+     * Luôn ép buộc theo múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
+     * @param {string|Date} thoiGian 
+     * @param {boolean} kemGiay 
+     * @returns {string} Ví dụ: 07:35 06/11/2026
+     */
+    ngayGio(thoiGian, kemGiay = false) {
+        const d = this.chuanHoaDate(thoiGian);
+        if (!d) return thoiGian ? String(thoiGian) : '---';
+        const options = {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour12: false
+        };
+        if (kemGiay) options.second = '2-digit';
+        return new Intl.DateTimeFormat('vi-VN', options).format(d).replace(',', '');
+    },
+
+    /**
+     * Định dạng giờ phút chuẩn Việt Nam (HH:mm)
+     * Luôn ép buộc theo múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
+     * @param {string|Date} thoiGian 
+     * @returns {string} Ví dụ: 07:35
+     */
+    gioPhut(thoiGian) {
+        const d = this.chuanHoaDate(thoiGian);
+        if (!d) return thoiGian ? String(thoiGian).substring(11, 16) : '--:--';
+        return new Intl.DateTimeFormat('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).format(d);
+    },
+
+    /**
+     * Định dạng chỉ ngày chuẩn Việt Nam (DD/MM/YYYY)
+     * Luôn ép buộc theo múi giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
      */
     chiNgay(thoiGian) {
-        if (!thoiGian) return '---';
-        const d = new Date(thoiGian);
-        if (isNaN(d.getTime())) return '---';
-        const ngay = String(d.getDate()).padStart(2, '0');
-        const thang = String(d.getMonth() + 1).padStart(2, '0');
-        const nam = d.getFullYear();
-        return `${ngay}/${thang}/${nam}`;
+        const d = this.chuanHoaDate(thoiGian);
+        if (!d) return '---';
+        return new Intl.DateTimeFormat('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(d);
     },
 
     /**

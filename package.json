@@ -4,6 +4,7 @@
   "description": "Backend hệ thống Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM)",
   "main": "backend/mayChu.js",
   "scripts": {
+    "prestart": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
     "start": "node backend/mayChu.js",
     "dev": "node --watch backend/mayChu.js"
   },

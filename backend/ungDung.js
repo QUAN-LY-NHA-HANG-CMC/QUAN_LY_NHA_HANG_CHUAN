@@ -48,18 +48,21 @@ ungDung.use('/tepTaiLen', express.static(path.join(__dirname, '../tepTaiLen')));
 
 const nhanVienModel = require('./modules/nhanVien/nhanVien.model');
 const { soSanhMatKhau } = require('./tienIch/maHoaMatKhau');
+const { kiemTraKetNoiCoSoDuLieu } = require('./cauHinh/ketNoiCoSoDuLieu');
 
-// Tuyến đường kiểm tra sức khỏe hệ thống
-ungDung.get(['/api/kiem-tra-he-thong', '/api/kiem-tra-suc-khoe'], (req, res) => {
+// Tuyến đường kiểm tra sức khỏe hệ thống & CSDL
+ungDung.get(['/api/kiem-tra-he-thong', '/api/kiem-tra-suc-khoe'], async (req, res) => {
+    const csdl = await kiemTraKetNoiCoSoDuLieu();
     res.json({
         ok: true,
         thoiGian: new Date().toISOString(),
         duAn: 'Quản lý Nhà hàng & Gọi món QR (QUANMOC.COM)',
-        tacGia: 'Minh - Backend API',
-        sprint: 'Sprint 2 (E-Menu QR, Giỏ hàng & Hỗ trợ)',
+        tacGia: 'Minh - Backend API & Phát - Database DBA',
+        sprint: 'Sprint 4 (Kết nối CSDL SQLite hoàn chỉnh)',
         lanIp: cauHinhChung.lanIp,
         congBackend: cauHinhChung.congBackend,
-        qrBaseUrl: cauHinhChung.qrBaseUrl
+        qrBaseUrl: cauHinhChung.qrBaseUrl,
+        coSoDuLieu: csdl
     });
 });
 

@@ -18,6 +18,7 @@
 class TheoDoiDonMonModule {
     constructor() {
         this.banIdHienTai = 3; // Mặc định Bàn 03 - Tầng 1
+        this.banIdKhachHang = null; // Khóa cứng bàn cho khách hàng
         this.boLocTrangThai = 'TAT_CA'; // 'TAT_CA' | 'CHO_XAC_NHAN' | 'DANG_CHE_BIEN' | 'DA_LEN_MON' | 'DA_HUY'
         this.duLieuDonBan = null;
         this.danhSachBan = [];
@@ -26,25 +27,70 @@ class TheoDoiDonMonModule {
     }
 
     /**
+     * Nhận diện xem người dùng có đang ở chế độ khách hàng (quét QR / E-Menu) hay không
+     */
+    laCheDoKhachHang() {
+        if (window.ungDung && typeof window.ungDung.laCheDoKhachHang === 'function' && window.ungDung.laCheDoKhachHang()) {
+            return true;
+        }
+        if (document.body.classList.contains('che-do-khach-hang')) {
+            return true;
+        }
+        const pathname = window.location.pathname.toLowerCase();
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+        if (pathname.includes('/e-menu') || pathname.includes('/menu')) {
+            return true;
+        }
+        if (urlParams.has('token') || hashParams.has('token') || urlParams.has('ban') || hashParams.has('ban') || urlParams.has('banId') || hashParams.has('banId')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Khởi tạo giao diện trang theo dõi đơn món
      */
     async khoiTao(banId = null) {
         // Ưu tiên 1: banId truyền trực tiếp
-        // Ưu tiên 2: param trong URL (?banId=6 hoặc ?ban=Q123 hoặc hash ?banId=6)
+        // Ưu tiên 2: param trong URL (?banId=6 hoặc ?ban=B101 hoặc hash ?banId=6)
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
-        const paramBanId = urlParams.get('banId') || hashParams.get('banId') || urlParams.get('ban') || hashParams.get('ban');
+        const paramBanId = urlParams.get('banId') || hashParams.get('banId');
+        const paramBanMa = urlParams.get('ban') || hashParams.get('ban') || urlParams.get('maBan') || hashParams.get('maBan');
 
+        let banIdXacDinh = null;
         if (banId) {
-            this.banIdHienTai = Number(banId);
+            banIdXacDinh = Number(banId);
         } else if (paramBanId && !isNaN(Number(paramBanId))) {
-            this.banIdHienTai = Number(paramBanId);
+            banIdXacDinh = Number(paramBanId);
         } else {
             // Lấy từ session bàn đang được quét hoặc chọn gần nhất
             const banLuu = localStorage.getItem('quanmoc_ban_id_hien_tai');
             if (banLuu && !isNaN(Number(banLuu))) {
-                this.banIdHienTai = Number(banLuu);
+                banIdXacDinh = Number(banLuu);
             }
+        }
+
+        // Nếu có mã bàn (ví dụ ban=B101) mà chưa có ID số
+        if (!banIdXacDinh && paramBanMa) {
+            try {
+                if (window.api && window.api.layDanhSachBanAn) {
+                    const dsBan = await window.api.layDanhSachBanAn();
+                    const bTim = (dsBan || []).find(b => String(b.maBan).toLowerCase() === String(paramBanMa).toLowerCase());
+                    if (bTim) banIdXacDinh = Number(bTim.id);
+                }
+            } catch (e) {}
+        }
+
+        if (banIdXacDinh) {
+            this.banIdHienTai = banIdXacDinh;
+        }
+
+        // Nếu là khách hàng: Khóa cứng chỉ xem bàn của mình
+        if (this.laCheDoKhachHang()) {
+            this.banIdKhachHang = this.banIdHienTai;
+            localStorage.setItem('quanmoc_ban_id_hien_tai', this.banIdHienTai);
         }
         
         // Cập nhật cho widget hỗ trợ tại bàn
@@ -96,9 +142,14 @@ class TheoDoiDonMonModule {
     }
 
     /**
-     * Tải danh sách bàn ăn để tạo bộ chuyển đổi bàn nhanh
+     * Tải danh sách bàn ăn (Chỉ phục vụ chuyển bàn cho nhân viên/quản lý nội bộ)
      */
     async taiDanhSachBan() {
+        // Khách hàng không được tải danh sách các bàn khác
+        if (this.laCheDoKhachHang()) {
+            this.danhSachBan = [];
+            return;
+        }
         if (window.api) {
             this.danhSachBan = window.api.layDanhSachBan ? await window.api.layDanhSachBan() : (window.api.layDanhSachBanAn ? await window.api.layDanhSachBanAn() : []);
         }
@@ -110,6 +161,11 @@ class TheoDoiDonMonModule {
     async taiDuLieuVaVe() {
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
+
+        // Đảm bảo khách hàng luôn xem đúng bàn của mình
+        if (this.laCheDoKhachHang() && this.banIdKhachHang) {
+            this.banIdHienTai = this.banIdKhachHang;
+        }
 
         if (!window.api) {
             vungChua.innerHTML = `<div class="khung-loi">Không tìm thấy dịch vụ API.</div>`;
@@ -167,6 +223,7 @@ class TheoDoiDonMonModule {
         }
 
         const yeuCauDangCho = (dsYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY');
+        const laKhach = this.laCheDoKhachHang();
 
         vungChua.innerHTML = `
             <div class="trang-theo-doi-don-mon">
@@ -186,7 +243,8 @@ class TheoDoiDonMonModule {
                     </div>
 
                     <div class="nhom-thao-tac-dau-trang-s2">
-                        <!-- Chọn chuyển bàn để test -->
+                        ${!laKhach ? `
+                        <!-- Chọn chuyển bàn để test (Chỉ hiển thị cho Quản lý / Tester nội bộ) -->
                         <div class="hop-chon-ban-test">
                             <label for="chon-ban-theo-doi" style="font-size: 12px; font-weight: 600; color: var(--mau-chu-phu);">Xem đơn bàn:</label>
                             <select id="chon-ban-theo-doi" class="nut-select-ban" onchange="window.theoDoiDonMonModule.chuyenBanTheoDoi(this.value)">
@@ -202,6 +260,12 @@ class TheoDoiDonMonModule {
                                 }).join('')}
                             </select>
                         </div>
+                        ` : `
+                        <!-- Huy hiệu bàn cố định dành cho khách hàng - Khóa chỉ xem bàn mình -->
+                        <div class="the-ban-khach-hang">
+                            <span>🪑 Bàn của bạn: <strong>${soBan}</strong></span>
+                        </div>
+                        `}
 
                         <!-- Nút Gọi thêm món mới (US-067) -->
                         <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.moModalGoiThemMon()">
@@ -210,7 +274,8 @@ class TheoDoiDonMonModule {
                     </div>
                 </div>
 
-                <!-- BẢNG CÔNG CỤ GIẢ LẬP REAL-TIME (TEST SIMULATOR CHO GIẢNG VIÊN / TESTER) -->
+                <!-- BẢNG CÔNG CỤ GIẢ LẬP REAL-TIME (Chỉ hiển thị cho nội bộ / tester, KHÔNG hiển thị cho khách hàng) -->
+                ${!laKhach ? `
                 <div class="bang-dieu-khien-gia-lap-s2">
                     <div class="tieu-de-gia-lap">
                         <span>🧪 <strong>Thanh kiểm thử tương tác Real-time:</strong></span>
@@ -237,6 +302,7 @@ class TheoDoiDonMonModule {
                         </button>
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- THÔNG BÁO YÊU CẦU HỖ TRỢ ĐANG CHỜ (US-074) -->
                 ${yeuCauDangCho.length > 0 ? `
@@ -250,12 +316,12 @@ class TheoDoiDonMonModule {
                                     <div class="icon-yc">${yc.loaiYeuCau === 'THANH_TOAN' ? '💳' : '🙋'}</div>
                                     <div class="noi-dung-yc">
                                         <strong>${yc.tenYeuCau}</strong>
-                                        <small>${yc.chiTiet || 'Không có ghi chú thêm'} • ${yc.thoiGian.substring(11, 16)}</small>
+                                        <small>${yc.chiTiet || 'Không có ghi chú thêm'} • ${this.dinhDangGioPhut(yc.thoiGian || yc.thoiGianTao)}</small>
                                     </div>
                                     <div class="trang-thai-yc-badge">
                                         ${yc.trangThai === 'DA_TIEP_NHAN' 
-                                            ? `<span class="badge badge-xanh-la">✅ ${yc.nguoiTiepNhan || 'Nhân viên'} đang tới!</span>` 
-                                            : `<span class="badge badge-vang">⏳ Đang gửi tới nhân viên...</span>`}
+                                             ? `<span class="badge badge-xanh-la">✅ ${yc.nguoiTiepNhan || 'Nhân viên'} đang tới!</span>` 
+                                             : `<span class="badge badge-vang">⏳ Đang gửi tới nhân viên...</span>`}
                                     </div>
                                 </div>
                             `).join('')}
@@ -347,18 +413,24 @@ class TheoDoiDonMonModule {
                         <div style="font-size: 54px; margin-bottom: 12px;">🍲</div>
                         <h3>Bàn này chưa có đơn gọi món trong phiên</h3>
                         <p style="color: var(--mau-chu-phu); max-width: 520px; margin: 8px auto 20px; line-height: 1.6;">
-                            Bàn <strong>${soBan}</strong> hiện chưa phát sinh đơn hàng nào. Bạn có thể bấm nút bên dưới để nạp 2 lượt gọi món mẫu kiểm thử ngay hoặc bắt đầu đặt món mới:
+                            Bàn <strong>${soBan}</strong> hiện chưa phát sinh đơn hàng nào. Hãy chọn món ngon từ thực đơn để bắt đầu nhé!
                         </p>
                         <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                            <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.napDonMauChoBanNay()">
-                                ⚡ Nạp đơn hàng mẫu kiểm thử (${soBan})
-                            </button>
-                            <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.moModalGoiThemMon()">
+                            <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.moModalGoiThemMon()">
                                 ➕ Bắt đầu đặt món mới
+                            </button>
+                            ${laKhach ? `
+                            <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.quayLaiThucDon()">
+                                📖 Xem thực đơn E-Menu
+                            </button>
+                            ` : `
+                            <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.napDonMauChoBanNay()">
+                                ⚡ Nạp đơn hàng mẫu kiểm thử (${soBan})
                             </button>
                             <button type="button" class="nut nut-phu" onclick="window.theoDoiDonMonModule.chuyenBanTheoDoi(3)">
                                 🍽️ Xem Bàn 03 (Có sẵn 2 lượt gọi)
                             </button>
+                            `}
                         </div>
                     </div>
                 ` : `
@@ -394,7 +466,7 @@ class TheoDoiDonMonModule {
                     <div class="thong-tin-luot">
                         <span class="badge-luot-goi">Lượt gọi #${don.luotGoi}</span>
                         <span class="ma-don-hang">Mã: <strong>${don.maDon}</strong></span>
-                        <span class="thoi-gian-don">🕒 ${don.thoiGianTao}</span>
+                        <span class="thoi-gian-don">🕒 ${this.dinhDangThoiGian(don.thoiGianTaoVN || don.thoiGianTao)}</span>
                     </div>
                     <div class="tong-tien-luot">
                         <span>Lượt này: <strong>${tongTienDon.toLocaleString('vi-VN')} đ</strong></span>
@@ -506,9 +578,16 @@ class TheoDoiDonMonModule {
     }
 
     /**
-     * Chuyển đổi bàn theo dõi
+     * Chuyển đổi bàn theo dõi (Chỉ cho phép quản lý / nhân viên kiểm thử nội bộ)
      */
     chuyenBanTheoDoi(banId) {
+        if (this.laCheDoKhachHang()) {
+            console.warn('Khách hàng chỉ được phép xem bàn của mình.');
+            if (window.thongBao) {
+                window.thongBao.canhBao('Chỉ xem bàn của bạn', 'Bạn chỉ có thể xem và theo dõi đơn món của bàn mình đang ngồi.');
+            }
+            return;
+        }
         this.banIdHienTai = Number(banId);
         localStorage.setItem('quanmoc_ban_id_hien_tai', this.banIdHienTai);
         if (window.hoTroTaiBan) {
@@ -943,6 +1022,66 @@ class TheoDoiDonMonModule {
     }
 
     /**
+     * Điều hướng quay lại thực đơn E-Menu cho khách hàng
+     */
+    quayLaiThucDon() {
+        this.dongModal();
+        if (window.ungDung) {
+            window.ungDung.chuyenTab('eMenuKhachHang');
+        } else {
+            window.location.hash = '#e-menu';
+        }
+    }
+
+    /**
+     * Định dạng ngày giờ chuẩn Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
+     * Đảm bảo luôn chính xác giờ Việt Nam kể cả máy chủ chạy múi giờ UTC
+     */
+    dinhDangThoiGian(thoiGian) {
+        if (!thoiGian) return '---';
+        if (window.DinhDang && typeof window.DinhDang.ngayGio === 'function') {
+            return window.DinhDang.ngayGio(thoiGian);
+        }
+        try {
+            const d = new Date(thoiGian);
+            if (isNaN(d.getTime())) return String(thoiGian);
+            return new Intl.DateTimeFormat('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour12: false
+            }).format(d).replace(',', '');
+        } catch (e) {
+            return String(thoiGian);
+        }
+    }
+
+    /**
+     * Định dạng giờ:phút chuẩn Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
+     */
+    dinhDangGioPhut(thoiGian) {
+        if (!thoiGian) return '--:--';
+        if (window.DinhDang && typeof window.DinhDang.gioPhut === 'function') {
+            return window.DinhDang.gioPhut(thoiGian);
+        }
+        try {
+            const d = new Date(thoiGian);
+            if (isNaN(d.getTime())) return String(thoiGian).substring(11, 16);
+            return new Intl.DateTimeFormat('vi-VN', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(d);
+        } catch (e) {
+            return String(thoiGian).substring(11, 16);
+        }
+    }
+
+    /**
      * Tự động đồng bộ thời gian thực mỗi 3s (Cross-device real-time sync)
      * Giúp POS / màn hình theo dõi trên máy tính tự động cập nhật khi khách đặt món từ điện thoại
      */
@@ -955,6 +1094,11 @@ class TheoDoiDonMonModule {
 
             // Chỉ poll khi trang theo dõi đơn đang hiển thị và không có modal mở
             if (!vungChua || !coTrangTheoDoi || coModalMo) return;
+
+            // Đảm bảo khách hàng luôn theo dõi đúng bàn của mình
+            if (this.laCheDoKhachHang() && this.banIdKhachHang) {
+                this.banIdHienTai = this.banIdKhachHang;
+            }
 
             try {
                 const phanHoi = await window.api.layDanhSachDonTheoBan(this.banIdHienTai);

@@ -21,6 +21,7 @@ class DieuPhoiBepModule {
         this.cheDoXemLichSu = 'THE_DON'; // 'THE_DON' | 'BANG_MON'
         this.boLocTrangThai = 'TAT_CA'; // 'TAT_CA' | 'CHO_CHE_BIEN' | 'DANG_CHE_BIEN' | 'DA_XONG' | 'DA_HOAN_TAT'
         this.boLocKhuVuc = 'ALL';
+        this.boLocTram = 'ALL'; // 'ALL' | 'BEP_NONG' | 'BEP_NGUOI' | 'QUAY_BAR' | 'EXPO'
         this.kieuSapXep = 'THEO_BAN'; // 'THEO_BAN' | 'UU_TIEN_NAU' | 'FIFO'
         this.tuKhoaMonHet = '';
         this.danhMucMonHet = 'ALL';
@@ -133,13 +134,12 @@ class DieuPhoiBepModule {
                 if (!m.trangThai) m.trangThai = 'CHO_XAC_NHAN';
                 // Đồng bộ từ ngữ trạng thái
                 if (m.trangThai === 'CHO_CHE_BIEN') m.trangThai = 'CHO_XAC_NHAN';
-                else if (m.trangThai === 'DA_CHE_BIEN') m.trangThai = 'DA_XONG';
+                else if (m.trangThai === 'DA_CHE_BIEN' || m.trangThai === 'DA_NAU_XONG') m.trangThai = 'DA_XONG';
                 else if (m.trangThai === 'DA_PHUC_VU') m.trangThai = 'DA_LEN_MON';
             });
         });
 
-        // Tự động kiểm tra: nếu chưa có đơn nào đang chờ hoặc toàn bộ đã xong, tạo mẫu đơn chờ sinh động
-        this.kiemTraVaBoSungDonMauNeuCan();
+        // Đã tắt hoàn toàn tự động sinh đơn mẫu để tránh lặp vô tận
     }
 
     async taiDuLieuVaCapNhatGiaoDien() {
@@ -148,17 +148,10 @@ class DieuPhoiBepModule {
     }
 
     /**
-     * Bổ sung đơn mẫu có trạng thái chờ chế biến để dễ dàng kiểm thử KDS
+     * Đã tắt tự động sinh đơn mẫu
      */
     kiemTraVaBoSungDonMauNeuCan() {
-        if (!Array.isArray(this.danhSachDon)) this.danhSachDon = [];
-        const coDonCho = this.danhSachDon.some(don => 
-            don && Array.isArray(don.danhSachMon) && don.danhSachMon.some(m => m && (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'DANG_CHE_BIEN'))
-        );
-
-        if (!coDonCho && this.danhSachDon.length === 0) {
-            this.taoDonHangMauTest();
-        }
+        return;
     }
 
     /**
@@ -198,6 +191,84 @@ class DieuPhoiBepModule {
     }
 
     /**
+     * Xác định thời gian chờ thực tế của thẻ đơn:
+     * - Khi khách vào gọi món ban đầu: tính từ lúc tạo đơn.
+     * - Khi khách GỌI THÊM MÓN: tính từ lúc gọi thêm các món đang chờ chế biến,
+     *   tuyệt đối KHÔNG tính từ lúc khách vào bàn (đã phục vụ xong lượt trước).
+     */
+    layThoiGianHieuLucCuaDon(don) {
+        if (!don) return new Date().toISOString();
+        const danhSachMon = don.danhSachMon || [];
+
+        // Lọc các món đang cần bếp nấu
+        const cacMonDangLam = danhSachMon.filter(m => m && (
+            m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN'
+        ));
+
+        // Lọc các món đã nấu xong chờ phục vụ bưng
+        const cacMonChoBung = danhSachMon.filter(m => m && (
+            m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN'
+        ));
+
+        // Kiểm tra xem bàn có món cũ đã hoàn tất phục vụ (DA_LEN_MON / DA_PHUC_VU)
+        const coMonCuDaLen = danhSachMon.some(m => m && (m.trangThai === 'DA_LEN_MON' || m.trangThai === 'DA_PHUC_VU'));
+
+        if (cacMonDangLam.length > 0) {
+            // Tìm thời gian gọi của các món đang chờ/nấu này
+            let minTimeDangLam = Infinity;
+            let thoiGianMonDangLam = null;
+
+            cacMonDangLam.forEach(m => {
+                let tStr = m.thoiGianTao || m.thoiGianCapNhat || m.thoiGianDat;
+                if (!tStr && m.id && Number(m.id) > 1700000000000) {
+                    tStr = new Date(Number(m.id)).toISOString();
+                }
+                if (tStr) {
+                    const tVal = new Date(String(tStr).replace(' ', 'T')).getTime();
+                    if (!isNaN(tVal) && tVal > 0 && tVal < minTimeDangLam) {
+                        minTimeDangLam = tVal;
+                        thoiGianMonDangLam = tStr;
+                    }
+                }
+            });
+
+            // Nếu bàn có món cũ đã lên bàn và có món mới gọi thêm
+            if (coMonCuDaLen) {
+                if (thoiGianMonDangLam && minTimeDangLam < Infinity) {
+                    return thoiGianMonDangLam;
+                }
+                if (don.thoiGianGoiMoiNhat) {
+                    return don.thoiGianGoiMoiNhat;
+                }
+            }
+
+            // Nếu món đang làm có thời gian cụ thể
+            if (thoiGianMonDangLam && minTimeDangLam < Infinity) {
+                return thoiGianMonDangLam;
+            }
+        } else if (cacMonChoBung.length > 0) {
+            let maxTimeBung = 0;
+            let thoiGianBung = null;
+            cacMonChoBung.forEach(m => {
+                let tStr = m.thoiGianCapNhat || m.thoiGianTao;
+                if (!tStr && m.id && Number(m.id) > 1700000000000) {
+                    tStr = new Date(Number(m.id)).toISOString();
+                }
+                if (tStr) {
+                    const tVal = new Date(String(tStr).replace(' ', 'T')).getTime();
+                    if (!isNaN(tVal) && tVal > maxTimeBung) {
+                        maxTimeBung = tVal;
+                        thoiGianBung = tStr;
+                    }
+                }
+            });
+            if (thoiGianBung) return thoiGianBung;
+        }
+
+        return don.thoiGianTao || don.thoiGianDat || don.thoiGian || new Date().toISOString();
+    }
+
+    /**
      * US-085: Cảnh báo màu sắc theo thời gian chờ:
      * - < 10 phút: Bình thường (xanh / xám)
      * - 10 - 20 phút: Cảnh báo (vàng cam)
@@ -212,7 +283,7 @@ class DieuPhoiBepModule {
                 m && (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN')
             );
             const coMonChoBung = don.danhSachMon.some(m => 
-                m && (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN')
+                m && (m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN')
             );
 
             // Nếu không còn món nào cần nấu
@@ -237,6 +308,9 @@ class DieuPhoiBepModule {
             }
         }
 
+        const coMonCuDaLen = don && Array.isArray(don.danhSachMon) && don.danhSachMon.some(m => m && (m.trangThai === 'DA_LEN_MON' || m.trangThai === 'DA_PHUC_VU'));
+        const laGoiThem = coMonCuDaLen || (don && don.laGoiThem);
+
         if (soPhut >= 20) {
             return {
                 capDo: 'DO_KHAN_CAP',
@@ -259,7 +333,7 @@ class DieuPhoiBepModule {
                 lopCss: 'kds-card-binh-thuong',
                 lopBadge: 'badge-xanh-la',
                 icon: '⏱️',
-                nhan: `Mới nhận (${soPhut}p)`
+                nhan: laGoiThem ? `Mới gọi thêm (${soPhut}p)` : `Mới nhận (${soPhut}p)`
             };
         }
     }
@@ -304,7 +378,7 @@ class DieuPhoiBepModule {
 
         (this.danhSachDon || []).forEach(don => {
             if (!don) return;
-            const thoiGianStr = don.thoiGianTao || don.thoiGianDat || don.thoiGian;
+            const thoiGianStr = this.layThoiGianHieuLucCuaDon(don);
             const phut = this.tinhSoPhutTroiQua(thoiGianStr);
             (don.danhSachMon || []).forEach(m => {
                 if (!m) return;
@@ -359,13 +433,16 @@ class DieuPhoiBepModule {
 
                     <!-- Bộ nút điều khiển nhanh -->
                     <div class="kds-quick-actions">
+                        <button class="nut nut-cam nut-nho" onclick="window.dieuPhoiBepModule.moModalMoPhongToiUu()" title="Xem mô phỏng bản logic mới giúp tối ưu 60% hiệu suất bếp" style="font-weight: 700; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);">
+                            ⚡ Mô phỏng Logic Tối Ưu Bếp
+                        </button>
                         <button class="nut ${this.amThanhBat ? 'nut-xanh' : 'nut-phu'} nut-nho" onclick="window.dieuPhoiBepModule.chuyenTrangThaiAmThanh()" title="Bật/Tắt chuông báo âm thanh">
                             ${this.amThanhBat ? '🔔 Chuông: BẬT' : '🔕 Chuông: TẮT'}
                         </button>
                         <button class="nut nut-phu nut-nho" onclick="window.dieuPhoiBepModule.taiDuLieuVaCapNhatGiaoDien()" title="Làm mới dữ liệu từ hệ thống">
                             🔄 Làm mới
                         </button>
-                        <button class="nut nut-cam nut-nho" onclick="window.dieuPhoiBepModule.taoDonHangMauTest()" title="Tạo thêm 1 đơn đặt món mới để test hiển thị FIFO và cảnh báo">
+                        <button class="nut nut-phu nut-nho" onclick="window.dieuPhoiBepModule.taoDonHangMauTest()" title="Tạo thêm 1 đơn đặt món mới để test hiển thị FIFO và cảnh báo">
                             ➕ Thêm đơn test
                         </button>
                     </div>
@@ -421,8 +498,14 @@ class DieuPhoiBepModule {
                     soBan: tenBanChuan,
                     cacDonGocIds: [don.id],
                     cacMaDon: don.maDon ? [don.maDon] : [],
-                    soLuotGoi: 1,
-                    danhSachMon: [...(don.danhSachMon || [])]
+                    soLuotGoi: don.luotGoi || 1,
+                    thoiGianTao: don.thoiGianTao || don.thoiGianDat,
+                    thoiGianGoiMoiNhat: don.thoiGianGoiMoiNhat || don.thoiGianTao || don.thoiGianDat,
+                    danhSachMon: (don.danhSachMon || []).map(m => ({
+                        ...m,
+                        luotGoi: m.luotGoi || don.luotGoi || 1,
+                        thoiGianTao: m.thoiGianTao || don.thoiGianTao || don.thoiGianDat
+                    }))
                 };
                 banMap.set(banKey, donGop);
                 danhSachGop.push(donGop);
@@ -434,21 +517,38 @@ class DieuPhoiBepModule {
                 if (don.maDon && !donGop.cacMaDon.includes(don.maDon)) {
                     donGop.cacMaDon.push(don.maDon);
                 }
-                donGop.soLuotGoi += 1;
+                donGop.soLuotGoi = Math.max(donGop.soLuotGoi || 1, don.luotGoi || 1) + 1;
 
                 (don.danhSachMon || []).forEach(m => {
                     const daTonTai = donGop.danhSachMon.some(ex => 
-                        (m.id && Number(ex.id) === Number(m.id))
+                        (m.id && Number(ex.id) === Number(m.id)) || (m.id && String(ex.id) === String(m.id))
                     );
                     if (!daTonTai) {
-                        donGop.danhSachMon.push(m);
+                        donGop.danhSachMon.push({
+                            ...m,
+                            luotGoi: m.luotGoi || don.luotGoi || donGop.soLuotGoi,
+                            thoiGianTao: m.thoiGianTao || don.thoiGianTao || don.thoiGianDat,
+                            lanGoiMoi: true
+                        });
                     }
                 });
 
+                // Cập nhật thoiGianGoiMoiNhat của đợt gọi thêm mới
                 const timeDon = new Date(String(don.thoiGianTao || don.thoiGianDat || '').replace(' ', 'T')).getTime() || 0;
-                const timeGop = new Date(String(donGop.thoiGianTao || donGop.thoiGianDat || '').replace(' ', 'T')).getTime() || 0;
-                if (timeDon > 0 && (timeGop === 0 || timeDon < timeGop)) {
+                const timeGopMoiNhat = new Date(String(donGop.thoiGianGoiMoiNhat || donGop.thoiGianTao || '').replace(' ', 'T')).getTime() || 0;
+                if (timeDon > timeGopMoiNhat) {
+                    donGop.thoiGianGoiMoiNhat = don.thoiGianTao || don.thoiGianDat;
+                }
+
+                // Nếu tất cả các món cũ trong donGop đều đã lên bàn (DA_LEN_MON),
+                // và đơn mới này có món đang chờ nấu -> Chuyển thoiGianTao của donGop sang thời gian của đơn mới gọi thêm!
+                const coMonCuChuaXong = donGop.danhSachMon.some(m => 
+                    (don.danhSachMon || []).indexOf(m) === -1 && 
+                    (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN')
+                );
+                if (!coMonCuChuaXong && timeDon > 0) {
                     donGop.thoiGianTao = don.thoiGianTao || don.thoiGianDat;
+                    donGop.laGoiThem = true;
                 }
             }
         });
@@ -535,7 +635,7 @@ class DieuPhoiBepModule {
             return d.danhSachMon.some(m => m && (
                 m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' ||
                 m.trangThai === 'DANG_CHE_BIEN' ||
-                m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN'
+                m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN'
             ));
         };
 
@@ -559,7 +659,6 @@ class DieuPhoiBepModule {
         } else {
             danhSachHienThi = [...dsDonDangXuLy];
         }
-        this.danhSachDonGopHienThi = danhSachHienThi;
 
         // Lọc theo khu vực
         if (this.boLocKhuVuc !== 'ALL') {
@@ -577,14 +676,29 @@ class DieuPhoiBepModule {
             );
         } else if (this.boLocTrangThai === 'DA_XONG') {
             danhSachHienThi = danhSachHienThi.filter(d => 
-                (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN')
+                (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN')
             );
         }
+
+        // Lọc theo phân luồng Trạm chế biến (Station Routing)
+        if (this.boLocTram === 'EXPO') {
+            // Trạm Expo: Chỉ hiện các bàn có món đã nấu xong chờ bưng
+            danhSachHienThi = danhSachHienThi.filter(d => 
+                (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN')
+            );
+        } else if (this.boLocTram !== 'ALL') {
+            // Chỉ hiện các bàn có món thuộc trạm đang chọn
+            danhSachHienThi = danhSachHienThi.filter(d => 
+                (d.danhSachMon || []).some(m => this.xacDinhTramCheBien(m) === this.boLocTram)
+            );
+        }
+
+        this.danhSachDonGopHienThi = danhSachHienThi;
 
         // Đếm số đơn theo từng trạng thái để hiển thị trên pill
         const soDonCho = dsDonDangXuLy.filter(d => (d.danhSachMon || []).some(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN')).length;
         const soDonDangNau = dsDonDangXuLy.filter(d => (d.danhSachMon || []).some(m => m.trangThai === 'DANG_CHE_BIEN')).length;
-        const soDonChoBung = dsDonDangXuLy.filter(d => (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN')).length;
+        const soDonChoBung = dsDonDangXuLy.filter(d => (d.danhSachMon || []).some(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN')).length;
 
         // Sắp xếp đơn hàng logic theo Bàn & Nghiệp vụ bếp
         danhSachHienThi.sort((a, b) => {
@@ -600,8 +714,8 @@ class DieuPhoiBepModule {
                 if (luotA !== luotB) return luotA - luotB;
 
                 // 3. Nếu cùng lượt: đơn cũ hơn xếp trước
-                const timeA = new Date(String(a.thoiGianTao || a.thoiGianDat || a.thoiGian || '').replace(' ', 'T')).getTime() || 0;
-                const timeB = new Date(String(b.thoiGianTao || b.thoiGianDat || b.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                const timeA = new Date(String(this.layThoiGianHieuLucCuaDon(a)).replace(' ', 'T')).getTime() || 0;
+                const timeB = new Date(String(this.layThoiGianHieuLucCuaDon(b)).replace(' ', 'T')).getTime() || 0;
                 return timeA - timeB;
             } else if (this.kieuSapXep === 'UU_TIEN_NAU') {
                 // Đơn còn món chờ nấu / đang nấu được ưu tiên lên đầu
@@ -614,14 +728,34 @@ class DieuPhoiBepModule {
                 if (soBanA !== soBanB) return soBanA - soBanB;
                 return (Number(a.luotGoi || 1) - Number(b.luotGoi || 1));
             } else {
-                // FIFO: Thời gian gọi cũ nhất lên trước
-                const timeA = new Date(String(a.thoiGianTao || a.thoiGianDat || a.thoiGian || '').replace(' ', 'T')).getTime() || 0;
-                const timeB = new Date(String(b.thoiGianTao || b.thoiGianDat || b.thoiGian || '').replace(' ', 'T')).getTime() || 0;
+                // FIFO: Thời gian gọi cũ nhất lên trước (tính theo thời gian thực của các món cần nấu)
+                const timeA = new Date(String(this.layThoiGianHieuLucCuaDon(a)).replace(' ', 'T')).getTime() || 0;
+                const timeB = new Date(String(this.layThoiGianHieuLucCuaDon(b)).replace(' ', 'T')).getTime() || 0;
                 return timeA - timeB;
             }
         });
 
         return `
+            <!-- THANH PHÂN LUỒNG TRẠM CHẾ BIẾN (STATION ROUTING - LOGIC TỐI ƯU BẾP) -->
+            <div class="kds-station-filter-bar" style="display: flex; gap: 8px; align-items: center; background: #FFF; padding: 10px 14px; border-radius: 8px; border: 1px solid #E5E7EB; margin-bottom: 12px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <span style="font-size: 13px; font-weight: 700; color: #374151;">🍳 Trạm chế biến:</span>
+                <button class="nut-loc-pill ${this.boLocTram === 'ALL' ? 'kich-hoat' : ''}" onclick="window.dieuPhoiBepModule.chuyenBoLocTram('ALL')">
+                    🏷️ Toàn bếp (${dsDonDangXuLy.length})
+                </button>
+                <button class="nut-loc-pill ${this.boLocTram === 'BEP_NONG' ? 'kich-hoat' : ''}" onclick="window.dieuPhoiBepModule.chuyenBoLocTram('BEP_NONG')">
+                    🔥 Bếp Nóng (Nướng / Lẩu / Xào)
+                </button>
+                <button class="nut-loc-pill ${this.boLocTram === 'BEP_NGUOI' ? 'kich-hoat' : ''}" onclick="window.dieuPhoiBepModule.chuyenBoLocTram('BEP_NGUOI')">
+                    🥗 Bếp Nguội & Khai Vị (Gỏi / Salad)
+                </button>
+                <button class="nut-loc-pill ${this.boLocTram === 'QUAY_BAR' ? 'kich-hoat' : ''}" onclick="window.dieuPhoiBepModule.chuyenBoLocTram('QUAY_BAR')">
+                    🍹 Quầy Bar & Nước
+                </button>
+                <button class="nut-loc-pill ${this.boLocTram === 'EXPO' ? 'kich-hoat' : ''}" style="${this.boLocTram === 'EXPO' ? 'background: #7C3AED; color: #FFF; border-color: #6D28D9; font-weight: 700;' : 'color: #7C3AED; border-color: #DDD6FE;'}" onclick="window.dieuPhoiBepModule.chuyenBoLocTram('EXPO')">
+                    🛎️ Trạm Điều Phối Expo (Ra mâm bưng) (${soDonChoBung})
+                </button>
+            </div>
+
             <!-- Thanh bộ lọc đơn hàng KDS -->
             <div class="kds-filter-bar">
                 <div class="kds-filter-group">
@@ -710,20 +844,31 @@ class DieuPhoiBepModule {
      */
     renderTheDonHang(don, viTri) {
         const danhSachMon = don.danhSachMon || [];
-        const thoiGianStr = don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
+        const thoiGianStr = this.layThoiGianHieuLucCuaDon(don);
         const thongTinCanhBao = this.layThongTinCanhBaoThoiGian(thoiGianStr, don);
         const thoiGianTroiQua = this.dinhDangThoiGianTroiQua(thoiGianStr);
+
+        // Kiểm tra xem đơn này có phải là đợt khách gọi thêm món hay không
+        const coMonDaLen = danhSachMon.some(m => m && (m.trangThai === 'DA_LEN_MON' || m.trangThai === 'DA_PHUC_VU'));
+        const coMonDangChoNau = danhSachMon.some(m => m && (m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN'));
+        const laGoiThemMon = Boolean(don.laGoiThem || (coMonDaLen && coMonDangChoNau));
+        const soLuotHienThi = don.soLuotGoi && don.soLuotGoi > 1 ? don.soLuotGoi : (laGoiThemMon ? 2 : (don.luotGoi || 1));
 
         // Kiểm tra số món theo trạng thái trong thẻ
         const monCho = danhSachMon.filter(m => m.trangThai === 'CHO_XAC_NHAN' || m.trangThai === 'CHO_CHE_BIEN').length;
         const monDangNau = danhSachMon.filter(m => m.trangThai === 'DANG_CHE_BIEN').length;
-        const monDaXong = danhSachMon.filter(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_CHE_BIEN').length;
+        const monDaXong = danhSachMon.filter(m => m.trangThai === 'DA_XONG' || m.trangThai === 'DA_NAU_XONG' || m.trangThai === 'DA_CHE_BIEN').length;
 
         // Trạng thái chung của thẻ
         let tongSoMonConLai = monCho + monDangNau;
         const tongSoLuongPhan = danhSachMon.reduce((sum, m) => sum + (Number(m.soLuong) || 1), 0);
-        const monChuaXongDs = danhSachMon.filter(m => m.trangThai !== 'DA_XONG' && m.trangThai !== 'DA_CHE_BIEN' && m.trangThai !== 'DA_LEN_MON');
+        const monChuaXongDs = danhSachMon.filter(m => m.trangThai !== 'DA_XONG' && m.trangThai !== 'DA_NAU_XONG' && m.trangThai !== 'DA_CHE_BIEN' && m.trangThai !== 'DA_LEN_MON');
         const soPhanChuaXong = monChuaXongDs.reduce((sum, m) => sum + (Number(m.soLuong) || 1), 0);
+
+        // Lọc danh sách món hiển thị theo trạm chế biến
+        const monHienThi = (this.boLocTram === 'ALL' || this.boLocTram === 'EXPO')
+            ? danhSachMon
+            : danhSachMon.filter(m => this.xacDinhTramCheBien(m) === this.boLocTram);
 
         return `
             <div class="kds-order-card ${thongTinCanhBao.lopCss}" id="card-don-${don.id}">
@@ -742,7 +887,7 @@ class DieuPhoiBepModule {
                     <div class="kds-card-info-row">
                         <div class="kds-order-code">
                             <span>Mã: <strong>${don.cacMaDon && don.cacMaDon.length > 1 ? don.cacMaDon[0] + ' (+' + (don.cacMaDon.length - 1) + ')' : don.maDon}</strong></span>
-                            <span class="kds-luot-badge">${don.soLuotGoi && don.soLuotGoi > 1 ? `${don.soLuotGoi} lượt (Gộp 1 Bill)` : `Lượt ${don.luotGoi || 1}`}</span>
+                            <span class="kds-luot-badge ${laGoiThemMon ? 'badge-cam' : ''}">${laGoiThemMon ? `⚡ Lượt ${soLuotHienThi} (Gọi thêm)` : (don.soLuotGoi && don.soLuotGoi > 1 ? `${don.soLuotGoi} lượt (Gộp 1 Bill)` : `Lượt ${don.luotGoi || 1}`)}</span>
                         </div>
                         <div class="kds-time-badge ${thongTinCanhBao.lopBadge}">
                             <span class="kds-dong-ho-troi-qua" data-time="${thoiGianStr}">⏱️ ${thoiGianTroiQua}</span>
@@ -751,7 +896,7 @@ class DieuPhoiBepModule {
 
                     <!-- US-085: Thông báo cảnh báo quá thời gian -->
                     <div class="kds-alert-pill ${thongTinCanhBao.lopBadge}">
-                        ${thongTinCanhBao.icon} ${thongTinCanhBao.nhan} • Gửi lúc ${thoiGianStr ? String(thoiGianStr).substring(11, 16) : ''}
+                        ${thongTinCanhBao.icon} ${thongTinCanhBao.nhan} • ${laGoiThemMon ? 'Gọi thêm lúc' : 'Gửi lúc'} ${thoiGianStr ? (window.DinhDang ? window.DinhDang.gioPhut(thoiGianStr) : String(thoiGianStr).substring(11, 16)) : ''}
                     </div>
 
                     ${don.ghiChuDon ? `
@@ -778,11 +923,23 @@ class DieuPhoiBepModule {
                             </button>
                         ` : ''}
                     </div>
+
+                    <!-- BĂNG THÔNG BÁO CHO TRẠM ĐIỀU PHỐI EXPO RA MÂM -->
+                    ${this.boLocTram === 'EXPO' ? `
+                        <div style="background: #EDE9FE; border: 1px solid #C4B5FD; padding: 8px 12px; border-radius: 6px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 12px; font-weight: 700; color: #6D28D9;">🛎️ MÂM EXPO (${monDaXong} món nấu xong)</span>
+                            ${monDaXong > 0 ? `
+                                <button class="nut nut-nho nut-chinh" onclick="window.dieuPhoiBepModule.xacNhanDaLenMonCaPhieu('${don.id}')" style="background: #7C3AED; border-color: #6D28D9;">
+                                    🏃‍♂️ Bưng trọn mâm ra bàn
+                                </button>
+                            ` : `<span style="font-size: 11px; color: #6B7280;">Chờ bếp ra món...</span>`}
+                        </div>
+                    ` : ''}
                 </div>
 
                 <!-- DANH SÁCH MÓN ĂN TRONG ĐƠN (US-080) -->
                 <div class="kds-card-items-list">
-                    ${danhSachMon.map(mon => this.renderDongMonAn(mon, don)).join('')}
+                    ${monHienThi.map(mon => this.renderDongMonAn(mon, don)).join('')}
                 </div>
 
                 <!-- CHÂN THẺ -->
@@ -809,7 +966,7 @@ class DieuPhoiBepModule {
         const trangThai = mon.trangThai || 'CHO_XAC_NHAN';
         const thongTinTrangThai = window.HANG_SO?.TRANG_THAI_MON_GOI?.[trangThai] || 
             (trangThai === 'CHO_CHE_BIEN' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.CHO_XAC_NHAN :
-            (trangThai === 'DA_CHE_BIEN' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.DA_XONG :
+            (trangThai === 'DA_CHE_BIEN' || trangThai === 'DA_NAU_XONG' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.DA_XONG :
             (trangThai === 'DA_PHUC_VU' ? window.HANG_SO?.TRANG_THAI_MON_GOI?.DA_LEN_MON : null))) || {
             ten: trangThai,
             mau: '#6B7280',
@@ -822,8 +979,24 @@ class DieuPhoiBepModule {
         const soBanEscaped = String(don.soBan || ('Bàn ' + don.banId)).replace(/'/g, "\\'");
         const isCho = (trangThai === 'CHO_XAC_NHAN' || trangThai === 'CHO_CHE_BIEN');
         const isDangNau = (trangThai === 'DANG_CHE_BIEN');
-        const isXong = (trangThai === 'DA_XONG' || trangThai === 'DA_CHE_BIEN');
+        const isXong = (trangThai === 'DA_XONG' || trangThai === 'DA_NAU_XONG' || trangThai === 'DA_CHE_BIEN');
         const isLenMon = (trangThai === 'DA_LEN_MON' || trangThai === 'DA_PHUC_VU');
+
+        // Phân loại trạm chế biến hiển thị nhãn
+        const tram = this.xacDinhTramCheBien(mon);
+        const thongTinTram = {
+            BEP_NONG: { ten: '🔥 Bếp Nóng', lop: 'badge-cam' },
+            BEP_NGUOI: { ten: '🥗 Bếp Nguội', lop: 'badge-xanh-la' },
+            QUAY_BAR: { ten: '🍹 Quầy Bar', lop: 'badge-tim' }
+        }[tram] || { ten: '🍳 Bếp', lop: 'badge-xam' };
+
+        // Kiểm tra món có phải là đợt gọi thêm mới không
+        const coMonDaLen = (don.danhSachMon || []).some(m => m && (m.trangThai === 'DA_LEN_MON' || m.trangThai === 'DA_PHUC_VU'));
+        const laMonGoiThem = Boolean(
+            mon.lanGoiMoi || 
+            (mon.luotGoi && Number(mon.luotGoi) > 1) || 
+            (coMonDaLen && (isCho || isDangNau))
+        );
 
         return `
             <div class="kds-item-row kds-status-${String(trangThai).toLowerCase()}" id="mon-${mon.id}">
@@ -835,10 +1008,22 @@ class DieuPhoiBepModule {
                 <!-- THÔNG TIN MÓN & GHI CHÚ KHẨU VỊ NỔI BẬT (US-080) -->
                 <div class="kds-item-content">
                     <div class="kds-item-title-row">
-                        <span class="kds-dish-name">${mon.tenMon}</span>
-                        <span class="badge ${thongTinTrangThai.lopBadge} kds-item-status-badge">
-                            ${thongTinTrangThai.icon} ${thongTinTrangThai.ten}
-                        </span>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span class="kds-dish-name">${mon.tenMon}</span>
+                            ${laMonGoiThem ? `
+                                <span class="badge badge-cam" style="font-size: 10px; padding: 2px 6px; font-weight: 700; border-radius: 4px;">
+                                    ⚡ Gọi thêm
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                            <span class="badge ${thongTinTram.lop}" style="font-size: 10px; padding: 2px 6px;">
+                                ${thongTinTram.ten}
+                            </span>
+                            <span class="badge ${thongTinTrangThai.lopBadge} kds-item-status-badge">
+                                ${thongTinTrangThai.icon} ${thongTinTrangThai.ten}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Size & Topping -->
@@ -875,25 +1060,25 @@ class DieuPhoiBepModule {
                 <!-- CÁC NÚT THAO TÁC 1-CHẠM TRÊN TỪNG MÓN -->
                 <div class="kds-item-actions">
                     ${isCho ? `
-                        <button class="nut nut-chinh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.batDauNauMon(${mon.id}, ${don.banId})" title="Bắt đầu chế biến món này (US-082)">
+                        <button class="nut nut-chinh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.batDauNauMon('${mon.id}', '${don.banId}')" title="Bắt đầu chế biến món này (US-082)">
                             👨‍🍳 Bắt đầu nấu
                         </button>
-                        <button class="nut nut-do-vien nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.moModalTuChoiMon(${mon.id}, ${don.banId}, '${tenMonEscaped}')" title="Từ chối món do hết nguyên liệu (US-088)">
+                        <button class="nut nut-do-vien nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.moModalTuChoiMon('${mon.id}', '${don.banId}', '${tenMonEscaped}')" title="Từ chối món do hết nguyên liệu (US-088)">
                             🚫 Hết món
                         </button>
                     ` : ''}
 
                     ${isDangNau ? `
-                        <button class="nut nut-xanh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.hoanThanhMon(${mon.id}, ${don.banId}, '${tenMonEscaped}', '${soBanEscaped}')" title="Đánh dấu đã nấu xong, thông báo Phục vụ bưng món (US-083, US-084)">
+                        <button class="nut nut-xanh nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.hoanThanhMon('${mon.id}', '${don.banId}', '${tenMonEscaped}', '${soBanEscaped}')" title="Đánh dấu đã nấu xong, thông báo Phục vụ bưng món (US-083, US-084)">
                             🔔 Nấu xong
                         </button>
                     ` : ''}
 
                     ${isXong ? `
-                        <button class="nut nut-phu nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.xacNhanDaLenMon(${mon.id}, ${don.banId})" title="Xác nhận Phục vụ đã bưng món lên bàn khách (US-084)">
+                        <button class="nut nut-phu nut-nho kds-btn-action" onclick="window.dieuPhoiBepModule.xacNhanDaLenMon('${mon.id}', '${don.banId}')" title="Xác nhận Phục vụ đã bưng món lên bàn khách (US-084)">
                             🏃 Đã lên bàn
                         </button>
-                        <button class="nut nut-phu nut-nho" style="font-size: 11px;" onclick="window.dieuPhoiBepModule.thuHoiMonVeBep(${mon.id}, ${don.banId})" title="Thu hồi về bếp (nếu ấn nhầm)">
+                        <button class="nut nut-phu nut-nho" style="font-size: 11px;" onclick="window.dieuPhoiBepModule.thuHoiMonVeBep('${mon.id}', '${don.banId}')" title="Thu hồi về bếp (nếu ấn nhầm)">
                             ↩️ Nấu lại
                         </button>
                     ` : ''}
@@ -917,7 +1102,7 @@ class DieuPhoiBepModule {
 
         (this.danhSachDon || []).forEach(don => {
             if (!don) return;
-            const donThoiGian = don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
+            const donThoiGian = this.layThoiGianHieuLucCuaDon(don) || don.thoiGianTao || don.thoiGianDat || don.thoiGian || '';
             (don.danhSachMon || []).forEach(mon => {
                 if (!mon) return;
                 const tt = mon.trangThai;
@@ -940,6 +1125,14 @@ class DieuPhoiBepModule {
                     if (tt === 'CHO_XAC_NHAN' || tt === 'CHO_CHE_BIEN') nhom.soLuongCho += qty;
                     if (tt === 'DANG_CHE_BIEN') nhom.soLuongDangNau += qty;
 
+                    let monThoiGian = mon.thoiGianTao || mon.thoiGianCapNhat;
+                    if (!monThoiGian && mon.id && Number(mon.id) > 1700000000000) {
+                        monThoiGian = new Date(Number(mon.id)).toISOString();
+                    }
+                    if (!monThoiGian) {
+                        monThoiGian = don.thoiGianGoiMoiNhat || donThoiGian;
+                    }
+
                     nhom.cacBanCho.push({
                         monId: mon.id,
                         banId: don.banId,
@@ -948,7 +1141,8 @@ class DieuPhoiBepModule {
                         soLuong: qty,
                         ghiChu: mon.ghiChu,
                         trangThai: tt,
-                        thoiGianTao: donThoiGian
+                        thoiGianTao: monThoiGian,
+                        lanGoiMoi: mon.lanGoiMoi || Boolean(mon.luotGoi && Number(mon.luotGoi) > 1)
                     });
                 }
             });
@@ -1012,6 +1206,7 @@ class DieuPhoiBepModule {
                                         <div class="kds-batch-table-item">
                                             <div class="kds-batch-tbl-info">
                                                 <strong>${banItem.soBan}</strong> (${banItem.khuVucTen || 'Phòng'})
+                                                ${banItem.lanGoiMoi ? `<span class="badge badge-cam" style="font-size: 10px; padding: 1px 5px; font-weight: 700;">⚡ Gọi thêm</span>` : ''}
                                                 <span class="badge ${canhBao.lopBadge}" style="font-size: 11px;">⏱️ ${thoiGianTroiQua}</span>
                                             </div>
                                             <div class="kds-batch-tbl-qty">
@@ -1145,7 +1340,7 @@ class DieuPhoiBepModule {
                                         <span class="kds-luot-badge">Lượt ${don.luotGoi || 1}</span>
                                     </div>
                                     <div style="font-size: 11px; color: var(--mau-chu-phu);">
-                                        🕒 Tạo lúc: ${don.thoiGianTao ? String(don.thoiGianTao).substring(11, 16) : ''}
+                                        🕒 Tạo lúc: ${don.thoiGianTao ? (window.DinhDang ? window.DinhDang.gioPhut(don.thoiGianTao) : String(don.thoiGianTao).substring(11, 16)) : ''}
                                     </div>
                                 </div>
                                 <div class="kds-alert-pill badge-xanh-la">
@@ -1396,7 +1591,56 @@ class DieuPhoiBepModule {
 
     /* ==========================================================================
        CÁC HÀM XỬ LÝ NGHIỆP VỤ ĐIỀU PHỐI (US-082, US-083, US-084, US-088)
+       TỐI ƯU HIỆU SUẤT: OPTIMISTIC UI CẬP NHẬT TỨC THÌ 0MS + ĐỒNG BỘ BACKEND
        ========================================================================== */
+
+    /**
+     * Cập nhật trạng thái món ăn trong bộ nhớ cục bộ để phản hồi giao diện tức thì (Optimistic UI)
+     */
+    capNhatTrangThaiMonCucBo(idMonChiTiet, trangThaiMoi, banId = null) {
+        let monTimThay = null;
+        const numId = Number(idMonChiTiet);
+        const strId = String(idMonChiTiet);
+
+        const capNhat = (don) => {
+            if (banId && don.banId && Number(don.banId) !== Number(banId)) return;
+            (don.danhSachMon || []).forEach(mon => {
+                if ((!isNaN(numId) && Number(mon.id) === numId) || String(mon.id) === strId) {
+                    mon.trangThai = trangThaiMoi;
+                    mon.thoiGianCapNhat = new Date().toISOString();
+                    monTimThay = mon;
+                }
+            });
+        };
+
+        (this.danhSachDon || []).forEach(capNhat);
+        if (this.danhSachDonGopHienThi) {
+            this.danhSachDonGopHienThi.forEach(capNhat);
+        }
+        return monTimThay;
+    }
+
+    /**
+     * Xác định trạm chế biến của món ăn (Phân luồng trạm)
+     */
+    xacDinhTramCheBien(mon) {
+        if (!mon) return 'BEP_NONG';
+        const ten = (mon.tenMon || '').toLowerCase();
+        const danhMucId = Number(mon.danhMucId || 0);
+
+        if (danhMucId === 6 || ten.includes('trà') || ten.includes('nước') || ten.includes('bia') || ten.includes('cà phê') || ten.includes('sinh tố') || ten.includes('nước ép') || ten.includes('chè') || ten.includes('kem')) {
+            return 'QUAY_BAR';
+        }
+        if (danhMucId === 1 || ten.includes('gỏi') || ten.includes('nộm') || ten.includes('salad') || ten.includes('nem cuốn') || ten.includes('khoai tây') || ten.includes('khai vị')) {
+            return 'BEP_NGUOI';
+        }
+        return 'BEP_NONG';
+    }
+
+    chuyenBoLocTram(tram) {
+        this.boLocTram = tram;
+        this.render();
+    }
 
     /**
      * US-082: Bắt đầu nấu 1 món ăn lẻ
@@ -1404,16 +1648,27 @@ class DieuPhoiBepModule {
     async batDauNauMon(idMonChiTiet, banId) {
         if (!window.api) return;
 
+        // 1. Optimistic Update: Cập nhật ngay trong bộ nhớ để giao diện đổi trạng thái lập tức (0ms delay)
+        const mon = this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DANG_CHE_BIEN', banId);
+        this.render();
+
+        if (window.thongBao) {
+            window.thongBao.thongTin('👨‍🍳 Bếp bắt đầu nấu', `Đang chế biến: [${mon?.tenMon || 'Món'}]...`);
+        }
+
+        // 2. Gửi request cập nhật trạng thái lên Backend Server và các client qua WebSocket
         const kq = await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DANG_CHE_BIEN');
-        if (kq && kq.ok) {
-            if (window.thongBao) {
-                window.thongBao.thongTin('👨‍🍳 Bếp bắt đầu nấu', `Đang chế biến món ăn...`);
-            }
-            await this.taiDuLieuVaCapNhatGiaoDien();
-        } else {
+        if (!kq || !kq.ok) {
+            // Revert nếu mạng lỗi
+            this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'CHO_XAC_NHAN', banId);
+            this.render();
             if (window.thongBao) {
                 window.thongBao.thatBai('Lỗi', kq ? kq.msg : 'Không thể cập nhật trạng thái.');
             }
+        } else {
+            await this.taiDuLieu();
+            this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DANG_CHE_BIEN', banId);
+            this.render();
         }
     }
 
@@ -1421,22 +1676,33 @@ class DieuPhoiBepModule {
      * US-082: Bắt đầu nấu toàn bộ phiếu order
      */
     async batDauNauCaPhieu(donId) {
-        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
-                 || this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonDaNhan = 0;
+        const cacMonCanNau = [];
         for (const mon of don.danhSachMon) {
             if (mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
-                await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DANG_CHE_BIEN');
+                this.capNhatTrangThaiMonCucBo(mon.id, 'DANG_CHE_BIEN', don.banId);
+                cacMonCanNau.push(mon.id);
                 soMonDaNhan++;
             }
         }
+        this.render();
 
         if (window.thongBao) {
             window.thongBao.thanhCong('👨‍🍳 Đã nhận nấu toàn bộ phiếu', `Đã chuyển ${soMonDaNhan} món của ${don.soBan} sang trạng thái đang nấu.`);
         }
-        await this.taiDuLieuVaCapNhatGiaoDien();
+
+        for (const idM of cacMonCanNau) {
+            await window.api.capNhatTrangThaiMonAn(idM, don.banId, 'DANG_CHE_BIEN');
+        }
+        await this.taiDuLieu();
+        for (const idM of cacMonCanNau) {
+            this.capNhatTrangThaiMonCucBo(idM, 'DANG_CHE_BIEN', don.banId);
+        }
+        this.render();
     }
 
     /**
@@ -1445,40 +1711,48 @@ class DieuPhoiBepModule {
     async hoanThanhMon(idMonChiTiet, banId, tenMon, soBan) {
         if (!window.api) return;
 
-        const kq = await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DA_XONG');
-        if (kq && kq.ok) {
-            // Phát âm thanh chuông báo hoàn thành
-            if (this.amThanhBat && window.socketClient) {
-                window.socketClient.phatAmThanh('thanhCong');
-            }
+        // 1. Optimistic Update: Chuyển sang DA_XONG ngay lập tức
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DA_XONG', banId);
+        this.render();
 
-            // US-084: Bắn thông báo cho bộ phận phục vụ
-            if (window.thongBao) {
-                window.thongBao.thanhCong(
-                    `🔔 Món đã nấu xong!`, 
-                    `Đã gửi tín hiệu thông báo cho Phục vụ: Bưng món [${tenMon}] ra ${soBan}.`
-                );
-            }
-
-            await this.taiDuLieuVaCapNhatGiaoDien();
+        // Phát âm thanh chuông báo hoàn thành
+        if (this.amThanhBat && window.socketClient) {
+            window.socketClient.phatAmThanh('thanhCong');
         }
+
+        // US-084: Bắn thông báo cho bộ phận phục vụ
+        if (window.thongBao) {
+            window.thongBao.thanhCong(
+                `🔔 Món đã nấu xong!`, 
+                `Đã gửi tín hiệu thông báo cho Phục vụ: Bưng món [${tenMon}] ra ${soBan}.`
+            );
+        }
+
+        // 2. Gửi API đồng bộ
+        await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DA_XONG');
+        await this.taiDuLieu();
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DA_XONG', banId);
+        this.render();
     }
 
     /**
      * US-083 & US-084: Đánh dấu hoàn thành toàn bộ phiếu
      */
     async hoanThanhCaPhieu(donId) {
-        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
-                 || this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonHoanThanh = 0;
+        const cacMon = [];
         for (const mon of don.danhSachMon) {
             if (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
-                await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DA_XONG');
+                this.capNhatTrangThaiMonCucBo(mon.id, 'DA_XONG', don.banId);
+                cacMon.push(mon.id);
                 soMonHoanThanh++;
             }
         }
+        this.render();
 
         if (this.amThanhBat && window.socketClient) {
             window.socketClient.phatAmThanh('thanhCong');
@@ -1491,7 +1765,14 @@ class DieuPhoiBepModule {
             );
         }
 
-        await this.taiDuLieuVaCapNhatGiaoDien();
+        for (const idM of cacMon) {
+            await window.api.capNhatTrangThaiMonAn(idM, don.banId, 'DA_XONG');
+        }
+        await this.taiDuLieu();
+        for (const idM of cacMon) {
+            this.capNhatTrangThaiMonCucBo(idM, 'DA_XONG', don.banId);
+        }
+        this.render();
     }
 
     /**
@@ -1500,30 +1781,39 @@ class DieuPhoiBepModule {
     async xacNhanDaLenMon(idMonChiTiet, banId) {
         if (!window.api) return;
 
-        const kq = await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DA_LEN_MON');
-        if (kq && kq.ok) {
-            if (window.thongBao) {
-                window.thongBao.thanhCong('✅ Đã lên món', 'Đã phục vụ món ăn tại bàn.');
-            }
-            await this.taiDuLieuVaCapNhatGiaoDien();
+        // 1. Optimistic Update
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DA_LEN_MON', banId);
+        this.render();
+
+        if (window.thongBao) {
+            window.thongBao.thanhCong('✅ Đã lên món', 'Đã phục vụ món ăn tại bàn.');
         }
+
+        // 2. Gửi API đồng bộ
+        await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DA_LEN_MON');
+        await this.taiDuLieu();
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DA_LEN_MON', banId);
+        this.render();
     }
 
     /**
      * US-084: Xác nhận Phục vụ đã bưng toàn bộ món trong phiếu lên bàn (Chuyển phiếu sang Lịch sử)
      */
     async xacNhanDaLenMonCaPhieu(donId) {
-        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId)))
-                 || this.danhSachDon.find(d => String(d.id) === String(donId));
+        const don = (this.danhSachDonGopHienThi && this.danhSachDonGopHienThi.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId)))
+                 || this.danhSachDon.find(d => String(d.id) === String(donId) || String(d.banId) === String(donId));
         if (!don || !don.danhSachMon) return;
 
         let soMonDaBung = 0;
+        const cacMon = [];
         for (const mon of don.danhSachMon) {
-            if (mon.trangThai === 'DA_XONG' || mon.trangThai === 'DA_CHE_BIEN' || mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
-                await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DA_LEN_MON');
+            if (mon.trangThai === 'DA_XONG' || mon.trangThai === 'DA_NAU_XONG' || mon.trangThai === 'DA_CHE_BIEN' || mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN') {
+                this.capNhatTrangThaiMonCucBo(mon.id, 'DA_LEN_MON', don.banId);
+                cacMon.push(mon.id);
                 soMonDaBung++;
             }
         }
+        this.render();
 
         if (window.thongBao) {
             window.thongBao.thanhCong(
@@ -1532,7 +1822,14 @@ class DieuPhoiBepModule {
             );
         }
 
-        await this.taiDuLieuVaCapNhatGiaoDien();
+        for (const idM of cacMon) {
+            await window.api.capNhatTrangThaiMonAn(idM, don.banId, 'DA_LEN_MON');
+        }
+        await this.taiDuLieu();
+        for (const idM of cacMon) {
+            this.capNhatTrangThaiMonCucBo(idM, 'DA_LEN_MON', don.banId);
+        }
+        this.render();
     }
 
     /**
@@ -1541,11 +1838,16 @@ class DieuPhoiBepModule {
     async thuHoiMonVeBep(idMonChiTiet, banId) {
         if (!window.api) return;
 
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DANG_CHE_BIEN', banId);
+        this.render();
+
         await window.api.capNhatTrangThaiMonAn(idMonChiTiet, banId, 'DANG_CHE_BIEN');
         if (window.thongBao) {
             window.thongBao.thongTin('↩️ Đã thu hồi về bếp', 'Món ăn đã quay lại trạng thái Đang chế biến.');
         }
-        await this.taiDuLieuVaCapNhatGiaoDien();
+        await this.taiDuLieu();
+        this.capNhatTrangThaiMonCucBo(idMonChiTiet, 'DANG_CHE_BIEN', banId);
+        this.render();
     }
 
     /**
@@ -1553,19 +1855,30 @@ class DieuPhoiBepModule {
      */
     async batDauNauGomMe(tenMon, size) {
         let soLuongCapNhat = 0;
+        const cacMon = [];
         for (const don of this.danhSachDon) {
             for (const mon of (don.danhSachMon || [])) {
                 if (mon.tenMon === tenMon && (mon.size || '') === (size || '') && (mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN')) {
-                    await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DANG_CHE_BIEN');
+                    this.capNhatTrangThaiMonCucBo(mon.id, 'DANG_CHE_BIEN', don.banId);
+                    cacMon.push({ id: mon.id, banId: don.banId });
                     soLuongCapNhat += Number(mon.soLuong || 1);
                 }
             }
         }
+        this.render();
 
         if (window.thongBao) {
             window.thongBao.thanhCong(`👨‍🍳 Đã bắt đầu nấu mẻ [${tenMon}]`, `Tổng cộng ${soLuongCapNhat} suất cho tất cả các bàn.`);
         }
-        await this.taiDuLieuVaCapNhatGiaoDien();
+
+        for (const item of cacMon) {
+            await window.api.capNhatTrangThaiMonAn(item.id, item.banId, 'DANG_CHE_BIEN');
+        }
+        await this.taiDuLieu();
+        for (const item of cacMon) {
+            this.capNhatTrangThaiMonCucBo(item.id, 'DANG_CHE_BIEN', item.banId);
+        }
+        this.render();
     }
 
     /**
@@ -1573,15 +1886,18 @@ class DieuPhoiBepModule {
      */
     async hoanThanhGomMe(tenMon, size) {
         let soLuongCapNhat = 0;
+        const cacMon = [];
         for (const don of this.danhSachDon) {
             for (const mon of (don.danhSachMon || [])) {
                 if (mon.tenMon === tenMon && (mon.size || '') === (size || '') && 
                     (mon.trangThai === 'DANG_CHE_BIEN' || mon.trangThai === 'CHO_XAC_NHAN' || mon.trangThai === 'CHO_CHE_BIEN')) {
-                    await window.api.capNhatTrangThaiMonAn(mon.id, don.banId, 'DA_XONG');
+                    this.capNhatTrangThaiMonCucBo(mon.id, 'DA_XONG', don.banId);
+                    cacMon.push({ id: mon.id, banId: don.banId });
                     soLuongCapNhat += Number(mon.soLuong || 1);
                 }
             }
         }
+        this.render();
 
         if (this.amThanhBat && window.socketClient) {
             window.socketClient.phatAmThanh('thanhCong');
@@ -1590,7 +1906,15 @@ class DieuPhoiBepModule {
         if (window.thongBao) {
             window.thongBao.thanhCong(`🎉 Mẻ [${tenMon}] đã nấu xong!`, `Đã xong ${soLuongCapNhat} suất. Thông báo đã gửi tới nhân viên phục vụ của tất cả các bàn.`);
         }
-        await this.taiDuLieuVaCapNhatGiaoDien();
+
+        for (const item of cacMon) {
+            await window.api.capNhatTrangThaiMonAn(item.id, item.banId, 'DA_XONG');
+        }
+        await this.taiDuLieu();
+        for (const item of cacMon) {
+            this.capNhatTrangThaiMonCucBo(item.id, 'DA_XONG', item.banId);
+        }
+        this.render();
     }
 
     /* ==========================================================================
@@ -1800,6 +2124,317 @@ class DieuPhoiBepModule {
 
         if (window.thongBao) {
             window.thongBao.thanhCong('Đã tạo đơn thử nghiệm', `Đã thêm đơn mới cho ${donMoi.soBan} với 2 món đang chờ nấu.`);
+        }
+
+        await this.taiDuLieuVaCapNhatGiaoDien();
+    }
+
+    /* ==========================================================================
+       MÔ PHỎNG BẢN LOGIC ĐIỀU PHỐI BẾP TỐI ƯU HIỆU SUẤT (SMART KDS MATRIX)
+       ========================================================================== */
+
+    /**
+     * Mở hộp thoại mô phỏng bản logic điều phối bếp tối ưu hiệu suất
+     */
+    moModalMoPhongToiUu() {
+        const modal = document.getElementById('khung-modal-toan-cuc');
+        if (!modal) return;
+
+        modal.innerHTML = `
+            <div class="hop-thoai-modal" style="max-width: 900px; width: 95%;">
+                <div class="tieu-de-modal" style="background: linear-gradient(135deg, #1E293B, #0F172A); color: #FFF; padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 24px;">⚡</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #F59E0B;">MÔ PHỎNG BẢN LOGIC ĐIỀU PHỐI BẾP TỐI ƯU HIỆU SUẤT</h3>
+                            <p style="margin: 0; font-size: 12px; color: #94A3B8;">Kiến trúc ma trận 3 Trụ Cột: Phân Luồng Trạm • Gom Mẻ Tự Động • Trạm Expo Ra Mâm</p>
+                        </div>
+                    </div>
+                    <button class="nut-dong-modal" style="color: #FFF;" onclick="window.dieuPhoiBepModule.dongModal()">&times;</button>
+                </div>
+
+                <div class="than-modal" style="padding: 20px; max-height: 80vh; overflow-y: auto;">
+                    <!-- 4 CHỈ SỐ ĐỘT PHÁ -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; font-weight: 600; color: #1E40AF; text-transform: uppercase;">⏱️ Thời gian ra món TB</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #1D4ED8; margin: 4px 0;">32p ➔ 12p</div>
+                            <div style="font-size: 11px; color: #059669; font-weight: 700;">⚡ Giảm 62.5% thời gian</div>
+                        </div>
+                        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; font-weight: 600; color: #065F46; text-transform: uppercase;">🏃 Số chuyến bưng bê</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #047857; margin: 4px 0;">18 ➔ 4 chuyến</div>
+                            <div style="font-size: 11px; color: #059669; font-weight: 700;">🚴 Giảm 78% di chuyển</div>
+                        </div>
+                        <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; font-weight: 600; color: #92400E; text-transform: uppercase;">🥘 Công suất giờ cao điểm</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #B45309; margin: 4px 0;">+120%</div>
+                            <div style="font-size: 11px; color: #B45309; font-weight: 700;">🔥 Tối đa sức chứa lò/bếp</div>
+                        </div>
+                        <div style="background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; font-weight: 600; color: #6B21A8; text-transform: uppercase;">🌡️ Chuẩn nhiệt & Nhịp món</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #7E22CE; margin: 4px 0;">100%</div>
+                            <div style="font-size: 11px; color: #059669; font-weight: 700;">🎯 Nước 2p • Món nóng 12p</div>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG SO SÁNH 2 MÔ HÌNH VẬN HÀNH -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                        <!-- MÔ HÌNH CŨ -->
+                        <div style="border: 2px solid #FECACA; background: #FEF2F2; border-radius: 8px; padding: 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                <span style="font-size: 20px;">❌</span>
+                                <h4 style="margin: 0; color: #B91C1C; font-size: 14px; font-weight: 700;">QUY TRÌNH CŨ: THEO BÀN LẺ TẺ (TICKET FIFO)</h4>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #4B5563; line-height: 1.7;">
+                                <li><strong>Nấu manh mún:</strong> Bàn 1 gọi Gà Nướng ➔ Bếp bật lò nướng 1 con. 10 phút sau Bàn 3 gọi Gà Nướng ➔ lại bật lò nướng 1 con riêng. Lãng phí 3 lần công chế biến.</li>
+                                <li><strong>Bếp quá tải & rối mắt:</strong> Đầu bếp nướng phải quét mắt qua 10 thẻ bàn để tìm xem bàn nào có món nướng.</li>
+                                <li><strong>Món ra lệch pha:</strong> Khai vị (khoai chiên) ra xong để 25 phút nguội ngắt khách mới nhận được món nướng.</li>
+                                <li><strong>Phục vụ kiệt sức:</strong> Mỗi đĩa xong bưng 1 lần ➔ chạy vào bếp 18 - 25 chuyến / giờ.</li>
+                            </ul>
+                        </div>
+
+                        <!-- MÔ HÌNH TỐI ƯU MỚI -->
+                        <div style="border: 2px solid #A7F3D0; background: #F0FDF4; border-radius: 8px; padding: 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                <span style="font-size: 20px;">✅</span>
+                                <h4 style="margin: 0; color: #047857; font-size: 14px; font-weight: 700;">LOGIC TỐI ƯU MỚI: MA TRẬN 3 TRỤ CỘT</h4>
+                            </div>
+                            <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #4B5563; line-height: 1.7;">
+                                <li><strong>Trụ Cột 1 - Phân luồng Trạm (Station Routing):</strong> Bếp Nóng (Nướng/Lẩu) • Bếp Nguội (Salad/Gỏi) • Quầy Bar (Nước) độc lập màn hình, đầu bếp chỉ tập trung vào trạm mình.</li>
+                                <li><strong>Trụ Cột 2 - Gom Mẻ Thông Minh (Auto Batching):</strong> Hệ thống tự động gom 3 suất Gà Nướng từ Bàn 1, Bàn 2, Bàn 3 thành 1 mẻ nướng chung ➔ 1 chạm bắt đầu, 1 chạm xong tất cả.</li>
+                                <li><strong>Trụ Cột 3 - Trạm Expo Ra Mâm (Pass Tray):</strong> Món nấu xong chuyển về cửa Expo xếp theo khay trọn mâm ➔ Phục vụ bưng 1 lần đầy đủ cho bàn.</li>
+                                <li><strong>Course Pacing:</strong> Nước ra trong 2 phút, khai vị ra trong 5 phút, món nướng ra sau 12 phút giữ chuẩn độ nóng sốt.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- KHU VỰC CHẠY GIẢ LẬP TRỰC QUAN -->
+                    <div style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #0F172A;">🎮 GIẢ LẬP TRỰC QUAN: 4 BÀN ĐỒNG THỜI GỌI MÓN</h4>
+                                <p style="margin: 0; font-size: 11px; color: #64748B;">Kịch bản: Bàn 01, Bàn 02, Bàn 03, Bàn 05 cùng gọi Gà Nướng, Khoai Tây Chiên & Trà Đào</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="nut nut-chinh nut-nho" id="btn-chay-mo-phong" onclick="window.dieuPhoiBepModule.chayMoPhongSoSanh()">
+                                    ▶️ Chạy Giả Lập So Sánh Tốc Độ
+                                </button>
+                                <button class="nut nut-cam nut-nho" onclick="window.dieuPhoiBepModule.napKichBanMoPhongVaoKDS()">
+                                    📥 Nạp Kịch Bản Này Vào KDS Thật
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- THANH TIẾN ĐỘ SO SÁNH GIẢ LẬP -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                            <!-- TIẾN ĐỘ CŨ -->
+                            <div style="background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                                    <span style="color: #DC2626;">Quy trình cũ (Nấu lẻ từng bàn)</span>
+                                    <span id="so-phut-cu" style="color: #DC2626; font-weight: 700;">0 / 32 phút</span>
+                                </div>
+                                <div style="height: 14px; background: #F1F5F9; border-radius: 7px; overflow: hidden; margin-bottom: 8px;">
+                                    <div id="bar-tien-do-cu" style="height: 100%; width: 0%; background: #EF4444; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div id="trang-thai-cu-text" style="font-size: 11px; color: #64748B; min-height: 32px;">
+                                    ⏳ Bấm "Chạy Giả Lập" để bắt đầu theo dõi tiến độ tuần tự...
+                                </div>
+                            </div>
+
+                            <!-- TIẾN ĐỘ MỚI -->
+                            <div style="background: #FFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 12px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                                    <span style="color: #059669;">Logic tối ưu mới (Phân trạm + Gom mẻ)</span>
+                                    <span id="so-phut-moi" style="color: #059669; font-weight: 700;">0 / 12 phút</span>
+                                </div>
+                                <div style="height: 14px; background: #F1F5F9; border-radius: 7px; overflow: hidden; margin-bottom: 8px;">
+                                    <div id="bar-tien-do-moi" style="height: 100%; width: 0%; background: #10B981; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div id="trang-thai-moi-text" style="font-size: 11px; color: #64748B; min-height: 32px;">
+                                    ⚡ Bấm "Chạy Giả Lập" để theo dõi gom mẻ đa trạm cùng lúc...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chan-modal" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #F8FAFC; border-top: 1px solid #E2E8F0;">
+                    <span style="font-size: 12px; color: #64748B;">💡 Bạn có thể dùng các nút bộ lọc <strong>"🍳 Phân luồng Trạm"</strong> trên thanh công cụ KDS để trải nghiệm ngay.</span>
+                    <button class="nut nut-phu" onclick="window.dieuPhoiBepModule.dongModal()">Đóng cửa sổ</button>
+                </div>
+            </div>
+        `;
+
+        modal.classList.add('mo');
+    }
+
+    /**
+     * Chạy hoạt ảnh giả lập so sánh tốc độ chế biến
+     */
+    chayMoPhongSoSanh() {
+        const barCu = document.getElementById('bar-tien-do-cu');
+        const barMoi = document.getElementById('bar-tien-do-moi');
+        const txtCu = document.getElementById('trang-thai-cu-text');
+        const txtMoi = document.getElementById('trang-thai-moi-text');
+        const phutCu = document.getElementById('so-phut-cu');
+        const phutMoi = document.getElementById('so-phut-moi');
+        const btn = document.getElementById('btn-chay-mo-phong');
+
+        if (!barCu || !barMoi) return;
+        if (btn) btn.disabled = true;
+
+        let phut = 0;
+        const interval = setInterval(() => {
+            phut++;
+
+            // Tiến độ quy trình mới (xong ở phút thứ 12)
+            if (phut <= 12) {
+                const pctMoi = Math.min(100, Math.round((phut / 12) * 100));
+                barMoi.style.width = pctMoi + '%';
+                phutMoi.textContent = `${phut} / 12 phút`;
+
+                if (phut === 2) {
+                    txtMoi.innerHTML = '🍹 <strong>Quầy Bar:</strong> Ra xong 4 ly Trà Đào (Bàn 1, 2, 5) ➔ Khách uống ngay!';
+                } else if (phut === 5) {
+                    txtMoi.innerHTML = '🥗 <strong>Bếp Nguội:</strong> Chiên xong 1 mẻ Khoai Tây Chiên (x4 đĩa) ➔ Bưng khai vị nóng giòn!';
+                } else if (phut === 12) {
+                    txtMoi.innerHTML = '🎉 <strong>Bếp Nóng:</strong> Ra lò mẻ Gà Nướng (x3 con) ➔ Trạm Expo ghép trọn mâm bưng phục vụ!';
+                }
+            }
+
+            // Tiến độ quy trình cũ (kéo dài đến phút thứ 32)
+            if (phut <= 32) {
+                const pctCu = Math.min(100, Math.round((phut / 32) * 100));
+                barCu.style.width = pctCu + '%';
+                phutCu.textContent = `${phut} / 32 phút`;
+
+                if (phut === 8) {
+                    txtCu.innerHTML = '👨‍🍳 Bếp nướng 1 đĩa Gà Bàn 1... Phục vụ chạy chuyến 1.';
+                } else if (phut === 14) {
+                    txtCu.innerHTML = '👨‍🍳 Bếp chiên khoai Bàn 1... Phục vụ chạy chuyến 2.';
+                } else if (phut === 22) {
+                    txtCu.innerHTML = '👨‍🍳 Bếp quay sang nướng Gà Bàn 2... Khách Bàn 3 sốt ruột giục món!';
+                } else if (phut === 32) {
+                    txtCu.innerHTML = '🏁 Bàn 5 mới nhận đủ món cuối cùng. Khoai tây Bàn 2 đã nguội!';
+                }
+            }
+
+            if (phut >= 32) {
+                clearInterval(interval);
+                if (btn) btn.disabled = false;
+            }
+        }, 150);
+    }
+
+    /**
+     * Nạp kịch bản 4 bàn vào KDS thật để người dùng trải nghiệm thực tế
+     */
+    async napKichBanMoPhongVaoKDS() {
+        const monGa = this.danhSachMonThucDon.find(m => m.tenMon && m.tenMon.includes('Gà Nướng')) || { id: 1, tenMon: 'Gà Nướng Ống Tre Tây Bắc', giaBan: 245000, danhMucId: 2 };
+        const monKhoai = this.danhSachMonThucDon.find(m => m.tenMon && m.tenMon.includes('Khoai tây')) || { id: 5, tenMon: 'Khoai tây chiên lắc phô mai', giaBan: 45000, danhMucId: 1 };
+        const monTra = this.danhSachMonThucDon.find(m => m.tenMon && m.tenMon.includes('Trà đào')) || { id: 4, tenMon: 'Trà đào cam sả', giaBan: 39000, danhMucId: 6 };
+        const monBo = this.danhSachMonThucDon.find(m => m.tenMon && m.tenMon.includes('Bò nướng')) || { id: 2, tenMon: 'Bò nướng tảng sốt tiêu đen', giaBan: 189000, danhMucId: 3 };
+
+        const thoiGian = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const gio = new Date().toISOString();
+
+        const taoMonItem = (id, monObj, qty, note = '') => ({
+            id,
+            monId: monObj.id,
+            tenMon: monObj.tenMon,
+            danhMucId: monObj.danhMucId,
+            size: 'Tiêu chuẩn',
+            topping: '',
+            donGia: monObj.giaBan || 100000,
+            soLuong: qty,
+            thanhTien: (monObj.giaBan || 100000) * qty,
+            ghiChu: note,
+            trangThai: 'CHO_XAC_NHAN',
+            thoiGianCapNhat: thoiGian
+        });
+
+        const don1 = {
+            id: 8001,
+            maDon: 'ORD-SIM-01',
+            banId: 1,
+            soBan: 'Bàn 01',
+            khuVucTen: 'Tầng 1 (Máy lạnh)',
+            luotGoi: 1,
+            thoiGianTao: gio,
+            ghiChuDon: 'Mô phỏng tối ưu KDS',
+            danhSachMon: [
+                taoMonItem(8101, monGa, 1, 'Chín vàng da giòn'),
+                taoMonItem(8102, monKhoai, 1, 'Chiên giòn'),
+                taoMonItem(8103, monTra, 1, 'Ít ngọt')
+            ]
+        };
+
+        const don2 = {
+            id: 8002,
+            maDon: 'ORD-SIM-02',
+            banId: 2,
+            soBan: 'Bàn 02',
+            khuVucTen: 'Tầng 1 (Máy lạnh)',
+            luotGoi: 1,
+            thoiGianTao: gio,
+            ghiChuDon: '',
+            danhSachMon: [
+                taoMonItem(8104, monGa, 1),
+                taoMonItem(8105, monBo, 1, 'Chín vừa (Medium)'),
+                taoMonItem(8106, monTra, 2)
+            ]
+        };
+
+        const don3 = {
+            id: 8003,
+            maDon: 'ORD-SIM-03',
+            banId: 3,
+            soBan: 'Bàn 03',
+            khuVucTen: 'Tầng 2 (Sân vườn)',
+            luotGoi: 1,
+            thoiGianTao: gio,
+            ghiChuDon: '',
+            danhSachMon: [
+                taoMonItem(8107, monKhoai, 2),
+                taoMonItem(8108, monGa, 1)
+            ]
+        };
+
+        const don5 = {
+            id: 8005,
+            maDon: 'ORD-SIM-05',
+            banId: 5,
+            soBan: 'Bàn 05',
+            khuVucTen: 'Tầng 2 (Sân vườn)',
+            luotGoi: 1,
+            thoiGianTao: gio,
+            ghiChuDon: '',
+            danhSachMon: [
+                taoMonItem(8109, monBo, 1),
+                taoMonItem(8110, monKhoai, 1),
+                taoMonItem(8111, monTra, 1)
+            ]
+        };
+
+        // Ghi vào localStorage & đồng bộ
+        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+        let ds = raw ? JSON.parse(raw) : [];
+        ds = ds.filter(d => !String(d.maDon).startsWith('ORD-SIM-') && d.id !== 8001 && d.id !== 8002 && d.id !== 8003 && d.id !== 8005);
+        ds.push(don1, don2, don3, don5);
+        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(ds));
+
+        this.dongModal();
+
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('order:moi', don1);
+        }
+
+        if (window.thongBao) {
+            window.thongBao.thanhCong(
+                '⚡ Đã nạp kịch bản mô phỏng 4 bàn!',
+                'Bàn 01, Bàn 02, Bàn 03, Bàn 05 đã sẵn sàng trên KDS. Bạn có thể bấm sang Tab "Gom Món" hoặc dùng bộ lọc "Trạm chế biến" để trải nghiệm!'
+            );
         }
 
         await this.taiDuLieuVaCapNhatGiaoDien();

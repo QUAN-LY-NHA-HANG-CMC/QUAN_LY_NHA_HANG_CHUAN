@@ -22,6 +22,7 @@ async function chayKiemThuSprint3() {
 
     // Lấy bàn 3 để thực hiện trọn vẹn kịch bản từ Gọi món -> Lập hóa đơn -> Thanh toán
     const banTest = await banAnModel.layTheoId(3);
+    const tokenBanDau = banTest.tokenBaoMat;
     console.log(`📌 Bàn thử nghiệm: ID = ${banTest.id}, Tên = "${banTest.tenBan}", Khu vực = ${banTest.khuVucId}\n`);
 
     // -------------------------------------------------------------
@@ -258,7 +259,7 @@ async function chayKiemThuSprint3() {
     const banSauThanhToan = await banAnModel.layTheoId(banTest.id);
     ghiKetQua(
         'Tự động đóng phiên và giải phóng bàn về "Bàn trống" (US-109, US-110)',
-        banSauThanhToan.trangThai === 'Trong' && banSauThanhToan.tokenBaoMat !== banTest.tokenBaoMat,
+        banSauThanhToan.trangThai === 'Trong' && banSauThanhToan.tokenBaoMat !== tokenBanDau,
         `Trạng thái bàn hiện tại: '${banSauThanhToan.trangThai}', Token QR đã được làm mới an toàn`
     );
 
@@ -266,7 +267,17 @@ async function chayKiemThuSprint3() {
     // PHẦN 7: TẠO MÃ VIETQR ĐỘNG VÀ XÁC NHẬN CHUYỂN KHOẢN (US-106, 107)
     // -------------------------------------------------------------
     console.log('\n--- [PHẦN 7: THANH TOÁN CHUYỂN KHOẢN VIETQR ĐỘNG (US-106, 107)] ---');
-    // Lấy Hóa đơn 1 mẫu trong CSDL để test thanh toán VietQR
+    // Đảm bảo Bàn 1 có đơn để test VietQR
+    const donBan1 = await donGoiMonService.layDonCuaBan(1);
+    if (!donBan1 || !donBan1.danhSachDon || donBan1.danhSachDon.length === 0) {
+        await donGoiMonService.taoDonGoiMon({
+            banId: 1,
+            ghiChuDon: 'Đơn test VietQR',
+            danhSachMon: [
+                { monId: 1, tenMon: 'Bò nướng tảng sốt tiêu đen', donGia: 189000, soLuong: 2 }
+            ]
+        });
+    }
     const hoaDonVietQr = await hoaDonService.tongHopHoaDonTuBan(1, { thueVatPhanTram: 8 });
     const ketQuaVietQr = await thanhToanService.taoMaVietQrChoHoaDon(hoaDonVietQr.id);
 

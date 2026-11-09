@@ -21,8 +21,21 @@ class UngDungFrontend {
             }
         } catch (e) {}
 
-        // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu máy chưa đăng nhập
-        if (window.api && !window.api.layAccessToken()) {
+        // Đọc URL path, search params và hash để xác định trang và chế độ
+        const pathname = window.location.pathname.toLowerCase();
+        const searchParams = new URLSearchParams(window.location.search);
+        const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+        const hashTab = hash.includes('?') ? hash.split('?')[0] : hash;
+        const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
+
+        const coBanParam = searchParams.has('ban') || searchParams.has('banId') || searchParams.has('maBan') ||
+                           hashParams.has('ban') || hashParams.has('banId') || hashParams.has('maBan');
+        const laDuongDanEMenu = pathname.includes('/e-menu') || pathname.includes('/menu') || 
+                                hash.startsWith('e-menu') || hash.startsWith('emenukhachhang');
+        const laKhach = laDuongDanEMenu || coBanParam;
+
+        // Tự động khởi tạo phiên người dùng mặc định (Phong - Quản lý) nếu là màn hình quản trị nội bộ
+        if (!laKhach && window.api && !window.api.layAccessToken()) {
             await window.api.dangNhap('quanly', '123456');
         }
 
@@ -41,15 +54,10 @@ class UngDungFrontend {
         this.ganSuKienDieuHuong();
 
         // Khởi tạo thành phần Hỗ trợ & Thanh toán tại bàn (Sprint 2 - Phong)
+        const banIdDau = searchParams.get('banId') || hashParams.get('banId') || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
         if (window.hoTroTaiBan) {
-            window.hoTroTaiBan.khoiTao(3);
+            window.hoTroTaiBan.khoiTao(Number(banIdDau));
         }
-
-        // Đọc URL path, search params và hash để xác định trang cần mở
-        const pathname = window.location.pathname.toLowerCase();
-        const searchParams = new URLSearchParams(window.location.search);
-        const hash = (window.location.hash || '').replace('#', '').trim().toLowerCase();
-        const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
 
         const banDoTab = {
             'so-do-ban-pos': 'posThuNgan',
@@ -80,16 +88,15 @@ class UngDungFrontend {
             'sprint4': 'baoCao'
         };
 
-        const coBanParam = searchParams.has('ban') || searchParams.has('banId') || searchParams.has('maBan') ||
-                           hashParams.has('ban') || hashParams.has('banId') || hashParams.has('maBan');
-        const laDuongDanEMenu = pathname.includes('/e-menu') || pathname.includes('/menu') || 
-                                hash.startsWith('e-menu') || hash.startsWith('emenukhachhang');
-
-        if (laDuongDanEMenu || coBanParam) {
-            this.tabHienTai = 'eMenuKhachHang';
+        if (laKhach) {
             this.batCheDoKhachHang(true);
-        } else if (hash && banDoTab[hash]) {
-            this.tabHienTai = banDoTab[hash];
+            if (hashTab && banDoTab[hashTab]) {
+                this.tabHienTai = banDoTab[hashTab];
+            } else {
+                this.tabHienTai = 'eMenuKhachHang';
+            }
+        } else if (hashTab && banDoTab[hashTab]) {
+            this.tabHienTai = banDoTab[hashTab];
         }
 
         // Nạp trang mặc định
@@ -201,6 +208,9 @@ class UngDungFrontend {
         // Hủy interval đồng hồ của KDS nếu chuyển sang tab khác
         if (tab !== 'dieuPhoiBep' && window.dieuPhoiBepModule) {
             window.dieuPhoiBepModule.huyDongHo();
+        }
+        if (tab !== 'theoDoiDonMon' && window.theoDoiDonMonModule && window.theoDoiDonMonModule.dungTuDongDongBo) {
+            window.theoDoiDonMonModule.dungTuDongDongBo();
         }
 
         this.tabHienTai = tab;

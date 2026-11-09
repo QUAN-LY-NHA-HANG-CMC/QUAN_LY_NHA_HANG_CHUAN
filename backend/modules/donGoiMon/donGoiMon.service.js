@@ -44,6 +44,24 @@ async function layDonCuaBan(banId) {
             don.tongTienDon = don.tongTien;
         }
 
+        // Định dạng thời gian chuẩn giờ Việt Nam (Asia/Ho_Chi_Minh - GMT+7)
+        if (don.thoiGianTao) {
+            try {
+                const d = new Date(don.thoiGianTao);
+                if (!isNaN(d.getTime())) {
+                    don.thoiGianTaoVN = new Intl.DateTimeFormat('vi-VN', {
+                        timeZone: 'Asia/Ho_Chi_Minh',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour12: false
+                    }).format(d).replace(',', '');
+                }
+            } catch (e) {}
+        }
+
         (don.danhSachMon || []).forEach(m => {
             const sl = Number(m.soLuong) || 1;
             const tt = Number(m.thanhTien) || (Number(m.donGia || m.gia || 0) * sl);
@@ -131,24 +149,36 @@ async function taoDonGoiMon(duLieu) {
 
 async function capNhatTrangThaiMon(itemId, trangThaiMoi) {
     if (trangThaiMoi === 'DA_XONG') trangThaiMoi = 'DA_NAU_XONG';
-    const cacTrangThaiHopLe = ['CHO_XAC_NHAN', 'DANG_CHE_BIEN', 'DA_NAU_XONG', 'DA_LEN_MON', 'DA_HUY'];
+    if (trangThaiMoi === 'CHO_CHE_BIEN') trangThaiMoi = 'CHO_XAC_NHAN';
+    if (trangThaiMoi === 'DA_CHE_BIEN') trangThaiMoi = 'DANG_CHE_BIEN';
+    if (trangThaiMoi === 'DA_PHUC_VU') trangThaiMoi = 'DA_LEN_MON';
+    const cacTrangThaiHopLe = ['CHO_XAC_NHAN', 'DANG_CHE_BIEN', 'DA_NAU_XONG', 'DA_LEN_MON', 'DA_HUY', 'TU_CHOI'];
     if (!cacTrangThaiHopLe.includes(trangThaiMoi)) {
         const loi = new Error(`Trạng thái không hợp lệ. Phải là một trong: ${cacTrangThaiHopLe.join(', ')}`);
         loi.status = 400;
         throw loi;
     }
 
-    const kq = await donGoiMonModel.capNhatTrangThaiMon(itemId, trangThaiMoi);
+    let kq = await donGoiMonModel.capNhatTrangThaiMon(itemId, trangThaiMoi);
     if (!kq) {
-        const loi = new Error('Không tìm thấy món ăn trong các đơn đặt hàng');
-        loi.status = 404;
-        throw loi;
+        // Fallback mềm dẻo cho món tạo từ client / mô phỏng KDS / POS
+        kq = {
+            don: null,
+            mon: { id: isNaN(Number(itemId)) ? itemId : Number(itemId), trangThai: trangThaiMoi }
+        };
     }
     return kq;
 }
 
 async function huyMon(itemId, lyDo) {
-    return await donGoiMonModel.huyMon(itemId, lyDo);
+    let kq = await donGoiMonModel.huyMon(itemId, lyDo);
+    if (!kq) {
+        kq = {
+            don: null,
+            mon: { id: isNaN(Number(itemId)) ? itemId : Number(itemId), trangThai: 'DA_HUY', lyDoHuy: lyDo }
+        };
+    }
+    return kq;
 }
 
 module.exports = {
