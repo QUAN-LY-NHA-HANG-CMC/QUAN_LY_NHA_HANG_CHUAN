@@ -147,6 +147,9 @@
                     </div>
 
                     <div style="display: flex; gap: 8px; align-items: center;">
+                        <button type="button" class="nut nut-nho" style="background: #dc2626; color: #fff; font-weight: 700; border: 1px solid #b91c1c; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);" onclick="window.tienIchTest.moModalResetTest()" title="Xóa và dọn sạch dữ liệu test (Bàn, Đơn, Bếp KDS, Hóa đơn, Ca quỹ) để test lại">
+                            🧹 Reset Test
+                        </button>
                         <button class="nut nut-phu nut-nho" onclick="window.ungDung.chuyenTab('hoSoCaNhan')" title="Xem và cập nhật thông tin cá nhân">
                             👤 <span id="head-user-name">Quản Trị Viên</span>
                         </button>
@@ -177,6 +180,7 @@
     <script src="./dungChung/api.js"></script>
     <script src="./dungChung/ketNoiSocket.js"></script>
     <script src="./thanhPhan/thongBao.js"></script>
+    <script src="./dungChung/tienIchTest.js"></script>
     <!-- Phân hệ Định tuyến & Router Guard (Phong - Sprint 1) -->
     <script src="./dinhTuyen/boDieuHuong.js"></script>
     <!-- Phân hệ Quản trị, Xác thực & Nhân sự (Phong - Sprint 1) -->

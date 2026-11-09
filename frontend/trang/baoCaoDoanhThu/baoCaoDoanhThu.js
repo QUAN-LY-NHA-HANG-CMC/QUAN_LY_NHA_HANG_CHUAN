@@ -98,6 +98,9 @@ class BaoCaoDoanhThuModule {
                         <p class="van-ban-mo">Theo dõi KPIs vận hành, doanh thu theo ca/ngày, đối soát lịch sử hóa đơn và phân tích kinh doanh</p>
                     </div>
                     <div class="nhom-nut-hanh-dong">
+                        <button type="button" class="nut nut-phu" style="color: #dc2626; border-color: #dc2626; font-weight: 600;" onclick="window.tienIchTest.xoaLichSuHoaDonTest()" title="Xóa toàn bộ hóa đơn test để đưa báo cáo về 0">
+                            🧹 Xóa hóa đơn test
+                        </button>
                         <button id="btnXuatCsvDoanhThu" class="nut nut-phu" title="Xuất báo cáo doanh thu ra file Excel/CSV">
                             <i class="fas fa-file-excel text-success"></i> Xuất Báo Cáo CSV (US-133)
                         </button>
@@ -381,12 +384,9 @@ class BaoCaoDoanhThuModule {
         const d = this.duLieuBaoCao?.huyMon || {};
         const tongThatThoat = d.giaTriHuy || d.tongThatThoat || 0;
         const soLuongHuy = d.soMonHuy || (d.dsHuy ? d.dsHuy.length : 0);
-        const tyLeHuy = d.tyLeHuy || '0%';
+        const tyLeHuy = d.tyLeHuy || '0';
         const lyDoList = d.lyDoHuyList || [];
-        const dsHuy = d.dsHuy || [
-            { thoiGian: '2026-11-02 11:45', soBan: 'Bàn 04', tenMon: 'Nem lụi nướng mía', soLuong: 1, thanhTien: 85000, lyDoHuy: 'Khách đổi ý muốn đổi món khác', nguoiHuy: 'Thu ngân' },
-            { thoiGian: '2026-11-02 18:20', soBan: 'Bàn 02', tenMon: 'Cá quả nướng giấy bạc', soLuong: 1, thanhTien: 100000, lyDoHuy: 'Bếp hết nguyên liệu trong ngày', nguoiHuy: 'Đầu bếp' }
-        ];
+        const dsHuy = (d.dsHuy && Array.isArray(d.dsHuy)) ? d.dsHuy : [];
 
         return `
             <div class="hop-kiem-soat-huy mb-4">
@@ -879,7 +879,7 @@ class BaoCaoDoanhThuModule {
                     <title>${d.ngay}: ${this.dinhDangTien(d.doanhThu)} (${d.soDon} đơn)</title>
                     <rect x="${x}" y="${y}" width="${colW}" height="${h}" rx="4" fill="#0d6efd" class="rect-cot"></rect>
                     <text x="${x + colW / 2}" y="${y - 6}" font-size="10" text-anchor="middle" fill="#0d6efd" font-weight="bold">${valLabel}</text>
-                    <text x="${x + colW / 2}" y="${labelY}" font-size="11" text-anchor="middle" fill="#6c757d">${d.ngay.substring(5)}</text>
+                    <text x="${x + colW / 2}" y="${labelY}" font-size="11" text-anchor="middle" fill="#6c757d">${d.nhan || d.ngay}</text>
                 </g>
             `;
         }).join('');

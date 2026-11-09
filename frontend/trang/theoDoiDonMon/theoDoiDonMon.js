@@ -370,6 +370,9 @@ class TheoDoiDonMonModule {
                         <button type="button" class="nut-mini-test nut-test-nhan-vien" onclick="window.theoDoiDonMonModule.giaLapNhanVienTiepNhan()">
                             🏃 NV tiếp nhận hỗ trợ (US-074)
                         </button>
+                        <button type="button" class="nut-mini-test" style="background: #fee2e2; border-color: #ef4444; color: #b91c1c; font-weight: 700;" onclick="window.tienIchTest.xoaDonBan(${this.banIdHienTai})" title="Hủy toàn bộ đơn test của bàn này và đưa bàn về Trống">
+                            🗑️ Xóa đơn bàn này
+                        </button>
                     </div>
                 </div>
                 ` : ''}

@@ -226,6 +226,9 @@ class UngDungFrontend {
             'phanQuyen': 'phan-quyen',
             'cauHinhHeThong': 'cau-hinh',
             'posThuNgan': 'pos',
+            'thanhToanPos': 'thanh-toan-pos',
+            'danhGiaDichVu': 'danh-gia',
+            'caLamViec': 'ca-lam-viec',
             'baoCao': 'bao-cao'
         };
         if (banDoHash[tab] && window.location.hash !== '#' + banDoHash[tab]) {

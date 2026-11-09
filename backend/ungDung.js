@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 
@@ -147,6 +148,77 @@ ungDung.use('/api/thanh-toan', thanhToanModule.router);
 ungDung.use('/api/danh-gia', danhGiaModule.router);
 ungDung.use('/api/ca-lam-viec', caLamViecModule.router);
 ungDung.use('/api/bao-cao', baoCaoModule.router);
+
+// API TIỆN ÍCH KIỂM THỬ & DỌN DẸP DỮ LIỆU TEST (Hỗ trợ reset nhanh cả SQL và JSON)
+ungDung.post(['/api/kiem-thu/reset', '/api/kiem-thu/xoa-du-lieu-test'], (req, res) => {
+    try {
+        const phanHe = req.body?.phanHe || 'ALL';
+        const DUONG_DAN_SQLITE = path.join(__dirname, '../database/quan_ly_nha_hang.sqlite');
+        const THU_MUC_DU_LIEU = path.join(__dirname, 'duLieu');
+
+        // 1. Reset các tệp JSON lưu trữ
+        if (phanHe === 'ALL' || phanHe === 'BAN' || phanHe === 'BEP') {
+            const donGoiPath = path.join(THU_MUC_DU_LIEU, 'donGoiMon.json');
+            fs.writeFileSync(donGoiPath, JSON.stringify([], null, 2), 'utf8');
+
+            const banAnPath = path.join(THU_MUC_DU_LIEU, 'banAn.json');
+            if (fs.existsSync(banAnPath)) {
+                try {
+                    const dsBan = JSON.parse(fs.readFileSync(banAnPath, 'utf8'));
+                    if (Array.isArray(dsBan)) {
+                        dsBan.forEach(b => {
+                            b.trangThai = 'Trong';
+                            b.daPhatSinhGiaoDich = false;
+                            b.ngayCapNhat = new Date().toISOString();
+                        });
+                        fs.writeFileSync(banAnPath, JSON.stringify(dsBan, null, 2), 'utf8');
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // 2. Reset trong CSDL SQLite nếu có
+        if (fs.existsSync(DUONG_DAN_SQLITE)) {
+            try {
+                const { DatabaseSync } = require('node:sqlite');
+                const db = new DatabaseSync(DUONG_DAN_SQLITE);
+                db.exec('PRAGMA foreign_keys = OFF;');
+
+                if (phanHe === 'ALL') {
+                    const cacBang = [
+                        'chi_tiet_don_hang', 'chi_tiet_don_hang_tuy_chon', 'don_hang', 'phien_phuc_vu',
+                        'chi_tiet_hoa_don', 'hoa_don_khuyen_mai', 'giao_dich_thanh_toan', 'hoa_don',
+                        'hang_doi_bep', 'lich_su_mon_bep', 'yeu_cau_ho_tro_ban', 'yeu_cau_huy_tra_mon',
+                        'ca_lam_viec', 'bien_ban_giao_ca', 'phieu_thu_chi_ca', 'gio_hang_item', 'gio_hang'
+                    ];
+                    for (const b of cacBang) {
+                        try { db.exec(`DELETE FROM ${b};`); } catch (err) {}
+                    }
+                    try { db.exec("UPDATE ban_an SET trang_thai = 'TRONG';"); } catch (err) {}
+                } else if (phanHe === 'BAN') {
+                    try { db.exec("DELETE FROM chi_tiet_don_hang; DELETE FROM don_hang; DELETE FROM phien_phuc_vu; UPDATE ban_an SET trang_thai = 'TRONG';"); } catch (err) {}
+                } else if (phanHe === 'BEP') {
+                    try { db.exec("DELETE FROM hang_doi_bep; DELETE FROM lich_su_mon_bep;"); } catch (err) {}
+                } else if (phanHe === 'HOA_DON') {
+                    try { db.exec("DELETE FROM chi_tiet_hoa_don; DELETE FROM hoa_don_khuyen_mai; DELETE FROM giao_dich_thanh_toan; DELETE FROM hoa_don;"); } catch (err) {}
+                } else if (phanHe === 'CA') {
+                    try { db.exec("DELETE FROM ca_lam_viec; DELETE FROM bien_ban_giao_ca; DELETE FROM phieu_thu_chi_ca;"); } catch (err) {}
+                }
+
+                db.exec('PRAGMA foreign_keys = ON;');
+            } catch (sqlErr) {
+                console.warn('Lỗi khi dọn dẹp SQLite trong API reset:', sqlErr.message);
+            }
+        }
+
+        return res.json({
+            ok: true,
+            msg: `Đã làm sạch dữ liệu kiểm thử phân hệ [${phanHe}] thành công!`
+        });
+    } catch (e) {
+        return res.status(500).json({ ok: false, msg: 'Lỗi khi làm sạch dữ liệu kiểm thử: ' + e.message });
+    }
+});
 
 // Phục vụ giao diện E-Menu Gọi món QR & Single Page Application (SPA)
 ungDung.get(['/e-menu', '/e-menu/*', '/menu', '/menu/*', '/theo-doi-don', '/bep-kds', '/pos'], (req, res) => {

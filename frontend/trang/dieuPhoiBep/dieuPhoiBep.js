@@ -445,6 +445,9 @@ class DieuPhoiBepModule {
                         <button class="nut nut-phu nut-nho" onclick="window.dieuPhoiBepModule.taoDonHangMauTest()" title="Tạo thêm 1 đơn đặt món mới để test hiển thị FIFO và cảnh báo">
                             ➕ Thêm đơn test
                         </button>
+                        <button class="nut nut-phu nut-nho" style="color: #dc2626; border-color: #dc2626; font-weight: 600;" onclick="window.tienIchTest.resetBepKds()" title="Xóa toàn bộ các đơn đang chờ nấu / chế biến trên màn hình bếp KDS">
+                            🧹 Xóa sạch đơn bếp
+                        </button>
                     </div>
                 </div>
 
@@ -882,6 +885,9 @@ class DieuPhoiBepModule {
                         <div class="kds-fifo-badge" title="Thứ tự nhận đơn theo chuẩn FIFO (First-In, First-Out)">
                             ${this.kieuSapXep === 'FIFO' ? `#FIFO ${viTri + 1}` : `#${viTri + 1}`}
                         </div>
+                        <button type="button" class="nut nut-phu nut-sieu-nho" style="color: #dc2626; border-color: #fca5a5; padding: 2px 6px; font-size: 11px; margin-left: 6px; cursor: pointer;" onclick="window.tienIchTest.xoaDonKds('${don.id || don.maDon}')" title="Xóa bỏ đơn test này khỏi màn hình bếp">
+                            🗑️ Xóa
+                        </button>
                     </div>
 
                     <div class="kds-card-info-row">

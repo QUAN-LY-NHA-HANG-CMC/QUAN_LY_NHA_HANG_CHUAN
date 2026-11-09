@@ -128,6 +128,36 @@ class ThanhToanPosModule {
         const ds = this.layLichSuHoaDon();
         ds.unshift(hd);
         localStorage.setItem('quanmoc_pos_lich_su_hoa_don', JSON.stringify(ds));
+
+        // Đồng bộ trực tiếp vào kho lưu trữ hóa đơn dùng chung (quanmoc_ds_hoa_don)
+        try {
+            const rawAll = localStorage.getItem('quanmoc_ds_hoa_don');
+            let dsAll = rawAll ? JSON.parse(rawAll) : [];
+            if (!dsAll.some(h => h.maHoaDon === hd.maHoaDon)) {
+                dsAll.unshift({
+                    id: hd.id || hd.maHoaDon,
+                    maHoaDon: hd.maHoaDon,
+                    banSo: hd.soBan,
+                    soBan: hd.soBan,
+                    caId: hd.caId || null,
+                    maCa: hd.maCa || null,
+                    thoiGianThanhToan: hd.thoiGianThanhToan || new Date().toISOString(),
+                    thoiGian: hd.thoiGianThanhToan || new Date().toISOString(),
+                    tamTinh: hd.tongTienMon || hd.tamTinh || hd.tongThanhToan,
+                    giamGia: hd.giamGia || 0,
+                    vat: hd.vat || 0,
+                    tongThanhToan: hd.tongThanhToan,
+                    tongTien: hd.tongThanhToan,
+                    phuongThuc: hd.phuongThuc || 'TIEN_MAT',
+                    thuNganTen: hd.thuNgan || 'Quân (Thu ngân POS)',
+                    thuNgan: hd.thuNgan || 'Quân (Thu ngân POS)',
+                    danhSachMon: hd.danhSachMon || []
+                });
+                localStorage.setItem('quanmoc_ds_hoa_don', JSON.stringify(dsAll));
+            }
+        } catch (e) {
+            console.warn('Lỗi đồng bộ vào quanmoc_ds_hoa_don:', e);
+        }
     }
 
     async khoiTao() {
@@ -150,6 +180,9 @@ class ThanhToanPosModule {
                         <p class="mo-ta-phu">In hóa đơn K80, Chiết khấu/Voucher, VietQR Động Napas 247, Tách Bill</p>
                     </div>
                     <div class="nhom-nut-hanh-dong-pos">
+                        <button class="nut nut-phu" style="color: #dc2626; border-color: #dc2626; font-weight: 600;" onclick="window.tienIchTest.xoaLichSuHoaDonTest()" title="Xóa toàn bộ hóa đơn test đã thanh toán để kiểm tra lại">
+                            🧹 Xóa bill test
+                        </button>
                         <button class="nut nut-phu" onclick="window.ungDung.chuyenTab('soDoBanPos')">
                             🗺️ Về Sơ đồ bàn
                         </button>
@@ -216,13 +249,17 @@ class ThanhToanPosModule {
                                 );
                                 if (monDaCo) {
                                     if (m.trangThai) monDaCo.trangThai = m.trangThai;
+                                    if (m.soLuong && m.soLuong > monDaCo.soLuong) monDaCo.soLuong = m.soLuong;
+                                    if (!monDaCo.donGia && (m.donGia || m.giaBan)) monDaCo.donGia = m.donGia || m.giaBan;
+                                    monDaCo.thanhTien = Number(m.thanhTien) || (Number(monDaCo.donGia || 0) * Number(monDaCo.soLuong || 1));
                                 } else {
                                     phienLocal[bId].danhSachMon.push({
                                         id: m.id || Date.now() + Math.random(),
                                         monAnId: m.monAnId || m.monId,
                                         tenMon: m.tenMon,
                                         soLuong: m.soLuong || 1,
-                                        donGia: m.donGia || 0,
+                                        donGia: m.donGia || m.giaBan || 0,
+                                        thanhTien: Number(m.thanhTien) || (Number(m.donGia || m.giaBan || 0) * Number(m.soLuong || 1)),
                                         tuyChon: m.tuyChon || '',
                                         ghiChu: m.ghiChu || '',
                                         trangThai: m.trangThai || 'CHO_CHE_BIEN'
@@ -403,7 +440,7 @@ class ThanhToanPosModule {
             danhSachMonHtml = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--mau-chu-phu);">Bàn chưa gọi món nào.</td></tr>';
         } else {
             cacMonHopLe.forEach((m, idx) => {
-                const thanhTien = m.donGia * m.soLuong;
+                const thanhTien = Number(m.thanhTien) || (Number(m.donGia || 0) * Number(m.soLuong || 1));
                 danhSachMonHtml += `
                     <tr>
                         <td style="text-align: center;">${idx + 1}</td>
@@ -730,12 +767,13 @@ class ThanhToanPosModule {
         const tenThuNgan = user ? user.hoTen : 'Quân (Thu ngân)';
 
         let dongMonHtml = '';
-        phien.danhSachMon.filter(m => m.trangThai !== 'DA_HUY').forEach((m, idx) => {
+        phien.danhSachMon.filter(m => m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI').forEach((m, idx) => {
+            const thanhTien = Number(m.thanhTien) || (Number(m.donGia || 0) * Number(m.soLuong || 1));
             dongMonHtml += `
                 <tr>
                     <td>${idx + 1}. ${m.tenMon} ${m.tuyChon ? `(${m.tuyChon})` : ''}</td>
                     <td style="text-align: center;">${m.soLuong}</td>
-                    <td style="text-align: right;">${(m.donGia * m.soLuong).toLocaleString()}</td>
+                    <td style="text-align: right;">${thanhTien.toLocaleString()}</td>
                 </tr>
             `;
         });
@@ -860,7 +898,7 @@ class ThanhToanPosModule {
         modal.classList.add('mo');
     }
 
-    xacNhanTachMon(banId) {
+    async xacNhanTachMon(banId) {
         const cacMonChon = Array.from(document.querySelectorAll('input[name="mon-tach-chon"]:checked')).map(cb => parseInt(cb.value));
 
         if (cacMonChon.length === 0) {
@@ -878,11 +916,20 @@ class ThanhToanPosModule {
         this.luuTatCaPhienBan(dsPhien);
 
         // Tạo hóa đơn tách và lưu lịch sử
-        const tongTienTach = cacMonBiTach.reduce((sum, m) => sum + (m.donGia * m.soLuong), 0);
+        const tongTienTach = cacMonBiTach.reduce((sum, m) => sum + (Number(m.thanhTien) || (Number(m.donGia || 0) * Number(m.soLuong || 1))), 0);
         const maHdTach = `HD-SPLIT-${Date.now().toString().slice(-6)}`;
+        let caDangMoTach = null;
+        try {
+            if (window.api && window.api.layCaHienTai) caDangMoTach = await window.api.layCaHienTai();
+        } catch (e) {}
+
         this.luuHoaDon({
             maHoaDon: maHdTach,
             soBan: `Bàn ${banId} (Tách bill)`,
+            banId: Number(banId),
+            caId: caDangMoTach ? caDangMoTach.id : null,
+            maCa: caDangMoTach ? caDangMoTach.maCa : null,
+            thoiDiemThanhToan: Date.now(),
             thoiGianVao: phien.thoiGianBatDau,
             thoiGianThanhToan: new Date().toISOString(),
             tongTienMon: tongTienTach,
@@ -891,7 +938,8 @@ class ThanhToanPosModule {
             vat: 0,
             tongThanhToan: tongTienTach,
             phuongThuc: 'TIEN_MAT',
-            thuNgan: 'Quân (Thu ngân)'
+            thuNgan: caDangMoTach ? caDangMoTach.thuNganTen : 'Quân (Thu ngân)',
+            danhSachMon: cacMonBiTach
         });
 
         window.soDoBanPos.dongModal();
@@ -921,9 +969,18 @@ class ThanhToanPosModule {
 
         // 1. Lưu hóa đơn vào lịch sử (US-107)
         const user = window.api ? window.api.layThongTinNguoiDung() : null;
+        let caDangMo = null;
+        try {
+            if (window.api && window.api.layCaHienTai) caDangMo = await window.api.layCaHienTai();
+        } catch (e) {}
+
         this.luuHoaDon({
             maHoaDon: maHoaDon,
             soBan: ban.soBan,
+            banId: Number(banId),
+            caId: caDangMo ? caDangMo.id : null,
+            maCa: caDangMo ? caDangMo.maCa : null,
+            thoiDiemThanhToan: Date.now(),
             thoiGianVao: phien.thoiGianBatDau,
             thoiGianThanhToan: new Date().toISOString(),
             tongTienMon: tinhTien.tienMon,
@@ -932,12 +989,43 @@ class ThanhToanPosModule {
             vat: tinhTien.tienVat,
             tongThanhToan: tinhTien.tongThanhToan,
             phuongThuc: this.phuongThucThanhToan,
-            thuNgan: user ? user.hoTen : 'Quân (Thu ngân)'
+            thuNgan: user ? user.hoTen : (caDangMo ? caDangMo.thuNganTen : 'Quân (Thu ngân)'),
+            danhSachMon: phien.danhSachMon || []
         });
 
         // 2. Đóng phiên phục vụ bàn (US-109)
         delete dsPhien[banId];
         this.luuTatCaPhienBan(dsPhien);
+
+        // ĐỒNG BỘ: Đánh dấu tất cả đơn đặt món của bàn thành DA_THANH_TOAN để không hồi sinh bàn ảo
+        try {
+            const rawDon = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
+            if (rawDon) {
+                let dsDon = JSON.parse(rawDon);
+                if (Array.isArray(dsDon)) {
+                    let coDoi = false;
+                    dsDon.forEach(d => {
+                        if (Number(d.banId) === Number(banId)) {
+                            d.trangThai = 'DA_THANH_TOAN';
+                            d.daThanhToan = true;
+                            if (Array.isArray(d.danhSachMon)) {
+                                d.danhSachMon.forEach(m => {
+                                    if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
+                                        m.trangThai = 'DA_PHUC_VU';
+                                    }
+                                });
+                            }
+                            coDoi = true;
+                        }
+                    });
+                    if (coDoi) {
+                        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Lỗi đánh dấu đơn đã thanh toán:', e);
+        }
 
         // 3. Chuyển trạng thái bàn về TRONG (US-110)
         ban.trangThai = 'TRONG';
