@@ -71,8 +71,17 @@ function xoaDuLieuMau() {
                 }
             }
 
+            // Khởi tạo lại các khu vực mặc định cho nhà hàng
+            db.exec(`
+                INSERT INTO khu_vuc (id, ten_khu_vuc, ghi_chu, trang_thai) VALUES
+                (1, 'Tầng 1', 'Khu vực tầng 1 trong nhà', 'HoatDong'),
+                (2, 'Tầng 2', 'Khu vực tầng 2 lầu cao', 'HoatDong'),
+                (3, 'Ngoài trời', 'Khu vực sân vườn ngoài trời thoáng mát', 'HoatDong'),
+                (4, 'Phòng VIP', 'Khu vực phòng VIP máy lạnh riêng tư', 'HoatDong');
+            `);
+
             db.exec('PRAGMA foreign_keys = ON;');
-            console.log('✅ Đã xóa sạch dữ liệu mẫu trong CSDL SQLite (giữ lại tài khoản đăng nhập & vai trò).');
+            console.log('✅ Đã xóa sạch dữ liệu mẫu trong CSDL SQLite (giữ lại tài khoản đăng nhập, vai trò & khu vực chuẩn).');
         }
     } catch (e) {
         console.error('❌ Lỗi khi dọn dẹp SQLite:', e.message);
@@ -84,12 +93,22 @@ function xoaDuLieuMau() {
             fs.mkdirSync(THU_MUC_DU_LIEU, { recursive: true });
         }
 
-        const cacTepLamRong = ['thucDon', 'banAn', 'danhMucMon', 'khuVuc', 'donGoiMon'];
+        const cacTepLamRong = ['thucDon', 'banAn', 'danhMucMon', 'donGoiMon'];
         for (const t of cacTepLamRong) {
             const p = path.join(THU_MUC_DU_LIEU, `${t}.json`);
             fs.writeFileSync(p, JSON.stringify([], null, 2), 'utf8');
             console.log(`✅ Đã đặt tệp backend/duLieu/${t}.json về mảng rỗng []`);
         }
+
+        // Khởi tạo 4 khu vực chuẩn cho khuVuc.json
+        const dsKhuVucChuan = [
+            { id: 1, ma: 'KV_1', ten: 'Tầng 1', tenKhuVuc: 'Tầng 1', ghiChu: 'Khu vực tầng 1 trong nhà', thuTu: 1, trangThai: 'HoatDong' },
+            { id: 2, ma: 'KV_2', ten: 'Tầng 2', tenKhuVuc: 'Tầng 2', ghiChu: 'Khu vực tầng 2 lầu cao', thuTu: 2, trangThai: 'HoatDong' },
+            { id: 3, ma: 'KV_3', ten: 'Ngoài trời', tenKhuVuc: 'Ngoài trời', ghiChu: 'Khu vực sân vườn ngoài trời thoáng mát', thuTu: 3, trangThai: 'HoatDong' },
+            { id: 4, ma: 'KV_4', ten: 'Phòng VIP', tenKhuVuc: 'Phòng VIP', ghiChu: 'Khu vực phòng VIP máy lạnh riêng tư', thuTu: 4, trangThai: 'HoatDong' }
+        ];
+        fs.writeFileSync(path.join(THU_MUC_DU_LIEU, 'khuVuc.json'), JSON.stringify(dsKhuVucChuan, null, 2), 'utf8');
+        console.log('✅ Đã đặt tệp backend/duLieu/khuVuc.json về 4 khu vực chuẩn (Tầng 1, Tầng 2, Ngoài trời, Phòng VIP)');
     } catch (e) {
         console.error('❌ Lỗi khi dọn dẹp tệp JSON:', e.message);
     }

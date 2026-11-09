@@ -5,11 +5,11 @@
     "matKhau": "123456",
     "hoTen": "Minh",
     "soDienThoai": "0908889999",
-    "email": "phong.admin@quanmoc.com",
+    "email": "minhquanly.admin@quanmoc.com",
     "vaiTro": "QuanLy",
     "trangThai": "HoatDong",
     "ngayTao": "2026-11-05T04:10:45.074Z",
-    "ngayCapNhat": "2026-11-09T02:06:58.890Z"
+    "ngayCapNhat": "2026-11-09T02:12:17.575Z"
   },
   {
     "id": 2,
@@ -21,7 +21,7 @@
     "vaiTro": "ThuNgan",
     "trangThai": "HoatDong",
     "ngayTao": "2026-11-05T04:10:45.074Z",
-    "ngayCapNhat": "2026-11-09T02:06:58.890Z"
+    "ngayCapNhat": "2026-11-09T02:12:17.575Z"
   },
   {
     "id": 3,
@@ -33,7 +33,7 @@
     "vaiTro": "Bep",
     "trangThai": "HoatDong",
     "ngayTao": "2026-11-05T04:10:45.074Z",
-    "ngayCapNhat": "2026-11-09T02:06:58.890Z"
+    "ngayCapNhat": "2026-11-09T02:12:17.575Z"
   },
   {
     "id": 4,
@@ -45,6 +45,6 @@
     "vaiTro": "PhucVu",
     "trangThai": "HoatDong",
     "ngayTao": "2026-11-05T04:10:45.074Z",
-    "ngayCapNhat": "2026-11-09T02:06:58.890Z"
+    "ngayCapNhat": "2026-11-09T02:12:17.575Z"
   }
 ]
