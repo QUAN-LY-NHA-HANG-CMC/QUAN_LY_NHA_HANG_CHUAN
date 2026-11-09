@@ -97,9 +97,13 @@ ungDung.post(['/api/tai-khoan/dang-nhap', '/api/dang-nhap'], async (req, res) =>
 
         const vaiTroMap = {
             'QuanLy': 'QUAN_LY',
+            'QUAN_LY': 'QUAN_LY',
             'ThuNgan': 'THU_NGAN',
+            'THU_NGAN': 'THU_NGAN',
             'Bep': 'BEP',
-            'PhucVu': 'PHUC_VU'
+            'BEP': 'BEP',
+            'PhucVu': 'PHUC_VU',
+            'PHUC_VU': 'PHUC_VU'
         };
 
         const duLieuNguoiDung = {
@@ -109,7 +113,8 @@ ungDung.post(['/api/tai-khoan/dang-nhap', '/api/dang-nhap'], async (req, res) =>
             email: nv.email || `${nv.tenDangNhap}@quanmoc.com`,
             soDienThoai: nv.soDienThoai || '',
             vaiTro: vaiTroMap[nv.vaiTro] || nv.vaiTro,
-            trangThai: nv.trangThai
+            trangThai: nv.trangThai,
+            thoiGianDangNhap: new Date().toISOString()
         };
 
         return res.json({

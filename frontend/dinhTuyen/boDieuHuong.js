@@ -212,16 +212,20 @@ class BoDieuHuong {
      */
     async doiVaiTroNhanh(maVaiTro) {
         const banDoTaiKhoan = {
-            'QUAN_LY': { tenDangNhap: 'quanly', matKhau: '123456' },
-            'THU_NGAN': { tenDangNhap: 'thungan', matKhau: '123456' },
-            'BEP': { tenDangNhap: 'bep', matKhau: '123456' },
-            'PHUC_VU': { tenDangNhap: 'phucvu', matKhau: '123456' }
+            'QUAN_LY': { tenDangNhap: 'quanly', matKhau: '123456', tenPhu: 'admin' },
+            'THU_NGAN': { tenDangNhap: 'thungan01', matKhau: '123456', tenPhu: 'thungan' },
+            'BEP': { tenDangNhap: 'bep01', matKhau: '123456', tenPhu: 'bep' },
+            'PHUC_VU': { tenDangNhap: 'phucvu01', matKhau: '123456', tenPhu: 'phucvu' }
         };
 
         const thongTin = banDoTaiKhoan[maVaiTro];
         if (!thongTin) return;
 
-        const kq = await window.api.dangNhap(thongTin.tenDangNhap, thongTin.matKhau);
+        let kq = await window.api.dangNhap(thongTin.tenDangNhap, thongTin.matKhau);
+        if ((!kq || !kq.ok) && thongTin.tenPhu) {
+            kq = await window.api.dangNhap(thongTin.tenPhu, thongTin.matKhau);
+        }
+
         if (kq && kq.ok) {
             this.capNhatNguoiDung(kq.data.nguoiDung);
             if (window.thongBao) {
@@ -233,10 +237,15 @@ class BoDieuHuong {
             if (!this.kiemTraQuyenTruyCapTab(tabHienTai)) {
                 if (maVaiTro === 'QUAN_LY') window.ungDung.chuyenTab('quanLyNhanVien');
                 else if (maVaiTro === 'BEP') window.ungDung.chuyenTab('dieuPhoiBep');
+                else if (maVaiTro === 'THU_NGAN') window.ungDung.chuyenTab('soDoBanPos');
                 else window.ungDung.chuyenTab('quanLyBanQr');
             } else {
                 // Tải lại nội dung tab hiện tại với phân quyền mới
                 window.ungDung.chuyenTab(tabHienTai);
+            }
+        } else {
+            if (window.thongBao) {
+                window.thongBao.canhBao('Chuyển vai trò thất bại', (kq && kq.msg) || 'Không thể đăng nhập vào tài khoản của vai trò này.');
             }
         }
     }

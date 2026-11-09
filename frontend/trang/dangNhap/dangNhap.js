@@ -89,14 +89,14 @@ class DangNhapModule {
                             <button type="button" class="nut-demo nut-demo-quanly" onclick="window.dangNhapModule.dienTaiKhoanMau('quanly', '123456')">
                                 👑 <strong>Quản lý</strong> (quanly / 123456)
                             </button>
-                            <button type="button" class="nut-demo nut-demo-thungan" onclick="window.dangNhapModule.dienTaiKhoanMau('thungan', '123456')">
-                                💵 <strong>Thu ngân</strong> (thungan / 123456)
+                            <button type="button" class="nut-demo nut-demo-thungan" onclick="window.dangNhapModule.dienTaiKhoanMau('thungan01', '123456')">
+                                💵 <strong>Thu ngân</strong> (thungan01 / 123456)
                             </button>
-                            <button type="button" class="nut-demo nut-demo-bep" onclick="window.dangNhapModule.dienTaiKhoanMau('bep', '123456')">
-                                👨‍🍳 <strong>Đầu bếp</strong> (bep / 123456)
+                            <button type="button" class="nut-demo nut-demo-bep" onclick="window.dangNhapModule.dienTaiKhoanMau('bep01', '123456')">
+                                👨‍🍳 <strong>Đầu bếp</strong> (bep01 / 123456)
                             </button>
-                            <button type="button" class="nut-demo nut-demo-phucvu" onclick="window.dangNhapModule.dienTaiKhoanMau('phucvu', '123456')">
-                                🏃 <strong>Phục vụ</strong> (phucvu / 123456)
+                            <button type="button" class="nut-demo nut-demo-phucvu" onclick="window.dangNhapModule.dienTaiKhoanMau('phucvu01', '123456')">
+                                🏃 <strong>Phục vụ</strong> (phucvu01 / 123456)
                             </button>
                             <button type="button" class="nut-demo nut-demo-khoa" onclick="window.dangNhapModule.dienTaiKhoanMau('nhanvien_cu', '123456')" title="Kiểm tra US-014: Chặn tài khoản bị khóa">
                                 🔒 <strong>TK đã khóa</strong> (nhanvien_cu)

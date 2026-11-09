@@ -112,9 +112,31 @@ async function layBanGhiGocTheoId(id) {
 
 async function layTheoTenDangNhap(tenDangNhap) {
     if (!tenDangNhap) return null;
-    return danhSachNhanVien.find(
-        n => n.tenDangNhap.toLowerCase() === tenDangNhap.toLowerCase().trim() && n.trangThai !== 'DaXoa'
-    ) || null;
+    const clean = tenDangNhap.toLowerCase().trim();
+
+    // 1. Tìm chính xác theo tên đăng nhập hoặc email
+    let nv = danhSachNhanVien.find(
+        n => (n.tenDangNhap.toLowerCase() === clean || (n.email && n.email.toLowerCase() === clean)) && n.trangThai !== 'DaXoa'
+    );
+    if (nv) return nv;
+
+    // 2. Tìm theo bí danh thông dụng (thungan <-> thungan01, bep <-> bep01, phucvu <-> phucvu01)
+    const aliases = {
+        'thungan': 'thungan01',
+        'thungan01': 'thungan',
+        'bep': 'bep01',
+        'bep01': 'bep',
+        'phucvu': 'phucvu01',
+        'phucvu01': 'phucvu',
+        'admin': 'quanly'
+    };
+    const targetAlias = aliases[clean];
+    if (targetAlias) {
+        nv = danhSachNhanVien.find(
+            n => (n.tenDangNhap.toLowerCase() === targetAlias || (n.email && n.email.toLowerCase().startsWith(targetAlias))) && n.trangThai !== 'DaXoa'
+        );
+    }
+    return nv || null;
 }
 
 async function taoMoi(duLieu) {

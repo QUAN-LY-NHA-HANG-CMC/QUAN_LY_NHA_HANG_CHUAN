@@ -1011,11 +1011,24 @@ class ApiService {
 
         // Fallback LocalStorage Authentication
         const dsNhanVien = await this.layDanhSachNhanVien();
-        const timThay = dsNhanVien.find(nv => 
-            (nv.tenDangNhap.toLowerCase() === tenDangNhap.trim().toLowerCase() || 
-             nv.email.toLowerCase() === tenDangNhap.trim().toLowerCase()) &&
-            nv.matKhau === matKhau
-        );
+        const cleanUser = tenDangNhap.trim().toLowerCase();
+        const aliasMap = {
+            'thungan': 'thungan01',
+            'thungan01': 'thungan',
+            'bep': 'bep01',
+            'bep01': 'bep',
+            'phucvu': 'phucvu01',
+            'phucvu01': 'phucvu',
+            'admin': 'quanly'
+        };
+        const targetAlias = aliasMap[cleanUser] || cleanUser;
+
+        const timThay = dsNhanVien.find(nv => {
+            const nvUser = (nv.tenDangNhap || '').toLowerCase();
+            const nvEmail = (nv.email || '').toLowerCase();
+            const khopUser = (nvUser === cleanUser || nvUser === targetAlias || nvEmail === cleanUser);
+            return khopUser && nv.matKhau === matKhau;
+        });
 
         if (!timThay) {
             return { ok: false, msg: 'Tên đăng nhập hoặc mật khẩu không chính xác.' };
