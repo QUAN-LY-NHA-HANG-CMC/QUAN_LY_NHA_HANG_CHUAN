@@ -53,8 +53,8 @@ class ApiService {
             // Khi kết nối với máy chủ thành công, dọn sạch dữ liệu mẫu cũ trong LocalStorage của trình duyệt
             if (this.serverDangChay && !this.daDonDepKhoCu) {
                 this.daDonDepKhoCu = true;
-                if (!localStorage.getItem('quanmoc_da_xoa_du_lieu_mau_v2')) {
-                    localStorage.setItem('quanmoc_da_xoa_du_lieu_mau_v2', '1');
+                if (!localStorage.getItem('quanmoc_dong_bo_jollibee_v1')) {
+                    localStorage.setItem('quanmoc_dong_bo_jollibee_v1', '1');
                     const danhSachKhoaDonDep = [
                         'quanmoc_ds_ban', 'quanmoc_ds_mon_an', 'quanmoc_ds_thuc_don',
                         'quanmoc_ds_khu_vuc', 'quanmoc_ds_danh_muc', 'quanmoc_ds_don_goi',

@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "id": 1,
+    "tenDanhMuc": "Gà Giòn Vui Vẻ",
+    "ten": "Gà Giòn Vui Vẻ",
+    "bieuTuong": "🍗",
+    "thuTuHienThi": 1,
+    "trangThai": "HoatDong"
+  },
+  {
+    "id": 2,
+    "tenDanhMuc": "Mì Ý Sốt Bò Bằm",
+    "ten": "Mì Ý Sốt Bò Bằm",
+    "bieuTuong": "🍝",
+    "thuTuHienThi": 2,
+    "trangThai": "HoatDong"
+  },
+  {
+    "id": 3,
+    "tenDanhMuc": "Burger & Cơm",
+    "ten": "Burger & Cơm",
+    "bieuTuong": "🍔",
+    "thuTuHienThi": 3,
+    "trangThai": "HoatDong"
+  },
+  {
+    "id": 4,
+    "tenDanhMuc": "Tráng Miệng & Thức Uống",
+    "ten": "Tráng Miệng & Thức Uống",
+    "bieuTuong": "🥤",
+    "thuTuHienThi": 4,
+    "trangThai": "HoatDong"
+  }
+]
