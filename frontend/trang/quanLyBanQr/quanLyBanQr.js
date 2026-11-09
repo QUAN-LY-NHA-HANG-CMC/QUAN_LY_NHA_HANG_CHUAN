@@ -336,8 +336,7 @@ class QuanLyBanQrModule {
                     <div class="luoi-in-standee">
                         ${banIn.map(ban => {
                             const kv = this.danhSachKhuVuc.find(k => k.id === ban.khuVucId);
-                            const tenKv = kv ? (kv.ten || kv.tenKhuVuc) : 'Chung';
-                            const tenKv = kv ? kv.ten : 'Quán Mộc';
+                            const tenKv = kv ? (kv.ten || kv.tenKhuVuc) : 'Quán Mộc';
                             const tokenBaoMat = ban.qrToken || ban.tokenBaoMat || '';
                             const urlQr = window.BoSinhQr.taoDuongDanBanAn(ban.maBan, tokenBaoMat, ban.id);
                             const anhQrUrl = window.BoSinhQr.layUrlAnhQr(urlQr, 200);
