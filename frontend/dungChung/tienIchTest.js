@@ -159,7 +159,7 @@ class TienIchTestModule {
             tenCa: 'Ca Sáng (08:00 - 15:00)',
             thuNganTen: 'Minh (Thu ngân)',
             tienDauCa: 1500000,
-            thoiGianMo: new Date().toISOString(),
+            thoiGianMo: (window.DinhDang && window.DinhDang.layThoiGianHienTaiVN) ? window.DinhDang.layThoiGianHienTaiVN() : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()),
             thoiDiemMo: Date.now(),
             ghiChuMo: 'Tiền mặt đầu ca gồm các mệnh giá 20k, 50k, 100k đủ cơ số',
             trangThai: 'DANG_MO'

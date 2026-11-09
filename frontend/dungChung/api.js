@@ -2203,7 +2203,7 @@ class ApiService {
         const tenYeuCau = timLyDo ? timLyDo.ten : 'Cần nhân viên hỗ trợ';
 
         const idMoi = ds.length > 0 ? Math.max(...ds.map(y => y.id || 0)) + 1 : 1;
-        const thoiGian = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const thoiGian = (window.DinhDang && window.DinhDang.layThoiGianHienTaiVN) ? window.DinhDang.layThoiGianHienTaiVN() : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
 
         const yeuCauMoi = {
             id: idMoi,
@@ -2962,7 +2962,7 @@ class ApiService {
         const id = Date.now();
         const ngay = new Date().toISOString().slice(0, 10);
         const maBienBan = `Z-${ngay.replace(/-/g, '')}-${String(Math.floor(Math.random()*90)+10)}`;
-        const thoiGianDong = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        const thoiGianDong = (window.DinhDang && window.DinhDang.layThoiGianHienTaiVN) ? window.DinhDang.layThoiGianHienTaiVN() : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date());
 
         const bienBanKetCa = {
             id,

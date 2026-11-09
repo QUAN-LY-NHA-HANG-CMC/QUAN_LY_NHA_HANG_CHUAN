@@ -931,7 +931,7 @@ class ThanhToanPosModule {
             maCa: caDangMoTach ? caDangMoTach.maCa : null,
             thoiDiemThanhToan: Date.now(),
             thoiGianVao: phien.thoiGianBatDau,
-            thoiGianThanhToan: new Date().toISOString(),
+            thoiGianThanhToan: (window.DinhDang && window.DinhDang.layThoiGianHienTaiVN) ? window.DinhDang.layThoiGianHienTaiVN() : new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()),
             tongTienMon: tongTienTach,
             giamGia: 0,
             phuPhi: 0,
@@ -1094,6 +1094,7 @@ class ThanhToanPosModule {
                                 <th style="text-align: center;">Hình thức</th>
                                 <th style="text-align: right;">Tổng thanh toán</th>
                                 <th>Thu ngân</th>
+                                <th style="text-align: center;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>

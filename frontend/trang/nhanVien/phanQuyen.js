@@ -119,7 +119,16 @@ class PhanQuyenModule {
     }
 
     renderMaTranQuyen(vtHienTai, danhMucQuyen) {
-        if (!vtHienTai) return '<div class="khung-trong">Chưa chọn vai trò</div>';
+        if (!vtHienTai) return `
+        <div class="khung-trong" style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 12px;">🛡️</div>
+            <h3>Danh sách vai trò đang trống hoặc chưa được chọn</h3>
+            <p style="color: var(--mau-chu-phu); max-width: 480px; margin: 8px auto 20px;">Hệ thống hỗ trợ 4 vai trò mặc định: Quản lý, Thu ngân, Bếp và Phục vụ.</p>
+            <button type="button" class="nut nut-chinh" onclick="window.phanQuyenModule.khoiPhucVaiTroMacDinh()">
+                🔄 Khôi phục 4 vai trò chuẩn mặc định
+            </button>
+        </div>
+    `;
         const danhSachQuyenDaCap = vtHienTai.danhSachQuyen || [];
 
         return `

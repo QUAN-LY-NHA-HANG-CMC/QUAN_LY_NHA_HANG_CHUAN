@@ -160,7 +160,7 @@ class CaLamViecModule {
                         <span class="ma-ca-txt">Mã: <strong>${ca.maCa}</strong> • Thu ngân: <strong>${ca.thuNganTen}</strong></span>
                     </div>
                     <div class="thoi-gian-mo-ca">
-                        <span>🕒 Bắt đầu ca: <strong>${ca.thoiGianMo}</strong></span>
+                        <span>🕒 Bắt đầu ca: <strong>${window.DinhDang ? window.DinhDang.dinhDangGioVN(ca.thoiDiemMo || ca.thoiGianMoIso || ca.thoiGianMo) : ca.thoiGianMo}</strong></span>
                     </div>
                 </div>
 
@@ -316,7 +316,7 @@ class CaLamViecModule {
                                     const giamGia = Number(hd.tienGiamGia || hd.giamGia || 0);
                                     const vat = Number(hd.tienVat || hd.vat || 0);
                                     const thoiGian = hd.thoiGianThanhToan || hd.thoiGian || '';
-                                    const gioHienThi = thoiGian.includes('T') ? thoiGian.replace('T', ' ').substring(0, 19) : thoiGian;
+                                    const gioHienThi = window.DinhDang ? window.DinhDang.dinhDangGioVN(hd.thoiDiemThanhToan || thoiGian) : (thoiGian.includes('T') ? thoiGian.replace('T', ' ').substring(0, 19) : thoiGian);
 
                                     return `
                                         <tr>
@@ -483,7 +483,73 @@ class CaLamViecModule {
     /**
      * US-118: Modal mở ca làm việc
      */
-    moModalMoCa() {
+    /**
+     * Modal Đổi / Chọn ca trực khi đang có ca mở
+     */
+    async moModalDoiCa() {
+        if (!this.danhSachCa || this.danhSachCa.length === 0) {
+            this.danhSachCa = await window.api.layDanhSachCaLamViec();
+        }
+        const modal = document.getElementById('khung-modal-toan-cuc');
+        if (!modal) return;
+        modal.innerHTML = `
+            <div class="hop-thoai-modal" style="max-width: 480px;">
+                <div class="dau-modal">
+                    <h3>🔄 Đổi / Chọn Ca Trực</h3>
+                    <button type="button" class="nut-dong-modal" onclick="window.caLamViecModule.dongModal()">✕</button>
+                </div>
+                <div class="than-modal">
+                    <p style="font-size: 13px; color: var(--mau-chu-phu); margin-bottom: 14px;">
+                        Bạn có thể chuyển ca trực sang khung giờ mới (Ca Sáng, Ca Chiều / Tối, Ca Đêm) mà vẫn giữ nguyên két tiền và doanh thu các hóa đơn đã thanh toán.
+                    </p>
+                    <div class="nhom-form">
+                        <label class="nhan-form">Chọn ca làm việc muốn chuyển đến *</label>
+                        <select id="chon-ca-doi" class="nhap-du-lieu" style="font-size: 14px; font-weight: 600;">
+                            ${this.danhSachCa.map(c => `
+                                <option value="${c.id}" ${this.caHienTai && Number(this.caHienTai.caId) === Number(c.id) ? 'selected' : ''}>${c.tenCa}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="duoi-modal">
+                    <button type="button" class="nut nut-phu" onclick="window.caLamViecModule.dongModal()">Hủy</button>
+                    <button type="button" class="nut nut-chinh" onclick="window.caLamViecModule.xacNhanDoiCa()">
+                        🚀 Xác nhận đổi ca
+                    </button>
+                </div>
+            </div>
+        `;
+        modal.classList.add('mo');
+    }
+
+    async xacNhanDoiCa() {
+        const selectCa = document.getElementById('chon-ca-doi');
+        const caId = selectCa ? selectCa.value : 1;
+        const timCa = this.danhSachCa.find(c => Number(c.id) === Number(caId));
+        const tenCa = timCa ? timCa.tenCa : 'Ca Sáng';
+        const kq = await window.api.doiCaLamViec({ caId, tenCa });
+        this.dongModal();
+        if (kq.ok) {
+            if (window.thongBao) window.thongBao.thanhCong('Đổi ca thành công', kq.msg);
+            await this.taiLaiVaRender();
+        } else {
+            if (window.thongBao) window.thongBao.loi('Thất bại', kq.msg);
+        }
+    }
+
+    async chonCaTrucTiep(caId, tenCa) {
+        if (this.caHienTai) {
+            const kq = await window.api.doiCaLamViec({ caId, tenCa });
+            if (kq.ok) {
+                if (window.thongBao) window.thongBao.thanhCong('Đổi ca thành công', kq.msg);
+                await this.taiLaiVaRender();
+            }
+        } else {
+            this.moModalMoCa(caId);
+        }
+    }
+
+    moModalMoCa(caMacDinhId = null) {
         const modal = document.getElementById('khung-modal-toan-cuc');
         if (!modal) return;
 
@@ -505,7 +571,7 @@ class CaLamViecModule {
                         <label class="nhan-form">Chọn ca làm việc *</label>
                         <select id="chon-ca-mo" class="nhap-du-lieu">
                             ${this.danhSachCa.map(c => `
-                                <option value="${c.id}">${c.tenCa}</option>
+                                <option value="${c.id}" ${(caMacDinhId && Number(caMacDinhId) === Number(c.id)) ? 'selected' : ''}>${c.tenCa}</option>
                             `).join('')}
                         </select>
                     </div>
@@ -1110,3 +1176,9 @@ class CaLamViecModule {
 // Khởi tạo đối tượng toàn cục
 window.caLamViecModule = new CaLamViecModule();
 window.caLamViec = window.caLamViecModule;
+
+window.xemChiTietHoaDon = (maHoaDon) => {
+    if (window.caLamViecModule) {
+        window.caLamViecModule.xemChiTietHoaDon(maHoaDon);
+    }
+};
