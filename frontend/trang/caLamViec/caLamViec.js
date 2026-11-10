@@ -979,14 +979,23 @@ class CaLamViecModule {
      * Xem chi tiết hóa đơn / bill thanh toán trong ca
      */
     xemChiTietHoaDonTheoIndex(index) {
-        if (this.tongKetCa && Array.isArray(this.tongKetCa.dsHoaDonCa)) {
-            const hd = this.tongKetCa.dsHoaDonCa[index];
-            if (hd) {
-                this.hienThiModalChiTietHoaDon(hd);
-                return;
+        try {
+            if (this.tongKetCa && Array.isArray(this.tongKetCa.dsHoaDonCa)) {
+                const hd = this.tongKetCa.dsHoaDonCa[index];
+                if (hd) {
+                    this.hienThiModalChiTietHoaDon(hd);
+                    return;
+                }
+            }
+            if (window.thongBao) window.thongBao.loi("Lỗi", "Không tìm thấy hóa đơn tại vị trí " + index);
+        } catch (err) {
+            console.error("Lỗi mở chi tiết hóa đơn theo index:", err);
+            if (window.thongBao) {
+                window.thongBao.loi("Lỗi xem hóa đơn", "Không thể hiển thị chi tiết hóa đơn: " + (err.message || "Lỗi không xác định"));
+            } else {
+                alert("Không thể hiển thị chi tiết hóa đơn: " + (err.message || "Lỗi không xác định"));
             }
         }
-        if (window.thongBao) window.thongBao.loi("Lỗi", "Không tìm thấy hóa đơn tại vị trí " + index);
     }
 
     async xemChiTietHoaDon(maHoaDon, id = null) {
@@ -1075,15 +1084,29 @@ class CaLamViecModule {
         if (!hd) return;
         const modal = document.getElementById("khung-modal-toan-cuc");
         if (!modal) return;
+        modal.classList.remove("co-bottom-sheet");
+
+        const esc = (v) => (window.DinhDang && typeof window.DinhDang.thoatHtml === "function")
+            ? window.DinhDang.thoatHtml(String(v ?? ""))
+            : String(v ?? "");
 
         const laTienMat = String(hd.phuongThuc || "").toUpperCase() === "TIEN_MAT";
-        const tongTien = Number(hd.tongThanhToan || hd.tongTien || 0);
-        const tienMon = Number(hd.tongTienMon || hd.tienMonAn || hd.tamTinh || tongTien);
-        const giamGia = Number(hd.giamGia || hd.tienGiamGia || 0);
-        const vat = Number(hd.vat || hd.tienVat || 0);
+        const tongTien = Number(hd.tongThanhToan || hd.tongTien || 0) || 0;
+        const tienMon = Number(hd.tongTienMon || hd.tienMonAn || hd.tamTinh || tongTien) || 0;
+        const giamGia = Number(hd.giamGia || hd.tienGiamGia || 0) || 0;
+        const vat = Number(hd.vat || hd.tienVat || 0) || 0;
         const thoiGian = hd.thoiGianThanhToan || hd.thoiGian || new Date().toISOString();
-        const gioHienThi = window.DinhDang ? window.DinhDang.dinhDangGioVN(hd.thoiDiemThanhToan || thoiGian) : (thoiGian.includes("T") ? thoiGian.replace("T", " ").substring(0, 19) : thoiGian);
-        const dsMon = Array.isArray(hd.danhSachMon) ? hd.danhSachMon : [];
+        let gioHienThi = "";
+        try {
+            gioHienThi = (window.DinhDang && typeof window.DinhDang.dinhDangGioVN === "function")
+                ? window.DinhDang.dinhDangGioVN(hd.thoiDiemThanhToan || thoiGian)
+                : String(thoiGian).replace("T", " ").substring(0, 19);
+        } catch (e) {
+            gioHienThi = String(thoiGian || "--:--");
+        }
+        const dsMon = Array.isArray(hd.danhSachMon)
+            ? hd.danhSachMon.filter(m => m && typeof m === "object")
+            : [];
 
         modal.innerHTML = `
             <div class="hop-thoai-modal hop-thoai-chi-tiet-hoa-don" style="max-width: 480px; width: 100%; background: #FFF; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
@@ -1100,18 +1123,18 @@ class CaLamViecModule {
                             PHIẾU THANH TOÁN (BILL)
                         </div>
                         <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
-                            Mã HĐ: <strong style="color: #B85D19;">${hd.maHoaDon || hd.id}</strong>
+                            Mã HĐ: <strong style="color: #B85D19;">${esc(hd.maHoaDon || hd.id)}</strong>
                         </div>
                     </div>
 
                     <!-- Thông tin bàn, thu ngân, thời gian -->
                     <div style="font-size: 12.5px; line-height: 1.6; margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 6px;">
                         <div style="display: flex; justify-content: space-between;">
-                            <span>Vị trí: <strong>${hd.soBan || hd.banSo || 'Bàn chưa đặt tên'}</strong></span>
-                            <span>Thu ngân: <strong>${hd.thuNganTen || hd.thuNgan || 'Thu ngân'}</strong></span>
+                            <span>Vị trí: <strong>${esc(hd.soBan || hd.banSo || 'Bàn chưa đặt tên')}</strong></span>
+                            <span>Thu ngân: <strong>${esc(hd.thuNganTen || hd.thuNgan || 'Thu ngân')}</strong></span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
-                            <span>Thời gian: <strong>${gioHienThi}</strong></span>
+                            <span>Thời gian: <strong>${esc(gioHienThi)}</strong></span>
                             <span>Hình thức: <span class="badge ${laTienMat ? 'badge-xanh-la' : 'badge-xanh-duong'}">${laTienMat ? 'Tiền mặt' : 'Chuyển khoản'}</span></span>
                         </div>
                     </div>
@@ -1130,7 +1153,7 @@ class CaLamViecModule {
                                 ${dsMon.length === 0 ? `
                                     <tr>
                                         <td colspan="3" style="text-align: center; padding: 12px; color: #64748b; font-style: italic;">
-                                            Thanh toán theo bàn (${hd.soBan || hd.banSo || 'Mang về'})<br>
+                                            Thanh toán theo bàn (${esc(hd.soBan || hd.banSo || 'Mang về')})<br>
                                             Tổng tiền: ${(tongTien || 0).toLocaleString("vi-VN")} đ
                                         </td>
                                     </tr>
@@ -1141,8 +1164,8 @@ class CaLamViecModule {
                                     return `
                                         <tr>
                                             <td style="padding: 4px 0;">
-                                                <strong>${m.tenMon || "Món ăn"}</strong>
-                                                ${m.tuyChon ? `<div style="font-size: 11px; color: #64748b;">${m.tuyChon}</div>` : ""}
+                                                <strong>${esc(m.tenMon || "Món ăn")}</strong>
+                                                ${m.tuyChon ? `<div style="font-size: 11px; color: #64748b;">${esc(m.tuyChon)}</div>` : ""}
                                             </td>
                                             <td style="text-align: center; padding: 4px 0; font-weight: 700;">x${sl}</td>
                                             <td style="text-align: right; padding: 4px 0; font-weight: 700;">

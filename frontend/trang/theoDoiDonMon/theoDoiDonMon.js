@@ -150,7 +150,7 @@ class TheoDoiDonMonModule {
      * Dừng đồng bộ khi rời khỏi tab
      */
     dungTuDongDongBo() {
-        // Có thể dọn dẹp interval nếu có
+        this.huyTuDongDongBo();
     }
 
     /**

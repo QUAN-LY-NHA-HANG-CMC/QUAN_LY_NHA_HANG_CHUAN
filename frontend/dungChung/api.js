@@ -2822,7 +2822,9 @@ class ApiService {
         const dsHoaDonCa = [];
 
         if (ca) {
-            // Tập hợp tất cả các mã hóa đơn đã nằm trong các ca đã kết thúc trước đó
+            // Tập hợp các hóa đơn đã nằm trong các ca đã kết thúc trước đó
+            const setIdDaDong = new Set();
+            const setKhoaDaDong = new Set();
             const setMaHdDaDong = new Set();
             try {
                 const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
@@ -2831,8 +2833,13 @@ class ApiService {
                     dsLs.forEach(bb => {
                         if (Array.isArray(bb.dsHoaDon)) {
                             bb.dsHoaDon.forEach(h => {
-                                if (h.maHoaDon) setMaHdDaDong.add(String(h.maHoaDon));
-                                if (h.id) setMaHdDaDong.add(String(h.id));
+                                if (!h) return;
+                                if (h.id && !String(h.id).startsWith('HD-')) setIdDaDong.add(String(h.id));
+                                const ma = String(h.maHoaDon || '').trim();
+                                const tg = String(h.thoiGianThanhToan || h.thoiGian || '');
+                                const tien = Number(h.tongThanhToan || h.tongTien || 0);
+                                if (ma && tg) setKhoaDaDong.add(`${ma}|${tg}|${tien}`);
+                                else if (ma) setMaHdDaDong.add(ma);
                             });
                         }
                     });
@@ -2858,8 +2865,18 @@ class ApiService {
             const tsMoCa = ca.thoiDiemMo || parseTs(ca.thoiGianMoIso || ca.thoiGianMo);
 
             dsHoaDon.forEach(hd => {
-                // Nếu hóa đơn đã được đánh dấu đóng hoặc nằm trong biên bản ca cũ -> BỎ QUA NGAY
-                if (hd.daKetCa || setMaHdDaDong.has(String(hd.maHoaDon)) || setMaHdDaDong.has(String(hd.id))) {
+                const maHd = String(hd.maHoaDon || '').trim();
+                const tgHd = String(hd.thoiGianThanhToan || hd.thoiGian || '');
+                const tienHd = Number(hd.tongThanhToan || hd.tongTien || 0);
+                const khoaHd = `${maHd}|${tgHd}|${tienHd}`;
+
+                // Nếu hóa đơn đã được đánh dấu đóng hoặc khớp với biên bản ca cũ -> BỎ QUA NGAY
+                if (
+                    hd.daKetCa ||
+                    (hd.id && setIdDaDong.has(String(hd.id))) ||
+                    setKhoaDaDong.has(khoaHd) ||
+                    (setMaHdDaDong.has(maHd) && (!hd.caId || String(hd.caId) !== String(ca.id)))
+                ) {
                     return;
                 }
 
@@ -3132,159 +3149,238 @@ class ApiService {
      * US-131: Tra cứu danh sách toàn bộ hóa đơn đã thanh toán kèm bộ lọc
      * ĐỒNG BỘ: Tự động tổng hợp từ POS thu ngân, lưu trữ hóa đơn và các biên bản kết ca
      */
-    chuanHoaDanhSachHoaDonTheoThoiGian(dsPos) {
-        if (!Array.isArray(dsPos) || dsPos.length === 0) return dsPos;
+    _laCungHoaDon(a, b) {
+        if (!a || !b) return false;
+        const aId = a.id != null ? String(a.id).trim() : '';
+        const bId = b.id != null ? String(b.id).trim() : '';
+        // Chỉ so khớp theo id nếu id là mã định danh duy nhất (không phải mã HD-... dễ trùng ở dữ liệu cũ)
+        if (aId && bId && !aId.startsWith('HD-') && !bId.startsWith('HD-') && aId === bId) {
+            return true;
+        }
+        const aTg = String(a.thoiGianThanhToan || a.thoiGian || '').trim();
+        const bTg = String(b.thoiGianThanhToan || b.thoiGian || '').trim();
+        const aTien = Number(a.tongThanhToan ?? a.tongTien ?? 0);
+        const bTien = Number(b.tongThanhToan ?? b.tongTien ?? 0);
+        const aBan = String(a.soBan || a.banSo || a.banId || '').trim().toLowerCase();
+        const bBan = String(b.soBan || b.banSo || b.banId || '').trim().toLowerCase();
+        if (aTg && bTg && aTg === bTg && aTien === bTien && (!aBan || !bBan || aBan === bBan)) {
+            return true;
+        }
+        const aMa = String(a.maHoaDon || '').trim();
+        const bMa = String(b.maHoaDon || '').trim();
+        if (aMa && bMa && aMa === bMa && aTien === bTien && (!aBan || !bBan || aBan === bBan)) {
+            const tsA = Number(a.thoiDiemThanhToan) || (aTg ? Date.parse(aTg) : 0);
+            const tsB = Number(b.thoiDiemThanhToan) || (bTg ? Date.parse(bTg) : 0);
+            if (!tsA || !tsB || Math.abs(tsA - tsB) < 5000) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-        // Nhóm các hóa đơn theo ngày và theo bàn để sắp xếp thứ tự lượt chính xác
+    _layNgayStrVN(hd) {
+        const ma = String(hd?.maHoaDon || '').trim();
+        const mNgay = ma.match(/^HD-(\d{8})-/i);
+        if (mNgay) return mNgay[1];
+        const ts = Number(hd?.thoiDiemThanhToan) || Date.parse(hd?.thoiGianThanhToan || hd?.thoiGian || '');
+        if (ts && !isNaN(ts)) {
+            try {
+                return new Intl.DateTimeFormat('sv-SE', {
+                    timeZone: 'Asia/Ho_Chi_Minh',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(new Date(ts)).replace(/-/g, '');
+            } catch (e) {}
+        }
+        const thoiGian = String(hd?.thoiGianThanhToan || hd?.thoiGian || '');
+        if (/^\d{4}-\d{2}-\d{2}/.test(thoiGian)) {
+            return thoiGian.slice(0, 10).replace(/-/g, '');
+        }
+        return new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    }
+
+    _layMaBanChuan(hd) {
+        const ma = String(hd?.maHoaDon || '').trim();
+        const mBan = ma.match(/^HD-\d{8}-([A-Z0-9]+?)(?:-\d+)?$/i);
+        if (mBan) return mBan[1].toUpperCase();
+        if (hd?.maBan) return String(hd.maBan).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        const bId = hd?.banId != null && hd.banId !== '' ? String(hd.banId) : '';
+        if (bId) return ('B' + (bId.length === 1 ? '0' + bId : bId)).toUpperCase();
+        if (hd?.soBan || hd?.banSo) {
+            return String(hd.soBan || hd.banSo).replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'B0';
+        }
+        return 'B0';
+    }
+
+    chuanHoaDanhSachHoaDonTheoThoiGian(dsPos, dsAll = null) {
+        const coDsAll = Array.isArray(dsAll);
+        const nguon = [];
+        if (Array.isArray(dsPos)) {
+            dsPos.forEach((hd, idx) => {
+                if (hd) nguon.push({ hd, nguon: 'POS', originalIdx: idx });
+            });
+        }
+        if (coDsAll) {
+            dsAll.forEach((hd, idx) => {
+                if (!hd) return;
+                const daCoTrongPos = nguon.some(item => this._laCungHoaDon(item.hd, hd));
+                if (!daCoTrongPos) {
+                    nguon.push({ hd, nguon: 'ALL', originalIdx: 100000 + idx });
+                }
+            });
+        }
+        if (nguon.length === 0) return dsPos || [];
+
         const nhom = {};
-        dsPos.forEach((hd, idx) => {
-            if (!hd) return;
-            const thoiGian = hd.thoiGianThanhToan || hd.thoiGian || '';
-            const ngayStr = (thoiGian ? thoiGian.slice(0, 10).replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, ''));
-            const bId = hd.banId ? String(hd.banId) : '';
-            const maBanGoc = String(hd.maBan || (bId ? ('B' + (bId.length === 1 ? '20' + bId : bId)) : '') || hd.soBan || 'B0');
-            const maBan = maBanGoc.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        nguon.forEach((entry) => {
+            const ma = String(entry.hd.maHoaDon || '').trim();
+            if (!ma || /^HD-20261102-\d+$/i.test(ma) || /^HD-SPLIT-/i.test(ma)) return;
+            const ngayStr = this._layNgayStrVN(entry.hd);
+            const maBan = this._layMaBanChuan(entry.hd);
             const key = `${ngayStr}_${maBan}`;
             if (!nhom[key]) nhom[key] = [];
-            nhom[key].push({ hd, originalIdx: idx });
+            nhom[key].push(entry);
         });
 
-        let coThayDoi = false;
+        let coThayDoiPos = false;
+        let coThayDoiAll = false;
+
         Object.keys(nhom).forEach(key => {
             const items = nhom[key];
             const [ngayStr, maBan] = key.split('_');
 
             // Sắp xếp các hóa đơn cùng bàn trong ngày theo thứ tự thời gian tăng dần (cũ trước, mới sau)
             items.sort((a, b) => {
-                const tsA = a.hd.thoiDiemThanhToan || (a.hd.thoiGianThanhToan ? new Date(a.hd.thoiGianThanhToan).getTime() : 0);
-                const tsB = b.hd.thoiDiemThanhToan || (b.hd.thoiGianThanhToan ? new Date(b.hd.thoiGianThanhToan).getTime() : 0);
-                return tsA - tsB;
+                const tsA = Number(a.hd.thoiDiemThanhToan) || (a.hd.thoiGianThanhToan ? new Date(a.hd.thoiGianThanhToan).getTime() : 0);
+                const tsB = Number(b.hd.thoiDiemThanhToan) || (b.hd.thoiGianThanhToan ? new Date(b.hd.thoiGianThanhToan).getTime() : 0);
+                if (tsA !== tsB) return tsA - tsB;
+                return a.originalIdx - b.originalIdx;
             });
 
             // Gán số thứ tự lượt bill chuẩn xác: -01, -02, -03...
             items.forEach((item, seq) => {
                 const luotStr = String(seq + 1).padStart(2, '0');
                 const maChuan = `HD-${ngayStr}-${maBan}-${luotStr}`;
-                if (item.hd.maHoaDon !== maChuan) {
+                const ts = Number(item.hd.thoiDiemThanhToan) || (item.hd.thoiGianThanhToan ? new Date(item.hd.thoiGianThanhToan).getTime() : Date.now());
+                const idStr = item.hd.id != null ? String(item.hd.id) : '';
+                const idChuan = (!idStr || idStr.startsWith('HD-')) ? `ID-${maChuan}-${ts}` : item.hd.id;
+
+                if (item.hd.maHoaDon !== maChuan || item.hd.id !== idChuan) {
+                    // Đồng bộ sang bản ghi tương ứng ở mảng còn lại trước khi gán
+                    if (coDsAll) {
+                        dsAll.forEach(hAll => {
+                            if (this._laCungHoaDon(item.hd, hAll)) {
+                                if (hAll.maHoaDon !== maChuan) { hAll.maHoaDon = maChuan; coThayDoiAll = true; }
+                                const hAllIdStr = hAll.id != null ? String(hAll.id) : '';
+                                if (!hAllIdStr || hAllIdStr.startsWith('HD-')) { hAll.id = idChuan; coThayDoiAll = true; }
+                            }
+                        });
+                    }
                     item.hd.maHoaDon = maChuan;
-                    coThayDoi = true;
-                }
-                const idChuan = `ID-${maChuan}-${item.hd.thoiDiemThanhToan || (item.hd.thoiGianThanhToan ? new Date(item.hd.thoiGianThanhToan).getTime() : Date.now())}`;
-                if (!item.hd.id || item.hd.id.startsWith('HD-')) {
                     item.hd.id = idChuan;
-                    coThayDoi = true;
+                    if (item.nguon === 'POS') coThayDoiPos = true;
+                    else coThayDoiAll = true;
                 }
             });
         });
 
-        // Nếu có thay đổi mã chuẩn hóa, đồng bộ ngược lại localStorage
-        if (coThayDoi) {
+        if (coThayDoiPos && Array.isArray(dsPos)) {
             try {
                 localStorage.setItem('quanmoc_pos_lich_su_hoa_don', JSON.stringify(dsPos));
+            } catch (e) {}
+        }
+        if (coThayDoiAll && coDsAll) {
+            try {
+                localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don', JSON.stringify(dsAll));
             } catch (e) {}
         }
 
         return dsPos;
     }
 
+    _chuanHoaBanGhiHoaDon(hd, macDinhThuNgan = 'Thu ngân') {
+        const tg = hd.thoiGianThanhToan || hd.thoiGian || new Date().toISOString();
+        const ts = Number(hd.thoiDiemThanhToan) || (hd.thoiGianThanhToan ? new Date(hd.thoiGianThanhToan).getTime() : Date.now());
+        return {
+            id: hd.id != null ? hd.id : String(hd.maHoaDon || ''),
+            maHoaDon: String(hd.maHoaDon || '').trim(),
+            banSo: hd.soBan || hd.banSo,
+            soBan: hd.soBan || hd.banSo,
+            banId: hd.banId || null,
+            maBan: hd.maBan || null,
+            caId: hd.caId || null,
+            maCa: hd.maCa || null,
+            daKetCa: Boolean(hd.daKetCa),
+            thoiDiemThanhToan: isNaN(ts) ? Date.now() : ts,
+            thoiGianThanhToan: tg,
+            thoiGian: tg,
+            tamTinh: Number(hd.tongTienMon || hd.tamTinh || hd.tienMonAn || hd.tongThanhToan || 0),
+            giamGia: Number(hd.giamGia || hd.tienGiamGia || 0),
+            vat: Number(hd.vat || hd.tienVat || 0),
+            tongThanhToan: Number(hd.tongThanhToan || hd.tongTien || 0),
+            tongTien: Number(hd.tongThanhToan || hd.tongTien || 0),
+            phuongThuc: hd.phuongThuc || 'TIEN_MAT',
+            thuNganTen: hd.thuNganTen || hd.thuNgan || macDinhThuNgan,
+            thuNgan: hd.thuNganTen || hd.thuNgan || macDinhThuNgan,
+            danhSachMon: Array.isArray(hd.danhSachMon) ? hd.danhSachMon : []
+        };
+    }
+
     async layDanhSachHoaDon(boLoc = {}) {
         let ds = [];
 
-        // 1. Đọc từ hóa đơn POS thu ngân ('quanmoc_pos_lich_su_hoa_don')
-        const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
-        if (rawPos) {
-            try {
-                let dsPos = JSON.parse(rawPos);
-                if (Array.isArray(dsPos)) {
-                    // Chuẩn hóa mã hóa đơn theo đúng số thứ tự lượt thời gian (-01, -02, -03...)
-                    dsPos = this.chuanHoaDanhSachHoaDonTheoThoiGian(dsPos);
-
-                    dsPos.forEach((hdPos) => {
-                        let ma = String(hdPos.maHoaDon || '').trim();
-                        if (!ma) return;
-
-                        // Bỏ qua các hóa đơn mock mẫu seed cũ ngày 02/11/2026
-                        if (/^HD-20261102-\d+$/.test(ma)) return;
-
-                        // Kiểm tra trùng lặp bản ghi hoàn toàn
-                        const daCoChinhXac = ds.some(h => 
-                            (h.id && hdPos.id && String(h.id) === String(hdPos.id)) ||
-                            (String(h.maHoaDon || '').trim() === ma && h.thoiGianThanhToan === hdPos.thoiGianThanhToan && Number(h.tongThanhToan) === Number(hdPos.tongThanhToan))
-                        );
-
-                        if (!daCoChinhXac) {
-                            ds.push({
-                                id: hdPos.id || ma,
-                                maHoaDon: ma,
-                                banSo: hdPos.soBan,
-                                soBan: hdPos.soBan,
-                                banId: hdPos.banId,
-                                caId: hdPos.caId || null,
-                                maCa: hdPos.maCa || null,
-                                thoiDiemThanhToan: hdPos.thoiDiemThanhToan || (hdPos.thoiGianThanhToan ? new Date(hdPos.thoiGianThanhToan).getTime() : Date.now()),
-                                thoiGianThanhToan: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
-                                thoiGian: hdPos.thoiGianThanhToan || hdPos.thoiGian || new Date().toISOString(),
-                                tamTinh: Number(hdPos.tongTienMon || hdPos.tamTinh || hdPos.tongThanhToan || 0),
-                                giamGia: Number(hdPos.giamGia || 0),
-                                vat: Number(hdPos.vat || 0),
-                                tongThanhToan: Number(hdPos.tongThanhToan || hdPos.tongTien || 0),
-                                tongTien: Number(hdPos.tongThanhToan || hdPos.tongTien || 0),
-                                phuongThuc: hdPos.phuongThuc || 'TIEN_MAT',
-                                thuNganTen: hdPos.thuNgan || 'Quân (Thu ngân POS)',
-                                thuNgan: hdPos.thuNgan || 'Quân (Thu ngân POS)',
-                                danhSachMon: Array.isArray(hdPos.danhSachMon) ? hdPos.danhSachMon : []
-                            });
-                        }
-                    });
-                }
-            } catch (e) {
-                console.warn('Lỗi đọc hóa đơn POS sang Báo cáo:', e);
+        let dsPos = [];
+        try {
+            const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
+            if (rawPos) {
+                const parsed = JSON.parse(rawPos);
+                if (Array.isArray(parsed)) dsPos = parsed;
             }
+        } catch (e) {
+            console.warn('Lỗi đọc quanmoc_pos_lich_su_hoa_don:', e);
         }
 
-        // 2. Đọc từ kho hóa đơn hệ thống ('quanmoc_ds_hoa_don')
-        const raw = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don');
-        if (raw) {
-            try {
-                const arr = JSON.parse(raw);
-                if (Array.isArray(arr)) {
-                    arr.forEach(hd => {
-                        let ma = String(hd.maHoaDon || '').trim();
-                        if (!ma) return;
-                        if (/^HD-20261102-\d+$/.test(ma)) return;
-
-                        const daCo = ds.some(h => 
-                            (h.id && hd.id && String(h.id) === String(hd.id)) ||
-                            (String(h.maHoaDon || '').trim() === ma && (h.thoiGianThanhToan === hd.thoiGianThanhToan || Number(h.tongThanhToan) === Number(hd.tongThanhToan || hd.tongTien)))
-                        );
-
-                        if (!daCo) {
-                            ds.push({
-                                id: hd.id || ma,
-                                maHoaDon: ma,
-                                banSo: hd.soBan || hd.banSo,
-                                soBan: hd.soBan || hd.banSo,
-                                banId: hd.banId,
-                                caId: hd.caId || null,
-                                maCa: hd.maCa || null,
-                                thoiDiemThanhToan: hd.thoiDiemThanhToan || (hd.thoiGianThanhToan ? new Date(hd.thoiGianThanhToan).getTime() : Date.now()),
-                                thoiGianThanhToan: hd.thoiGianThanhToan || hd.thoiGian || new Date().toISOString(),
-                                thoiGian: hd.thoiGianThanhToan || hd.thoiGian || new Date().toISOString(),
-                                tamTinh: Number(hd.tongTienMon || hd.tamTinh || hd.tienMonAn || hd.tongThanhToan || 0),
-                                giamGia: Number(hd.giamGia || hd.tienGiamGia || 0),
-                                vat: Number(hd.vat || hd.tienVat || 0),
-                                tongThanhToan: Number(hd.tongThanhToan || hd.tongTien || 0),
-                                tongTien: Number(hd.tongThanhToan || hd.tongTien || 0),
-                                phuongThuc: hd.phuongThuc || 'TIEN_MAT',
-                                thuNganTen: hd.thuNganTen || hd.thuNgan || 'Thu ngân',
-                                thuNgan: hd.thuNganTen || hd.thuNgan || 'Thu ngân',
-                                danhSachMon: Array.isArray(hd.danhSachMon) ? hd.danhSachMon : []
-                            });
-                        }
-                    });
-                }
-            } catch (e) {}
+        let dsAll = [];
+        const khoaHoaDon = window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || 'quanmoc_ds_hoa_don';
+        try {
+            const raw = localStorage.getItem(khoaHoaDon);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) dsAll = parsed;
+            }
+        } catch (e) {
+            console.warn('Lỗi đọc quanmoc_ds_hoa_don:', e);
         }
+
+        // Chuẩn hóa mã hóa đơn đồng bộ trên cả 2 kho theo đúng số thứ tự lượt thời gian (-01, -02, -03...)
+        try {
+            this.chuanHoaDanhSachHoaDonTheoThoiGian(dsPos, dsAll);
+        } catch (e) {
+            console.warn('Lỗi chuẩn hóa mã hóa đơn:', e);
+        }
+
+        // 1. Nạp từ hóa đơn POS thu ngân ('quanmoc_pos_lich_su_hoa_don')
+        dsPos.forEach((hdPos) => {
+            if (!hdPos) return;
+            const ma = String(hdPos.maHoaDon || '').trim();
+            if (!ma || /^HD-20261102-\d+$/.test(ma)) return;
+            const banGhi = this._chuanHoaBanGhiHoaDon(hdPos, 'Quân (Thu ngân POS)');
+            if (!ds.some(h => this._laCungHoaDon(h, banGhi))) {
+                ds.push(banGhi);
+            }
+        });
+
+        // 2. Nạp từ kho hóa đơn hệ thống ('quanmoc_ds_hoa_don')
+        dsAll.forEach((hd) => {
+            if (!hd) return;
+            const ma = String(hd.maHoaDon || '').trim();
+            if (!ma || /^HD-20261102-\d+$/.test(ma)) return;
+            const banGhi = this._chuanHoaBanGhiHoaDon(hd, 'Thu ngân');
+            if (!ds.some(h => this._laCungHoaDon(h, banGhi))) {
+                ds.push(banGhi);
+            }
+        });
 
         // 3. Đọc từ lịch sử kết ca ('quanmoc_ls_ket_ca')
         const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
@@ -3295,14 +3391,12 @@ class ApiService {
                     dsLs.forEach(bb => {
                         if (Array.isArray(bb.dsHoaDon)) {
                             bb.dsHoaDon.forEach(hdCa => {
+                                if (!hdCa) return;
                                 const ma = String(hdCa.maHoaDon || '').trim();
-                                if (ma && !ds.some(h => String(h.maHoaDon || '').trim() === ma)) {
-                                    ds.push({
-                                        ...hdCa,
-                                        tamTinh: Number(hdCa.tongTienMon || hdCa.tamTinh || hdCa.tongThanhToan || 0),
-                                        tongTien: Number(hdCa.tongThanhToan || hdCa.tongTien || 0),
-                                        thoiGian: hdCa.thoiGianThanhToan || hdCa.thoiGian || new Date().toISOString()
-                                    });
+                                if (!ma || /^HD-20261102-\d+$/.test(ma)) return;
+                                const banGhi = { ...this._chuanHoaBanGhiHoaDon(hdCa, 'Thu ngân'), daKetCa: true };
+                                if (!ds.some(h => this._laCungHoaDon(h, banGhi))) {
+                                    ds.push(banGhi);
                                 }
                             });
                         }

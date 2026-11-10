@@ -120,10 +120,20 @@ class ThanhToanPosModule {
     }
 
     sinhMaHoaDon(ban) {
-        if (!ban) return `HD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`;
-        const ngay = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        let ngay = '';
+        try {
+            ngay = new Intl.DateTimeFormat('sv-SE', {
+                timeZone: 'Asia/Ho_Chi_Minh',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(new Date()).replace(/-/g, '');
+        } catch (e) {
+            ngay = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        }
+        if (!ban) return `HD-${ngay}-${Date.now().toString().slice(-4)}`;
         const bId = ban.id ? String(ban.id) : '';
-        const maBanGoc = String(ban.maBan || (bId ? ('B' + (bId.length === 1 ? '20' + bId : bId)) : '') || 'B0');
+        const maBanGoc = String(ban.maBan || (bId ? ('B' + (bId.length === 1 ? '0' + bId : bId)) : '') || 'B0');
         const maBan = maBanGoc.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         const tienTo = `HD-${ngay}-${maBan}`;
 
@@ -134,8 +144,19 @@ class ThanhToanPosModule {
             const rawAll = localStorage.getItem('quanmoc_ds_hoa_don');
             if (rawAll) dsAll = JSON.parse(rawAll);
         } catch (e) {}
+        let dsKetCa = [];
+        try {
+            const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
+            const dsLs = rawLs ? JSON.parse(rawLs) : [];
+            if (Array.isArray(dsLs)) {
+                dsLs.forEach(bb => {
+                    if (Array.isArray(bb.dsHoaDon)) dsKetCa.push(...bb.dsHoaDon);
+                });
+            }
+        } catch (e) {}
 
-        const cacHdCuaBan = [...dsPos, ...(Array.isArray(dsAll) ? dsAll : [])].filter(h => {
+        const cacHdCuaBan = [...dsPos, ...(Array.isArray(dsAll) ? dsAll : []), ...dsKetCa].filter(h => {
+            if (!h) return false;
             const m = String(h.maHoaDon || '');
             return m.startsWith(tienTo);
         });
@@ -183,8 +204,11 @@ class ThanhToanPosModule {
                     maHoaDon: hd.maHoaDon,
                     banSo: hd.soBan,
                     soBan: hd.soBan,
+                    banId: hd.banId || null,
+                    maBan: hd.maBan || null,
                     caId: hd.caId || null,
                     maCa: hd.maCa || null,
+                    thoiDiemThanhToan: hd.thoiDiemThanhToan || Date.now(),
                     thoiGianThanhToan: hd.thoiGianThanhToan || new Date().toISOString(),
                     thoiGian: hd.thoiGianThanhToan || new Date().toISOString(),
                     tamTinh: hd.tongTienMon || hd.tamTinh || hd.tongThanhToan,
@@ -1028,6 +1052,7 @@ class ThanhToanPosModule {
             maHoaDon: maHoaDon,
             soBan: ban.soBan,
             banId: Number(banId),
+            maBan: ban.maBan || null,
             caId: caDangMo ? caDangMo.id : null,
             maCa: caDangMo ? caDangMo.maCa : null,
             thoiDiemThanhToan: Date.now(),
