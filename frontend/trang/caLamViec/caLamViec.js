@@ -340,7 +340,7 @@ class CaLamViecModule {
                                             </td>
                                             <td style="font-size: 12.5px;">${hd.thuNganTen || hd.thuNgan || 'Thu ngân'}</td>
                                             <td style="text-align: center;">
-                                                <button type="button" class="nut nut-phu nut-nho" onclick="window.caLamViecModule.xemChiTietHoaDon('${hd.maHoaDon}')" title="Xem chi tiết hóa đơn">
+                                                <button type="button" class="nut nut-phu nut-nho" onclick="window.caLamViecModule.xemChiTietHoaDon('${hd.maHoaDon}', '${hd.id || ''}')" title="Xem chi tiết hóa đơn">
                                                     👁️ Xem bill
                                                 </button>
                                             </td>
@@ -978,190 +978,256 @@ class CaLamViecModule {
     /**
      * Xem chi tiết hóa đơn / bill thanh toán trong ca
      */
-    async xemChiTietHoaDon(maHoaDon) {
-        let hd = null;
-        const maHdStr = String(maHoaDon || '').trim().toLowerCase();
+    async xemChiTietHoaDon(maHoaDon, id = null) {
+        try {
+            let hd = null;
+            const maHdStr = String(maHoaDon || "").trim().toLowerCase();
+            const idStr = String(id || "").trim().toLowerCase();
 
-        // 1. Tìm trong danh sách hóa đơn của ca hiện tại
-        if (this.tongKetCa && Array.isArray(this.tongKetCa.dsHoaDonCa)) {
-            hd = this.tongKetCa.dsHoaDonCa.find(h => 
-                String(h.maHoaDon || '').toLowerCase() === maHdStr || 
-                String(h.id || '').toLowerCase() === maHdStr
-            );
-        }
-
-        // 2. Tìm qua API hệ thống
-        if (!hd && window.api && window.api.layChiTietHoaDon) {
-            try {
-                const res = await window.api.layChiTietHoaDon(maHoaDon);
-                if (res && res.ok && res.data) hd = res.data;
-            } catch (e) {}
-        }
-
-        // 3. Tìm trong kho lịch sử hóa đơn POS
-        if (!hd) {
-            try {
-                const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
-                if (rawPos) {
-                    const dsPos = JSON.parse(rawPos);
-                    hd = dsPos.find(h => 
-                        String(h.maHoaDon || '').toLowerCase() === maHdStr || 
-                        String(h.id || '').toLowerCase() === maHdStr
-                    );
+            // Hàm so khớp thông minh và toàn diện
+            const khopHoaDon = (h) => {
+                if (!h) return false;
+                const hId = String(h.id || "").trim().toLowerCase();
+                const hMa = String(h.maHoaDon || "").trim().toLowerCase();
+                if (idStr && hId === idStr) return true;
+                if (hMa && (hMa === maHdStr || maHdStr.includes(hMa) || hMa.includes(maHdStr))) return true;
+                if (hId && (hId === maHdStr || String(h.id) === String(maHoaDon))) return true;
+                
+                // Hỗ trợ tìm kiếm theo số bàn / mã bàn (ví dụ B201, B202, Bàn 05, Bàn 06)
+                if (maHdStr) {
+                    const soBanNorm = String(h.soBan || h.banSo || "").toLowerCase().trim();
+                    if (soBanNorm && maHdStr.includes(soBanNorm)) return true;
+                    if (h.banId && (maHdStr.endsWith("b" + h.banId) || maHdStr.endsWith("b0" + h.banId) || maHdStr.includes("b" + h.banId + "-") || maHdStr.includes("b0" + h.banId + "-"))) return true;
+                    if (h.maBan && maHdStr.includes(String(h.maBan).toLowerCase().trim())) return true;
                 }
-            } catch (e) {}
-        }
+                return false;
+            };
 
-        // 4. Tìm trong kho hóa đơn dùng chung
-        if (!hd) {
-            try {
-                const rawAll = localStorage.getItem('quanmoc_ds_hoa_don');
-                if (rawAll) {
-                    const dsAll = JSON.parse(rawAll);
-                    hd = dsAll.find(h => 
-                        String(h.maHoaDon || '').toLowerCase() === maHdStr || 
-                        String(h.id || '').toLowerCase() === maHdStr
-                    );
-                }
-            } catch (e) {}
-        }
+            // 1. Tìm trong danh sách hóa đơn của ca hiện tại
+            if (this.tongKetCa && Array.isArray(this.tongKetCa.dsHoaDonCa)) {
+                hd = this.tongKetCa.dsHoaDonCa.find(khopHoaDon);
+            }
 
-        // 5. Tìm trong lịch sử biên bản kết ca cũ
-        if (!hd) {
-            try {
-                const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || 'quanmoc_ls_ket_ca');
-                if (rawLs) {
-                    const dsLs = JSON.parse(rawLs);
-                    for (const bb of dsLs) {
-                        if (Array.isArray(bb.dsHoaDon)) {
-                            const found = bb.dsHoaDon.find(h => 
-                                String(h.maHoaDon || '').toLowerCase() === maHdStr || 
-                                String(h.id || '').toLowerCase() === maHdStr
-                            );
-                            if (found) { hd = found; break; }
+            // 2. Tìm qua API hệ thống layChiTietHoaDon
+            if (!hd && window.api && window.api.layChiTietHoaDon) {
+                try {
+                    const res = await window.api.layChiTietHoaDon(id || maHoaDon);
+                    if (res && res.ok && res.data) hd = res.data;
+                } catch (e) {}
+            }
+
+            // 3. Tìm trong toàn bộ danh sách hóa đơn API
+            if (!hd && window.api && window.api.layDanhSachHoaDon) {
+                try {
+                    const dsAllApi = await window.api.layDanhSachHoaDon();
+                    if (Array.isArray(dsAllApi)) {
+                        hd = dsAllApi.find(khopHoaDon);
+                    }
+                } catch (e) {}
+            }
+
+            // 4. Tìm trong kho lịch sử hóa đơn POS (quanmoc_pos_lich_su_hoa_don)
+            if (!hd) {
+                try {
+                    const rawPos = localStorage.getItem("quanmoc_pos_lich_su_hoa_don");
+                    if (rawPos) {
+                        const dsPos = JSON.parse(rawPos);
+                        if (Array.isArray(dsPos)) {
+                            hd = dsPos.find(khopHoaDon);
                         }
                     }
-                }
-            } catch (e) {}
-        }
+                } catch (e) {}
+            }
 
-        if (!hd) {
-            if (window.thongBao) window.thongBao.loi('Không tìm thấy', 'Không tìm thấy thông tin chi tiết của hóa đơn này.');
-            else alert('Không tìm thấy thông tin chi tiết của hóa đơn này.');
-            return;
-        }
+            // 5. Tìm trong kho hóa đơn dùng chung (quanmoc_ds_hoa_don)
+            if (!hd) {
+                try {
+                    const rawAll = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_HOA_DON || "quanmoc_ds_hoa_don");
+                    if (rawAll) {
+                        const dsAll = JSON.parse(rawAll);
+                        if (Array.isArray(dsAll)) {
+                            hd = dsAll.find(khopHoaDon);
+                        }
+                    }
+                } catch (e) {}
+            }
 
-        const modal = document.getElementById('khung-modal-toan-cuc');
-        if (!modal) return;
+            // 6. Tìm trong lịch sử biên bản kết ca cũ
+            if (!hd) {
+                try {
+                    const rawLs = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.LICH_SU_KET_CA || "quanmoc_ls_ket_ca");
+                    if (rawLs) {
+                        const dsLs = JSON.parse(rawLs);
+                        if (Array.isArray(dsLs)) {
+                            for (const bb of dsLs) {
+                                if (Array.isArray(bb.dsHoaDon)) {
+                                    const found = bb.dsHoaDon.find(khopHoaDon);
+                                    if (found) { hd = found; break; }
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
 
-        const laTienMat = hd.phuongThuc === 'TIEN_MAT';
-        const tongTien = Number(hd.tongThanhToan || hd.tongTien || 0);
-        const tienMon = Number(hd.tienMonAn || hd.tamTinh || hd.tongTienMon || tongTien);
-        const giamGia = Number(hd.tienGiamGia || hd.giamGia || 0);
-        const vat = Number(hd.tienVat || hd.vat || 0);
-        const dsMon = Array.isArray(hd.danhSachMon) ? hd.danhSachMon : [];
+            // 7. Dự phòng tìm kiếm từ phiên bàn nếu bill vừa tạo hoặc chưa lưu đầy đủ
+            if (!hd) {
+                try {
+                    const rawPhien = localStorage.getItem("quanmoc_pos_phien_ban");
+                    if (rawPhien) {
+                        const phienMap = JSON.parse(rawPhien);
+                        for (const bId of Object.keys(phienMap)) {
+                            const p = phienMap[bId];
+                            if (p && (maHdStr.includes("b" + bId) || maHdStr.includes("ban " + bId) || maHdStr.includes("bàn " + bId))) {
+                                hd = {
+                                    maHoaDon: maHoaDon,
+                                    soBan: "Bàn " + String(bId).padStart(2, "0"),
+                                    banId: Number(bId),
+                                    thoiGianThanhToan: new Date().toISOString(),
+                                    tongThanhToan: (p.danhSachMon || []).reduce((s, m) => s + (Number(m.thanhTien) || (Number(m.donGia || 0) * (m.soLuong || 1))), 0),
+                                    phuongThuc: "TIEN_MAT",
+                                    danhSachMon: p.danhSachMon || []
+                                };
+                                break;
+                            }
+                        }
+                    }
+                } catch (e) {}
+            }
 
-        // Định dạng thời gian an toàn
-        const thoiGianRaw = hd.thoiGianThanhToan || hd.thoiGian || '';
-        let gioHienThi = '';
-        if (typeof thoiGianRaw === 'number') {
-            gioHienThi = new Date(thoiGianRaw).toLocaleString('vi-VN');
-        } else if (typeof thoiGianRaw === 'string') {
-            gioHienThi = thoiGianRaw.includes('T') ? thoiGianRaw.replace('T', ' ').substring(0, 19) : thoiGianRaw;
-        } else {
-            gioHienThi = new Date().toLocaleString('vi-VN');
-        }
+            if (!hd) {
+                if (window.thongBao) window.thongBao.loi("Không tìm thấy", "Không tìm thấy thông tin chi tiết của hóa đơn " + maHoaDon + ".");
+                else alert("Không tìm thấy thông tin chi tiết của hóa đơn " + maHoaDon + ".");
+                return;
+            }
 
-        modal.innerHTML = `
-            <div class="hop-modal hop-modal-vua hop-thoai-phieu-in" style="max-width: 440px; background: #FFF; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: auto;">
-                <div class="dau-modal" style="background: #1e293b; color: white; display: flex; justify-content: space-between; align-items: center; padding: 12px 18px;">
-                    <h3 style="color: white; margin: 0; font-size: 15px; font-weight: 700;">🧾 Chi Tiết Hóa Đơn Thanh Toán</h3>
-                    <button type="button" class="nut-dong-modal" onclick="window.caLamViecModule.dongModal()" style="color: white; background: none; border: none; font-size: 18px; cursor: pointer;">✕</button>
+            const modal = document.getElementById("khung-modal-toan-cuc");
+            if (!modal) return;
+
+            const laTienMat = String(hd.phuongThuc || "").toUpperCase() === "TIEN_MAT";
+            const tongTien = Number(hd.tongThanhToan || hd.tongTien || 0);
+            const tienMon = Number(hd.tongTienMon || hd.tienMonAn || hd.tamTinh || tongTien);
+            const giamGia = Number(hd.giamGia || hd.tienGiamGia || 0);
+            const vat = Number(hd.vat || hd.tienVat || 0);
+            const thoiGian = hd.thoiGianThanhToan || hd.thoiGian || new Date().toISOString();
+            const gioHienThi = thoiGian.includes("T") ? thoiGian.replace("T", " ").substring(0, 19) : thoiGian;
+            const dsMon = Array.isArray(hd.danhSachMon) ? hd.danhSachMon : [];
+
+            modal.innerHTML = `
+                <div class="hop-modal-lop-phu" onclick="if(event.target === this) window.caLamViecModule.dongModal()">
+                    <div class="hop-thoai-modal hop-thoai-chi-tiet-hoa-don" style="max-width: 480px; width: 100%; background: #FFF; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+                        <div class="dau-modal" style="background: #0f172a; color: #FFF; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #FFF;">🧾 Chi Tiết Hóa Đơn Bán Hàng</h3>
+                            <button type="button" class="nut-dong-modal" onclick="window.caLamViecModule.dongModal()" style="color: #FFF; background: transparent; border: none; font-size: 20px; cursor: pointer;">✕</button>
+                        </div>
+                        <div class="than-modal" style="padding: 18px; max-height: 75vh; overflow-y: auto;">
+                            <!-- Header Hóa Đơn -->
+                            <div style="text-align: center; border-bottom: 1px dashed #CCC; padding-bottom: 12px; margin-bottom: 12px;">
+                                <h4 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 800; color: #B85D19;">NHÀ HÀNG QUÁN MỘC</h4>
+                                <div style="font-size: 12px; color: #64748b;">123 Đường Ẩm Thực, Quận 1, TP.HCM | Hotline: 1900 6868</div>
+                                <div style="margin-top: 8px; font-size: 14px; font-weight: 700; color: #0f172a;">
+                                    PHIẾU THANH TOÁN (BILL)
+                                </div>
+                                <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
+                                    Mã HĐ: <strong style="color: #B85D19;">${hd.maHoaDon || hd.id}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Thông tin bàn, thu ngân, thời gian -->
+                            <div style="font-size: 12.5px; line-height: 1.6; margin-bottom: 12px; background: #f8fafc; padding: 10px 12px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Vị trí: <strong>${hd.soBan || hd.banSo || 'Bàn chưa đặt tên'}</strong></span>
+                                    <span>Thu ngân: <strong>${hd.thuNganTen || hd.thuNgan || 'Thu ngân'}</strong></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Thời gian: <strong>${gioHienThi}</strong></span>
+                                    <span>Hình thức: <span class="badge ${laTienMat ? 'badge-xanh-la' : 'badge-xanh-duong'}">${laTienMat ? 'Tiền mặt' : 'Chuyển khoản'}</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Danh sách món ăn -->
+                            <div style="border-bottom: 1px dashed #CCC; padding-bottom: 10px; margin-bottom: 12px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid #E2E8F0; text-align: left; color: #64748b;">
+                                            <th style="padding-bottom: 4px;">Món</th>
+                                            <th style="text-align: center; padding-bottom: 4px; width: 45px;">SL</th>
+                                            <th style="text-align: right; padding-bottom: 4px; width: 95px;">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${dsMon.length === 0 ? `
+                                            <tr>
+                                                <td colspan="3" style="text-align: center; padding: 12px; color: #64748b; font-style: italic;">
+                                                    Thanh toán theo bàn (${hd.soBan || hd.banSo || 'Mang về'})<br>
+                                                    Tổng tiền: ${(tongTien || 0).toLocaleString("vi-VN")} đ
+                                                </td>
+                                            </tr>
+                                        ` : dsMon.map(m => {
+                                            const sl = Number(m.soLuong) || 1;
+                                            const donGia = Number(m.donGia) || 0;
+                                            const thanhTien = Number(m.thanhTien) || (donGia * sl);
+                                            return `
+                                                <tr>
+                                                    <td style="padding: 4px 0;">
+                                                        <strong>${m.tenMon || "Món ăn"}</strong>
+                                                        ${m.tuyChon ? `<div style="font-size: 11px; color: #64748b;">${m.tuyChon}</div>` : ""}
+                                                    </td>
+                                                    <td style="text-align: center; padding: 4px 0; font-weight: 700;">x${sl}</td>
+                                                    <td style="text-align: right; padding: 4px 0; font-weight: 700;">
+                                                        ${thanhTien.toLocaleString("vi-VN")} đ
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join("")}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div style="margin-bottom: 12px; font-size: 13px; line-height: 1.7;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Tạm tính tiền món:</span>
+                                    <strong>${tienMon.toLocaleString("vi-VN")} đ</strong>
+                                </div>
+                                ${giamGia > 0 ? `
+                                <div style="display: flex; justify-content: space-between; color: #DC2626;">
+                                    <span>Giảm giá / Voucher:</span>
+                                    <strong>-${giamGia.toLocaleString("vi-VN")} đ</strong>
+                                </div>
+                                ` : ""}
+                                ${vat > 0 ? `
+                                <div style="display: flex; justify-content: space-between; color: #4B5563;">
+                                    <span>Thuế VAT:</span>
+                                    <strong>+${vat.toLocaleString("vi-VN")} đ</strong>
+                                </div>
+                                ` : ""}
+                                <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; margin-top: 6px; border-top: 2px solid #0f172a; padding-top: 6px;">
+                                    <span>TỔNG THANH TOÁN:</span>
+                                    <span style="color: ${laTienMat ? "#16A34A" : "#2563EB"}; font-size: 16px;">${tongTien.toLocaleString("vi-VN")} đ</span>
+                                </div>
+                            </div>
+
+                            <div style="text-align: center; font-size: 11.5px; color: #64748b; border-top: 1px dashed #CCC; padding-top: 8px;">
+                                Cảm ơn quý khách & Hẹn gặp lại!<br>
+                                <em>(Hóa đơn chứng từ ca thu ngân)</em>
+                            </div>
+                        </div>
+                        <div class="duoi-modal" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            <button type="button" class="nut nut-phu" onclick="window.caLamViecModule.dongModal()">Đóng</button>
+                            <button type="button" class="nut nut-chinh" onclick="window.print()">🖨️ In lại hóa đơn</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="than-modal noi-dung-in-bill" style="font-family: monospace; font-size: 13px; line-height: 1.5; padding: 20px; background: white; max-height: 75vh; overflow-y: auto;">
-                    <div style="text-align: center; border-bottom: 1px dashed #CCC; padding-bottom: 8px; margin-bottom: 10px;">
-                        <h4 style="font-size: 16px; margin: 0; font-weight: 700; color: #0f172a;">NHÀ HÀNG QUÁN MỘC</h4>
-                        <p style="margin: 2px 0; font-size: 12px; color: #64748b;">123 Đường Ẩm Thực, Q.1, TP. Hồ Chí Minh</p>
-                        <p style="margin: 2px 0; font-size: 12px; color: #64748b;">Hotline: 028 1234 5678</p>
-                        <h5 style="margin: 6px 0 2px; font-size: 15px; text-transform: uppercase;">HÓA ĐƠN THANH TOÁN</h5>
-                        <small style="color: #64748b;">Mã HĐ: <strong style="color: #0f172a;">${hd.maHoaDon || hd.id}</strong></small>
-                    </div>
-
-                    <div style="margin-bottom: 10px; font-size: 12.5px; line-height: 1.6;">
-                        <div>Bàn: <strong>${hd.soBan || hd.banSo || 'Mang về'}</strong></div>
-                        <div>Thời gian: <strong>${gioHienThi}</strong></div>
-                        <div>Thu ngân: ${hd.thuNganTen || hd.thuNgan || 'Thu ngân'}</div>
-                        <div>Hình thức: <strong>${laTienMat ? '💵 Tiền mặt' : '💳 Chuyển khoản (VietQR)'}</strong></div>
-                    </div>
-
-                    <div style="border-top: 1px dashed #CCC; border-bottom: 1px dashed #CCC; padding: 8px 0; margin-bottom: 10px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
-                            <thead>
-                                <tr style="border-bottom: 1px solid #E2E8F0; text-align: left; color: #64748b;">
-                                    <th style="padding-bottom: 4px;">Món</th>
-                                    <th style="text-align: center; padding-bottom: 4px; width: 45px;">SL</th>
-                                    <th style="text-align: right; padding-bottom: 4px; width: 95px;">Thành tiền</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${dsMon.length === 0 ? `
-                                    <tr>
-                                        <td colspan="3" style="text-align: center; padding: 12px; color: #64748b; font-style: italic;">
-                                            Thanh toán theo bàn (${hd.soBan || hd.banSo || 'Mang về'})<br>
-                                            Tổng tiền: ${(tongTien || 0).toLocaleString('vi-VN')} đ
-                                        </td>
-                                    </tr>
-                                ` : dsMon.map(m => `
-                                    <tr>
-                                        <td style="padding: 4px 0;">
-                                            <strong>${m.tenMon || 'Món ăn'}</strong>
-                                            ${m.tuyChon ? `<div style="font-size: 11px; color: #64748b;">${m.tuyChon}</div>` : ''}
-                                        </td>
-                                        <td style="text-align: center; padding: 4px 0; font-weight: 700;">x${m.soLuong || 1}</td>
-                                        <td style="text-align: right; padding: 4px 0; font-weight: 700;">
-                                            ${Number(m.thanhTien || (Number(m.donGia || 0) * Number(m.soLuong || 1)) || 0).toLocaleString('vi-VN')} đ
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div style="margin-bottom: 12px; font-size: 13px; line-height: 1.7;">
-                        <div style="display: flex; justify-content: space-between;">
-                            <span>Tạm tính tiền món:</span>
-                            <strong>${tienMon.toLocaleString('vi-VN')} đ</strong>
-                        </div>
-                        ${giamGia > 0 ? `
-                        <div style="display: flex; justify-content: space-between; color: #DC2626;">
-                            <span>Giảm giá / Voucher:</span>
-                            <strong>-${giamGia.toLocaleString('vi-VN')} đ</strong>
-                        </div>
-                        ` : ''}
-                        ${vat > 0 ? `
-                        <div style="display: flex; justify-content: space-between; color: #4B5563;">
-                            <span>Thuế VAT:</span>
-                            <strong>+${vat.toLocaleString('vi-VN')} đ</strong>
-                        </div>
-                        ` : ''}
-                        <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; margin-top: 6px; border-top: 2px solid #0f172a; padding-top: 6px;">
-                            <span>TỔNG THANH TOÁN:</span>
-                            <span style="color: ${laTienMat ? '#16A34A' : '#2563EB'}; font-size: 16px;">${tongTien.toLocaleString('vi-VN')} đ</span>
-                        </div>
-                    </div>
-
-                    <div style="text-align: center; font-size: 11.5px; color: #64748b; border-top: 1px dashed #CCC; padding-top: 8px;">
-                        Cảm ơn quý khách & Hẹn gặp lại!<br>
-                        <em>(Hóa đơn chứng từ ca thu ngân)</em>
-                    </div>
-                </div>
-                <div class="duoi-modal" style="display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
-                    <button type="button" class="nut nut-phu" onclick="window.caLamViecModule.dongModal()">Đóng</button>
-                    <button type="button" class="nut nut-chinh" onclick="window.print()">🖨️ In lại hóa đơn</button>
-                </div>
-            </div>
-        `;
-        modal.classList.add('mo');
+            `;
+            modal.classList.add("mo");
+        } catch (err) {
+            console.error("Lỗi xem chi tiết hóa đơn:", err);
+            if (window.thongBao) {
+                window.thongBao.loi("Lỗi xem hóa đơn", "Không thể hiển thị chi tiết hóa đơn: " + (err.message || "Lỗi không xác định"));
+            } else {
+                alert("Không thể hiển thị chi tiết hóa đơn: " + err.message);
+            }
+        }
     }
 
     dongModal() {

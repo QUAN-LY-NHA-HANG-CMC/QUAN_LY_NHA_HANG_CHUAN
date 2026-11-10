@@ -119,12 +119,52 @@ class ThanhToanPosModule {
         return raw ? JSON.parse(raw) : [];
     }
 
+    sinhMaHoaDon(ban) {
+        if (!ban) return `HD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`;
+        const ngay = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const maBan = ban.maBan || ('B' + ban.id);
+        const tienTo = `HD-${ngay}-${maBan}`;
+
+        // Đọc lịch sử hóa đơn để đếm số lượt hóa đơn của bàn này trong ngày
+        const dsPos = this.layLichSuHoaDon() || [];
+        let dsAll = [];
+        try {
+            const rawAll = localStorage.getItem('quanmoc_ds_hoa_don');
+            if (rawAll) dsAll = JSON.parse(rawAll);
+        } catch (e) {}
+
+        const cacHdCuaBan = [...dsPos, ...(Array.isArray(dsAll) ? dsAll : [])].filter(h => {
+            const m = String(h.maHoaDon || '');
+            return m.startsWith(tienTo);
+        });
+
+        let maxIndex = 0;
+        cacHdCuaBan.forEach(h => {
+            const m = String(h.maHoaDon || '');
+            if (m === tienTo) {
+                if (maxIndex < 1) maxIndex = 1;
+            } else {
+                const match = m.match(new RegExp(`^${tienTo}-(\\d+)$`));
+                if (match) {
+                    const idx = parseInt(match[1], 10);
+                    if (idx > maxIndex) maxIndex = idx;
+                }
+            }
+        });
+
+        const luotMoi = maxIndex + 1;
+        return `${tienTo}-${String(luotMoi).padStart(2, '0')}`;
+    }
+
     layLichSuHoaDon() {
         const raw = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
         return raw ? JSON.parse(raw) : [];
     }
 
     luuHoaDon(hd) {
+        if (!hd.id) {
+            hd.id = Date.now() + Math.floor(Math.random() * 1000);
+        }
         const ds = this.layLichSuHoaDon();
         ds.unshift(hd);
         localStorage.setItem('quanmoc_pos_lich_su_hoa_don', JSON.stringify(ds));
@@ -133,7 +173,11 @@ class ThanhToanPosModule {
         try {
             const rawAll = localStorage.getItem('quanmoc_ds_hoa_don');
             let dsAll = rawAll ? JSON.parse(rawAll) : [];
-            if (!dsAll.some(h => h.maHoaDon === hd.maHoaDon)) {
+            const daCo = dsAll.some(h => 
+                (h.id && hd.id && String(h.id) === String(hd.id)) ||
+                (h.maHoaDon === hd.maHoaDon && h.thoiGianThanhToan === hd.thoiGianThanhToan)
+            );
+            if (!daCo) {
                 dsAll.unshift({
                     id: hd.id || hd.maHoaDon,
                     maHoaDon: hd.maHoaDon,
@@ -430,7 +474,11 @@ class ThanhToanPosModule {
 
         const tinhTien = this.tinhToanTongTienHoaDon(phien);
         const thoiGianVao = new Date(phien.thoiGianBatDau).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        const maHoaDon = `HD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${ban.maBan || 'B' + ban.id}`;
+        if (!phien.maHoaDon) {
+            phien.maHoaDon = this.sinhMaHoaDon(ban);
+            this.luuTatCaPhienBan(dsPhien);
+        }
+        const maHoaDon = phien.maHoaDon;
 
         // Sinh danh sách món
         let danhSachMonHtml = '';
@@ -974,7 +1022,9 @@ class ThanhToanPosModule {
             if (window.api && window.api.layCaHienTai) caDangMo = await window.api.layCaHienTai();
         } catch (e) {}
 
+        const idMoi = Date.now() + Math.floor(Math.random() * 1000);
         this.luuHoaDon({
+            id: idMoi,
             maHoaDon: maHoaDon,
             soBan: ban.soBan,
             banId: Number(banId),

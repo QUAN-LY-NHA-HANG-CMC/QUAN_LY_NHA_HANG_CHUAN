@@ -147,6 +147,13 @@ class TheoDoiDonMonModule {
     }
 
     /**
+     * Dừng đồng bộ khi rời khỏi tab
+     */
+    dungTuDongDongBo() {
+        // Có thể dọn dẹp interval nếu có
+    }
+
+    /**
      * Lắng nghe các sự kiện thời gian thực (US-075 -> US-078)
      */
     dangKySuKienSocket() {
@@ -154,29 +161,37 @@ class TheoDoiDonMonModule {
 
         // Khi có đơn mới gửi xuống (US-075)
         window.socketClient.khiCoSuKien('order:moi', (donMoi) => {
-            if (Number(donMoi.banId) === Number(this.banIdHienTai)) {
-                this.taiDuLieuVaVe();
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (Number(donMoi.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
             }
         });
 
         // Khi trạng thái món thay đổi từ Bếp (US-076)
         window.socketClient.khiCoSuKien('order:capNhatTrangThai', (data) => {
-            if (Number(data.banId) === Number(this.banIdHienTai)) {
-                this.taiDuLieuVaVe();
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (Number(data.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
             }
         });
 
         // Khi Bếp từ chối món do hết nguyên liệu (US-069)
         window.socketClient.khiCoSuKien('order:tuChoiMon', (data) => {
-            if (Number(data.banId) === Number(this.banIdHienTai)) {
-                this.taiDuLieuVaVe();
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (Number(data.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
             }
         });
 
         // Khi nhân viên tiếp nhận yêu cầu hỗ trợ (US-074)
         window.socketClient.khiCoSuKien('hoTro:tiepNhan', (data) => {
-            if (Number(data.banId) === Number(this.banIdHienTai)) {
-                this.taiDuLieuVaVe();
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (Number(data.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
             }
         });
 
@@ -201,6 +216,11 @@ class TheoDoiDonMonModule {
      * Tải dữ liệu đơn hàng của bàn và render giao diện
      */
     async taiDuLieuVaVe() {
+        // Chỉ vẽ giao diện nếu tab hiện tại đang là Theo dõi đơn món
+        if (window.ungDung && window.ungDung.tabHienTai !== 'theoDoiDonMon') {
+            return;
+        }
+
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
 
@@ -500,6 +520,26 @@ class TheoDoiDonMonModule {
                     <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.bungTatCaMonDaXong(${this.banIdHienTai})" style="background: #059669; border-color: #059669; color: white; padding: 10px 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; border-radius: 8px; cursor: pointer; white-space: nowrap;">
                         🚶 Bưng tất cả món đã xong (${thongKe.daXong})
                     </button>
+                </div>
+                ` : ''}
+
+                <!-- BANNER BÁO CÁC BÀN KHÁC CŨNG CÓ MÓN NẤU XONG CHỜ BƯNG (DÀNH CHO PHỤC VỤ) -->
+                ${(!laKhach && Object.keys(soMonChoBungTheoBan).some(bId => Number(bId) !== Number(this.banIdHienTai) && soMonChoBungTheoBan[bId] > 0)) ? `
+                <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+                    <strong style="color: #15803d; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        🔔 Bếp vừa nấu xong món ở các bàn khác (Click để chuyển nhanh & bưng món):
+                    </strong>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                        ${Object.keys(soMonChoBungTheoBan).filter(bId => Number(bId) !== Number(this.banIdHienTai) && soMonChoBungTheoBan[bId] > 0).map(bId => {
+                            const banObj = this.danhSachBan.find(b => Number(b.id) === Number(bId));
+                            const tenBan = banObj ? (banObj.soBan || banObj.tenBan) : `Bàn ${bId}`;
+                            return `
+                                <button type="button" class="nut nut-nho" style="background: #10b981; color: white; border: none; font-weight: 700; padding: 8px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="window.theoDoiDonMonModule.chuyenBanTheoDoi(${bId})">
+                                    🏃 👉 Chuyển sang ${tenBan} (${soMonChoBungTheoBan[bId]} món chờ bưng)
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
                 ` : ''}
 

@@ -62,6 +62,10 @@ class DieuPhoiBepModule {
     khoiDongDongHoCapNhatThoiGian() {
         this.huyDongHo();
         this.dongHoInterval = setInterval(() => {
+            if (window.ungDung && window.ungDung.tabHienTai !== 'dieuPhoiBep') {
+                this.huyDongHo();
+                return;
+            }
             if (this.cheDoXem === 'THE_DON') {
                 this.capNhatThoiGianChoTrucTiep();
             }
@@ -76,31 +80,47 @@ class DieuPhoiBepModule {
 
         // Đơn mới từ khách hàng hoặc thu ngân (US-075)
         window.socketClient.khiCoSuKien('order:moi', (donMoi) => {
-            this.taiDuLieuVaCapNhatGiaoDien();
-            if (this.amThanhBat && window.socketClient) {
-                window.socketClient.phatAmThanh('chuongBao');
-            }
-            if (window.thongBao) {
-                window.thongBao.thongTin('🛎️ Đơn đặt món mới!', `${donMoi.soBan || ('Bàn ' + donMoi.banId)} vừa gửi ${donMoi.danhSachMon?.length || 1} món xuống bếp.`);
+            if (window.ungDung && window.ungDung.tabHienTai === 'dieuPhoiBep') {
+                this.taiDuLieuVaCapNhatGiaoDien();
+                if (this.amThanhBat && window.socketClient) {
+                    window.socketClient.phatAmThanh('chuongBao');
+                }
+                if (window.thongBao) {
+                    window.thongBao.thongTin('🛎️ Đơn đặt món mới!', `${donMoi.soBan || ('Bàn ' + donMoi.banId)} vừa gửi ${donMoi.danhSachMon?.length || 1} món xuống bếp.`);
+                }
+            } else {
+                this.taiDuLieu();
             }
         });
 
         // Cập nhật trạng thái món (từ thu ngân, khách hủy, bếp khác)
         window.socketClient.khiCoSuKien('order:capNhatTrangThai', () => {
-            this.taiDuLieuVaCapNhatGiaoDien();
+            if (window.ungDung && window.ungDung.tabHienTai === 'dieuPhoiBep') {
+                this.taiDuLieuVaCapNhatGiaoDien();
+            } else {
+                this.taiDuLieu();
+            }
         });
 
         // Khách hủy món
         window.socketClient.khiCoSuKien('order:huyMon', (data) => {
-            this.taiDuLieuVaCapNhatGiaoDien();
-            if (window.thongBao) {
-                window.thongBao.canhBao('❌ Khách hủy món', `Bàn ${data.banId} vừa yêu cầu hủy món.`);
+            if (window.ungDung && window.ungDung.tabHienTai === 'dieuPhoiBep') {
+                this.taiDuLieuVaCapNhatGiaoDien();
+                if (window.thongBao) {
+                    window.thongBao.canhBao('❌ Khách hủy món', `Bàn ${data.banId} vừa yêu cầu hủy món.`);
+                }
+            } else {
+                this.taiDuLieu();
             }
         });
 
         // Cập nhật hết món từ quản lý thực đơn
         window.socketClient.khiCoSuKien('thucDon:hetMon', () => {
-            this.taiDuLieuVaCapNhatGiaoDien();
+            if (window.ungDung && window.ungDung.tabHienTai === 'dieuPhoiBep') {
+                this.taiDuLieuVaCapNhatGiaoDien();
+            } else {
+                this.taiDuLieu();
+            }
         });
 
         this.dangLangNghe = true;
@@ -144,6 +164,10 @@ class DieuPhoiBepModule {
 
     async taiDuLieuVaCapNhatGiaoDien() {
         await this.taiDuLieu();
+        // Chỉ vẽ lại giao diện nếu người dùng đang thực sự ở tab Điều phối Bếp (tránh ghi đè màn hình Phục vụ/POS)
+        if (window.ungDung && window.ungDung.tabHienTai !== 'dieuPhoiBep') {
+            return;
+        }
         this.render();
     }
 
@@ -367,6 +391,18 @@ class DieuPhoiBepModule {
      * Render toàn bộ giao diện màn hình KDS
      */
     render() {
+        // Chỉ vẽ giao diện nếu người dùng đang ở tab dieuPhoiBep
+        if (window.ungDung && window.ungDung.tabHienTai !== 'dieuPhoiBep') {
+            return;
+        }
+
+        // Kiểm tra quyền RBAC: Chỉ Quản lý hoặc Bếp mới được hiển thị giao diện này
+        const user = window.boDieuHuong ? window.boDieuHuong.layNguoiDung() : null;
+        const vaiTro = user ? user.vaiTro : '';
+        if (vaiTro && vaiTro !== 'QUAN_LY' && vaiTro !== 'BEP') {
+            return;
+        }
+
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
 
