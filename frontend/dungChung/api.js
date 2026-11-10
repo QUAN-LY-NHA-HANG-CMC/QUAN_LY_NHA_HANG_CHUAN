@@ -3132,6 +3132,61 @@ class ApiService {
      * US-131: Tra cứu danh sách toàn bộ hóa đơn đã thanh toán kèm bộ lọc
      * ĐỒNG BỘ: Tự động tổng hợp từ POS thu ngân, lưu trữ hóa đơn và các biên bản kết ca
      */
+    chuanHoaDanhSachHoaDonTheoThoiGian(dsPos) {
+        if (!Array.isArray(dsPos) || dsPos.length === 0) return dsPos;
+
+        // Nhóm các hóa đơn theo ngày và theo bàn để sắp xếp thứ tự lượt chính xác
+        const nhom = {};
+        dsPos.forEach((hd, idx) => {
+            if (!hd) return;
+            const thoiGian = hd.thoiGianThanhToan || hd.thoiGian || '';
+            const ngayStr = (thoiGian ? thoiGian.slice(0, 10).replace(/-/g, '') : new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+            const bId = hd.banId ? String(hd.banId) : '';
+            const maBanGoc = String(hd.maBan || (bId ? ('B' + (bId.length === 1 ? '20' + bId : bId)) : '') || hd.soBan || 'B0');
+            const maBan = maBanGoc.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const key = `${ngayStr}_${maBan}`;
+            if (!nhom[key]) nhom[key] = [];
+            nhom[key].push({ hd, originalIdx: idx });
+        });
+
+        let coThayDoi = false;
+        Object.keys(nhom).forEach(key => {
+            const items = nhom[key];
+            const [ngayStr, maBan] = key.split('_');
+
+            // Sắp xếp các hóa đơn cùng bàn trong ngày theo thứ tự thời gian tăng dần (cũ trước, mới sau)
+            items.sort((a, b) => {
+                const tsA = a.hd.thoiDiemThanhToan || (a.hd.thoiGianThanhToan ? new Date(a.hd.thoiGianThanhToan).getTime() : 0);
+                const tsB = b.hd.thoiDiemThanhToan || (b.hd.thoiGianThanhToan ? new Date(b.hd.thoiGianThanhToan).getTime() : 0);
+                return tsA - tsB;
+            });
+
+            // Gán số thứ tự lượt bill chuẩn xác: -01, -02, -03...
+            items.forEach((item, seq) => {
+                const luotStr = String(seq + 1).padStart(2, '0');
+                const maChuan = `HD-${ngayStr}-${maBan}-${luotStr}`;
+                if (item.hd.maHoaDon !== maChuan) {
+                    item.hd.maHoaDon = maChuan;
+                    coThayDoi = true;
+                }
+                const idChuan = `ID-${maChuan}-${item.hd.thoiDiemThanhToan || (item.hd.thoiGianThanhToan ? new Date(item.hd.thoiGianThanhToan).getTime() : Date.now())}`;
+                if (!item.hd.id || item.hd.id.startsWith('HD-')) {
+                    item.hd.id = idChuan;
+                    coThayDoi = true;
+                }
+            });
+        });
+
+        // Nếu có thay đổi mã chuẩn hóa, đồng bộ ngược lại localStorage
+        if (coThayDoi) {
+            try {
+                localStorage.setItem('quanmoc_pos_lich_su_hoa_don', JSON.stringify(dsPos));
+            } catch (e) {}
+        }
+
+        return dsPos;
+    }
+
     async layDanhSachHoaDon(boLoc = {}) {
         let ds = [];
 
@@ -3139,9 +3194,11 @@ class ApiService {
         const rawPos = localStorage.getItem('quanmoc_pos_lich_su_hoa_don');
         if (rawPos) {
             try {
-                const dsPos = JSON.parse(rawPos);
+                let dsPos = JSON.parse(rawPos);
                 if (Array.isArray(dsPos)) {
-                    const seenCounts = {};
+                    // Chuẩn hóa mã hóa đơn theo đúng số thứ tự lượt thời gian (-01, -02, -03...)
+                    dsPos = this.chuanHoaDanhSachHoaDonTheoThoiGian(dsPos);
+
                     dsPos.forEach((hdPos) => {
                         let ma = String(hdPos.maHoaDon || '').trim();
                         if (!ma) return;
@@ -3149,19 +3206,13 @@ class ApiService {
                         // Bỏ qua các hóa đơn mock mẫu seed cũ ngày 02/11/2026
                         if (/^HD-20261102-\d+$/.test(ma)) return;
 
-                        // Kiểm tra nếu là cùng 1 hóa đơn chính xác bị trùng lặp
+                        // Kiểm tra trùng lặp bản ghi hoàn toàn
                         const daCoChinhXac = ds.some(h => 
                             (h.id && hdPos.id && String(h.id) === String(hdPos.id)) ||
                             (String(h.maHoaDon || '').trim() === ma && h.thoiGianThanhToan === hdPos.thoiGianThanhToan && Number(h.tongThanhToan) === Number(hdPos.tongThanhToan))
                         );
 
                         if (!daCoChinhXac) {
-                            // Tự động phân tách hậu tố nếu trùng mã hóa đơn (ví dụ bàn đó gọi 2 đơn trong ca)
-                            if (ds.some(h => String(h.maHoaDon || '').trim() === ma)) {
-                                seenCounts[ma] = (seenCounts[ma] || 1) + 1;
-                                ma = `${ma}-${String(seenCounts[ma]).padStart(2, '0')}`;
-                            }
-
                             ds.push({
                                 id: hdPos.id || ma,
                                 maHoaDon: ma,
@@ -3200,7 +3251,6 @@ class ApiService {
                     arr.forEach(hd => {
                         let ma = String(hd.maHoaDon || '').trim();
                         if (!ma) return;
-                        // Bỏ qua các hóa đơn mock mẫu seed cũ ngày 02/11/2026
                         if (/^HD-20261102-\d+$/.test(ma)) return;
 
                         const daCo = ds.some(h => 
@@ -3209,9 +3259,6 @@ class ApiService {
                         );
 
                         if (!daCo) {
-                            if (ds.some(h => String(h.maHoaDon || '').trim() === ma)) {
-                                ma = `${ma}-02`;
-                            }
                             ds.push({
                                 id: hd.id || ma,
                                 maHoaDon: ma,
@@ -3263,6 +3310,13 @@ class ApiService {
                 }
             } catch (e) {}
         }
+
+        // Sắp xếp hóa đơn mới nhất lên trên
+        ds.sort((a, b) => {
+            const tsA = a.thoiDiemThanhToan || (a.thoiGianThanhToan ? new Date(a.thoiGianThanhToan).getTime() : 0);
+            const tsB = b.thoiDiemThanhToan || (b.thoiGianThanhToan ? new Date(b.thoiGianThanhToan).getTime() : 0);
+            return tsB - tsA;
+        });
 
         // Áp dụng bộ lọc nếu có
         if (boLoc) {

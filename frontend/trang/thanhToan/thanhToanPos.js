@@ -122,7 +122,9 @@ class ThanhToanPosModule {
     sinhMaHoaDon(ban) {
         if (!ban) return `HD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`;
         const ngay = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const maBan = ban.maBan || ('B' + ban.id);
+        const bId = ban.id ? String(ban.id) : '';
+        const maBanGoc = String(ban.maBan || (bId ? ('B' + (bId.length === 1 ? '20' + bId : bId)) : '') || 'B0');
+        const maBan = maBanGoc.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         const tienTo = `HD-${ngay}-${maBan}`;
 
         // Đọc lịch sử hóa đơn để đếm số lượt hóa đơn của bàn này trong ngày
@@ -141,14 +143,12 @@ class ThanhToanPosModule {
         let maxIndex = 0;
         cacHdCuaBan.forEach(h => {
             const m = String(h.maHoaDon || '');
-            if (m === tienTo) {
-                if (maxIndex < 1) maxIndex = 1;
-            } else {
-                const match = m.match(new RegExp(`^${tienTo}-(\\d+)$`));
-                if (match) {
-                    const idx = parseInt(match[1], 10);
-                    if (idx > maxIndex) maxIndex = idx;
-                }
+            const match = m.match(new RegExp(`^${tienTo}-(\\d+)$`));
+            if (match) {
+                const idx = parseInt(match[1], 10);
+                if (idx > maxIndex) maxIndex = idx;
+            } else if (m === tienTo && maxIndex < 1) {
+                maxIndex = 1;
             }
         });
 
