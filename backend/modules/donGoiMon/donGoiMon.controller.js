@@ -52,10 +52,21 @@ async function huyMon(req, res, next) {
     }
 }
 
+async function dongPhienBan(req, res, next) {
+    try {
+        const { banId } = req.params;
+        const ketQua = await donGoiMonService.dongPhienBan(banId);
+        return phanHoiThanhCong(res, ketQua, 'Đã đóng phiên bàn và giải phóng bàn trống thành công');
+    } catch (e) {
+        next(e);
+    }
+}
+
 module.exports = {
     layDanhSach,
     layDonTheoBan,
     taoDonMoi,
     capNhatTrangThaiMon,
-    huyMon
+    huyMon,
+    dongPhienBan
 };

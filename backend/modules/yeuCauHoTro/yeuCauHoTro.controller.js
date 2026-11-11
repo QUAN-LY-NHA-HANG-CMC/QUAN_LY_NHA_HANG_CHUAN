@@ -45,7 +45,7 @@ async function doiTrangThai(req, res, next) {
         }
 
         const nguoiXuLyId = req.nguoiDung ? req.nguoiDung.taiKhoanId : null;
-        const yeuCauCapNhat = await yeuCauService.capNhatTrangThaiYeuCau(id, req.body.trangThai, nguoiXuLyId);
+        const yeuCauCapNhat = await yeuCauService.capNhatTrangThaiYeuCau(id, req.body.trangThai, nguoiXuLyId, req.body.nguoiTiepNhan || null);
         return phanHoiThanhCong(res, yeuCauCapNhat, 'Cập nhật trạng thái yêu cầu thành công');
     } catch (loi) {
         next(loi);

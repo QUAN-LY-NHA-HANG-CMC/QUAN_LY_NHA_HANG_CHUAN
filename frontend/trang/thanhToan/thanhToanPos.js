@@ -232,11 +232,16 @@ class ThanhToanPosModule {
         const vungChua = document.getElementById('noi-dung-chinh');
         if (!vungChua) return;
 
-        // Đọc bàn được chọn từ chuyển hướng nếu có
+        // Đọc bàn & phương thức được chọn từ chuyển hướng nếu có
         const banDuocChon = localStorage.getItem('quanmoc_pos_ban_thanh_toan_chon');
         if (banDuocChon) {
             this.banIdHienTai = parseInt(banDuocChon);
             localStorage.removeItem('quanmoc_pos_ban_thanh_toan_chon');
+        }
+        const ptDuocChon = localStorage.getItem('quanmoc_pos_phuong_thuc_chon');
+        if (ptDuocChon) {
+            this.phuongThucThanhToan = ptDuocChon;
+            localStorage.removeItem('quanmoc_pos_phuong_thuc_chon');
         }
 
         vungChua.innerHTML = `
@@ -287,20 +292,24 @@ class ThanhToanPosModule {
         await this.taiVaHienThi();
     }
 
-    async dongBoPhienVoiServer() {
+    async dongBoPhienVoiServer(dsBan = []) {
         const phienLocal = this.layTatCaPhienBan();
         try {
             if (window.api && window.api.layTatCaDonGoiMon) {
                 const dsDonServer = await window.api.layTatCaDonGoiMon();
                 if (Array.isArray(dsDonServer)) {
+                    const banCoDonActive = new Set();
+
                     dsDonServer.forEach(don => {
                         const bId = Number(don.banId);
                         if (!bId) return;
 
                         // BỎ QUA các đơn đã hoàn tất, đã thanh toán, hoặc đã hủy
-                        if (don.trangThai === 'HOAN_THANH' || don.trangThai === 'DA_THANH_TOAN' || don.trangThai === 'DA_HUY') {
+                        if (don.trangThai === 'HOAN_THANH' || don.trangThai === 'DA_THANH_TOAN' || don.trangThai === 'DA_HUY' || don.daThanhToan) {
                             return;
                         }
+
+                        banCoDonActive.add(bId);
 
                         if (!phienLocal[bId]) {
                             phienLocal[bId] = {
@@ -336,6 +345,17 @@ class ThanhToanPosModule {
                             });
                         }
                     });
+
+                    // Dọn dẹp phiên cũ nếu bàn trên server đang TRỐNG và không có đơn active
+                    if (Array.isArray(dsBan)) {
+                        dsBan.forEach(b => {
+                            const laTrong = (b.trangThai === 'TRONG' || b.trangThai === 'Trong' || !b.trangThai);
+                            if (laTrong && !banCoDonActive.has(Number(b.id)) && phienLocal[b.id]) {
+                                delete phienLocal[b.id];
+                            }
+                        });
+                    }
+
                     this.luuTatCaPhienBan(phienLocal);
                 }
             }
@@ -347,7 +367,7 @@ class ThanhToanPosModule {
 
     async taiVaHienThi() {
         const dsBan = await window.api.layDanhSachBan();
-        const dsPhien = await this.dongBoPhienVoiServer();
+        const dsPhien = await this.dongBoPhienVoiServer(dsBan);
 
         // Lọc các bàn đang có phiên thực tế và đang phục vụ/chờ thanh toán
         const dsBanCoKhach = dsBan.filter(b => {
@@ -798,8 +818,10 @@ class ThanhToanPosModule {
             mQr.style.display = pt === 'CHUYEN_KHOAN_VIETQR' ? 'flex' : 'none';
             mTm.style.display = pt === 'TIEN_MAT' ? 'block' : 'none';
         }
-        document.querySelectorAll('.nut-tab-pt').forEach(b => b.classList.remove('kich-hoat'));
-        event.target.classList.add('kich-hoat');
+        document.querySelectorAll('.nut-tab-pt').forEach(b => {
+            const onclickAttr = b.getAttribute('onclick') || '';
+            b.classList.toggle('kich-hoat', onclickAttr.includes(`'${pt}'`));
+        });
     }
 
     doiTienKhachDua(val) {
@@ -1033,9 +1055,15 @@ class ThanhToanPosModule {
 
         const tinhTien = this.tinhToanTongTienHoaDon(phien);
 
-        if (this.phuongThucThanhToan === 'TIEN_MAT' && this.tienKhachDua < tinhTien.tongThanhToan) {
-            if (!confirm(`Tiền khách đưa (${(this.tienKhachDua || 0).toLocaleString()} đ) ít hơn tổng thanh toán (${tinhTien.tongThanhToan.toLocaleString()} đ). Bạn có chắc chắn muốn xác nhận không?`)) {
-                return;
+        if (this.phuongThucThanhToan === 'TIEN_MAT') {
+            const inpTien = document.getElementById('nhap-tien-khach-dua');
+            if (inpTien && inpTien.value !== '') {
+                this.tienKhachDua = parseFloat(inpTien.value) || 0;
+            }
+            if (this.tienKhachDua < tinhTien.tongThanhToan) {
+                if (!confirm(`Tiền khách đưa (${(this.tienKhachDua || 0).toLocaleString()} đ) ít hơn tổng thanh toán (${tinhTien.tongThanhToan.toLocaleString()} đ). Bạn có chắc chắn muốn xác nhận không?`)) {
+                    return;
+                }
             }
         }
 
@@ -1068,44 +1096,18 @@ class ThanhToanPosModule {
             danhSachMon: phien.danhSachMon || []
         });
 
-        // 2. Đóng phiên phục vụ bàn (US-109)
+        // 2. Đóng phiên phục vụ bàn trên cả LocalStorage và Backend Server (US-109 & US-110)
         delete dsPhien[banId];
+        delete dsPhien[Number(banId)];
+        delete dsPhien[String(banId)];
         this.luuTatCaPhienBan(dsPhien);
 
-        // ĐỒNG BỘ: Đánh dấu tất cả đơn đặt món của bàn thành DA_THANH_TOAN để không hồi sinh bàn ảo
-        try {
-            const rawDon = localStorage.getItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi');
-            if (rawDon) {
-                let dsDon = JSON.parse(rawDon);
-                if (Array.isArray(dsDon)) {
-                    let coDoi = false;
-                    dsDon.forEach(d => {
-                        if (Number(d.banId) === Number(banId)) {
-                            d.trangThai = 'DA_THANH_TOAN';
-                            d.daThanhToan = true;
-                            if (Array.isArray(d.danhSachMon)) {
-                                d.danhSachMon.forEach(m => {
-                                    if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
-                                        m.trangThai = 'DA_PHUC_VU';
-                                    }
-                                });
-                            }
-                            coDoi = true;
-                        }
-                    });
-                    if (coDoi) {
-                        localStorage.setItem(window.HANG_SO?.KHOA_LUU_TRU?.DANH_SACH_DON_GOI || 'quanmoc_ds_don_goi', JSON.stringify(dsDon));
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('Lỗi đánh dấu đơn đã thanh toán:', e);
+        if (window.api && typeof window.api.dongPhienBanSauThanhToan === 'function') {
+            await window.api.dongPhienBanSauThanhToan(banId);
+        } else {
+            ban.trangThai = 'TRONG';
+            await window.api.capNhatTrangThaiBan(banId, 'TRONG');
         }
-
-        // 3. Chuyển trạng thái bàn về TRONG (US-110)
-        ban.trangThai = 'TRONG';
-        await window.api.capNhatTrangThaiBan(banId, 'TRONG');
-        await window.api.luuDanhSachBan(dsBan);
 
         // Thông báo thành công
         if (window.thongBao) {

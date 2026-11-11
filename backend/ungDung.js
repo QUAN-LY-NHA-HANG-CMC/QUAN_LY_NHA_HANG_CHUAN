@@ -168,6 +168,13 @@ ungDung.post(['/api/kiem-thu/reset', '/api/kiem-thu/xoa-du-lieu-test'], (req, re
             const donGoiPath = path.join(THU_MUC_DU_LIEU, 'donGoiMon.json');
             fs.writeFileSync(donGoiPath, JSON.stringify([], null, 2), 'utf8');
 
+            if (yeuCauHoTroModule && yeuCauHoTroModule.model && typeof yeuCauHoTroModule.model.xoaTatCa === 'function') {
+                yeuCauHoTroModule.model.xoaTatCa();
+            } else {
+                const yeuCauPath = path.join(THU_MUC_DU_LIEU, 'yeuCauHoTro.json');
+                fs.writeFileSync(yeuCauPath, JSON.stringify([], null, 2), 'utf8');
+            }
+
             const banAnPath = path.join(THU_MUC_DU_LIEU, 'banAn.json');
             if (fs.existsSync(banAnPath)) {
                 try {

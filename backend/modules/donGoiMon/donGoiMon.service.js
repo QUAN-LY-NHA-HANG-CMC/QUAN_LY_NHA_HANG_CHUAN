@@ -181,10 +181,44 @@ async function huyMon(itemId, lyDo) {
     return kq;
 }
 
+async function dongPhienBan(banId) {
+    const ban = await banAnModel.layTheoId(banId);
+    if (!ban) {
+        const loi = new Error('Bàn ăn không tồn tại');
+        loi.status = 404;
+        throw loi;
+    }
+
+    const soDonDaDong = await donGoiMonModel.dongDonCuaBan(ban.id);
+
+    // Đóng luôn các yêu cầu hỗ trợ/thanh toán đang chờ của bàn
+    try {
+        const yeuCauModel = require('../yeuCauHoTro/yeuCauHoTro.model');
+        const dsYc = await yeuCauModel.layTatCa({ banId: ban.id });
+        for (const yc of dsYc) {
+            if (yeuCauModel.chuanHoaTrangThai(yc.trangThai) !== 'DA_XU_LY') {
+                await yeuCauModel.capNhatTrangThai(yc.id, 'DA_XU_LY');
+            }
+        }
+    } catch (e) {}
+
+    // Đưa trạng thái bàn về Trong
+    await banAnModel.capNhat(ban.id, {
+        trangThai: 'Trong',
+        daPhatSinhGiaoDich: false
+    });
+
+    return {
+        banId: ban.id,
+        soDonDaDong
+    };
+}
+
 module.exports = {
     layDanhSachDon,
     layDonCuaBan,
     taoDonGoiMon,
     capNhatTrangThaiMon,
-    huyMon
+    huyMon,
+    dongPhienBan
 };

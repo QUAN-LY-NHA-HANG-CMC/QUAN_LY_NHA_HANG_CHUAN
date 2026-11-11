@@ -144,6 +144,7 @@ class SoDoBanPosModule {
     }
 
     async dongBoPhienVoiServer() {
+        this._banCoDonActiveServer = new Set();
         let phienLocal = this.layTatCaPhienBan() || {};
         try {
             if (window.api && window.api.layTatCaDonGoiMon) {
@@ -171,6 +172,8 @@ class SoDoBanPosModule {
                             m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI'
                         );
                         if (cacMonHopLe.length === 0) return;
+
+                        this._banCoDonActiveServer.add(bId);
 
                         if (!phienKetHop[bId]) {
                             phienKetHop[bId] = {
@@ -223,6 +226,15 @@ class SoDoBanPosModule {
         const dsBan = await window.api.layDanhSachBan();
         const dsKhuVuc = await window.api.layDanhSachKhuVuc();
         const dsPhien = await this.dongBoPhienVoiServer();
+        const dsYeuCau = (window.api.layDanhSachYeuCauHoTro)
+            ? await window.api.layDanhSachYeuCauHoTro(null)
+            : [];
+        this.dsYeuCauChoTheoBan = {};
+        (dsYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY').forEach(y => {
+            const bId = Number(y.banId);
+            if (!this.dsYeuCauChoTheoBan[bId]) this.dsYeuCauChoTheoBan[bId] = [];
+            this.dsYeuCauChoTheoBan[bId].push(y);
+        });
 
         // Đồng bộ trạng thái Bàn: Server database là nguồn chuẩn
         dsBan.forEach(ban => {
@@ -230,14 +242,14 @@ class SoDoBanPosModule {
             const p = dsPhien[ban.id];
 
             if (isServerTrong) {
-                // Nếu bàn đang TRỐNG trên hệ thống:
-                // Nếu có phiên rác sót lại nhưng không có món đang nấu mới phát sinh, xóa triệt để phiên rác
+                // Nếu bàn đang TRỐNG trên hệ thống và không có đơn mới trên server: xóa triệt để phiên rác
                 if (p) {
+                    const coDonMoiTrenServer = this._banCoDonActiveServer && this._banCoDonActiveServer.has(Number(ban.id));
                     const coMonDangCheBienMoi = (p.danhSachMon || []).some(m => 
                         (m.trangThai === 'CHO_CHE_BIEN' || m.trangThai === 'DANG_CHE_BIEN' || m.trangThai === 'CHO_XAC_NHAN')
                     );
                     const soPhutNgoi = this.tinhSoPhutNgoi(p.thoiGianBatDau);
-                    if (!coMonDangCheBienMoi || soPhutNgoi > 15) {
+                    if (!coDonMoiTrenServer || !coMonDangCheBienMoi || soPhutNgoi > 15) {
                         delete dsPhien[ban.id];
                         ban.trangThai = 'TRONG';
                     } else {
@@ -529,6 +541,11 @@ class SoDoBanPosModule {
                         </div>
 
                         ${laBanDangPhucVu ? `
+                            ${(this.dsYeuCauChoTheoBan && this.dsYeuCauChoTheoBan[ban.id] && this.dsYeuCauChoTheoBan[ban.id].length > 0) ? `
+                                <div style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin-bottom: 8px; font-weight: 600;">
+                                    🔔 ${this.dsYeuCauChoTheoBan[ban.id][0].tenYeuCau}
+                                </div>
+                            ` : ''}
                             ${coMonChoBung ? `
                                 <div class="canh-bao-cho-bung-nhanh">
                                     🔔 <strong>Có ${soMonChoBung} món nấu xong!</strong> Chờ bưng lên bàn

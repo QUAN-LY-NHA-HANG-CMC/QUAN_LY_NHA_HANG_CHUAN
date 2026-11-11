@@ -17,10 +17,12 @@
 
 class TheoDoiDonMonModule {
     constructor() {
-        this.banIdHienTai = 3; // Mặc định Bàn 03 - Tầng 1
+        this.banIdHienTai = 1; // Mặc định Bàn 01
         this.banIdKhachHang = null; // Khóa cứng bàn cho khách hàng
         this.boLocTrangThai = 'TAT_CA'; // 'TAT_CA' | 'CHO_XAC_NHAN' | 'DANG_CHE_BIEN' | 'DA_LEN_MON' | 'DA_HUY'
         this.duLieuDonBan = null;
+        this.dsYeuCauHienTai = [];
+        this.dsTatCaYeuCauCho = [];
         this.danhSachBan = [];
         this.dangLangNghe = false;
         this.intervalDongBo = null;
@@ -53,19 +55,35 @@ class TheoDoiDonMonModule {
      */
     async khoiTao(banId = null) {
         // Ưu tiên 1: banId truyền trực tiếp
-        // Ưu tiên 2: param trong URL (?banId=6 hoặc ?ban=B101 hoặc hash ?banId=6)
+        // Ưu tiên 2: param trong hash (#theo-doi-don?banId=2 hoặc ?ban=2 hoặc ?ban=B102)
+        // Ưu tiên 3: param trong query string (?banId=2&ban=B102)
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
-        const paramBanId = urlParams.get('banId') || hashParams.get('banId');
-        const paramBanMa = urlParams.get('ban') || hashParams.get('ban') || urlParams.get('maBan') || hashParams.get('maBan');
+
+        const hashBanRaw = hashParams.get('banId') || hashParams.get('ban') || hashParams.get('maBan');
+        const urlBanRaw = urlParams.get('banId') || urlParams.get('ban') || urlParams.get('maBan');
+        const paramBanRaw = banId || hashBanRaw || urlBanRaw || (this.laCheDoKhachHang() && window.thucDonQr?.banId ? window.thucDonQr.banId : null);
 
         let banIdXacDinh = null;
-        if (banId) {
-            banIdXacDinh = Number(banId);
-        } else if (paramBanId && !isNaN(Number(paramBanId))) {
-            banIdXacDinh = Number(paramBanId);
-        } else {
-            // Kiểm tra xem bàn nào trong phiên POS đang có món chờ bưng hoặc đang phục vụ
+        if (paramBanRaw !== null && paramBanRaw !== undefined && String(paramBanRaw).trim() !== '') {
+            if (!isNaN(Number(paramBanRaw)) && Number(paramBanRaw) > 0) {
+                banIdXacDinh = Number(paramBanRaw);
+            } else if (window.api && window.api.layDanhSachBanAn) {
+                try {
+                    const dsBan = await window.api.layDanhSachBanAn();
+                    const str = String(paramBanRaw).trim().toLowerCase();
+                    const bTim = (dsBan || []).find(b =>
+                        (b.maBan && b.maBan.toLowerCase() === str) ||
+                        (b.tenBan && b.tenBan.toLowerCase() === str) ||
+                        (b.soBan && b.soBan.toLowerCase() === str)
+                    );
+                    if (bTim) banIdXacDinh = Number(bTim.id);
+                } catch (e) {}
+            }
+        }
+
+        // Chỉ khi không có tham số bàn rõ ràng mới fallback sang phiên đang hoạt động hoặc bàn lưu gần nhất
+        if (!banIdXacDinh) {
             const rawPhien = localStorage.getItem('quanmoc_pos_phien_ban');
             if (rawPhien) {
                 try {
@@ -89,7 +107,6 @@ class TheoDoiDonMonModule {
                 } catch (e) {}
             }
 
-            // Ưu tiên 3: Bàn có món đã nấu xong trong quanmoc_ds_don_goi
             if (!banIdXacDinh) {
                 const rawDon = localStorage.getItem('quanmoc_ds_don_goi');
                 if (rawDon) {
@@ -106,23 +123,11 @@ class TheoDoiDonMonModule {
             }
 
             if (!banIdXacDinh) {
-                // Lấy từ session bàn đang được quét hoặc chọn gần nhất
                 const banLuu = localStorage.getItem('quanmoc_ban_id_hien_tai');
                 if (banLuu && !isNaN(Number(banLuu))) {
                     banIdXacDinh = Number(banLuu);
                 }
             }
-        }
-
-        // Nếu có mã bàn (ví dụ ban=B101) mà chưa có ID số
-        if (!banIdXacDinh && paramBanMa) {
-            try {
-                if (window.api && window.api.layDanhSachBanAn) {
-                    const dsBan = await window.api.layDanhSachBanAn();
-                    const bTim = (dsBan || []).find(b => String(b.maBan).toLowerCase() === String(paramBanMa).toLowerCase());
-                    if (bTim) banIdXacDinh = Number(bTim.id);
-                }
-            } catch (e) {}
         }
 
         if (banIdXacDinh) {
@@ -134,7 +139,7 @@ class TheoDoiDonMonModule {
             this.banIdKhachHang = this.banIdHienTai;
             localStorage.setItem('quanmoc_ban_id_hien_tai', this.banIdHienTai);
         }
-        
+
         // Cập nhật cho widget hỗ trợ tại bàn
         if (window.hoTroTaiBan) {
             window.hoTroTaiBan.datBanHienTai(this.banIdHienTai);
@@ -186,10 +191,27 @@ class TheoDoiDonMonModule {
             }
         });
 
+        // Khi có yêu cầu hỗ trợ hoặc thanh toán mới (US-071 -> US-075)
+        window.socketClient.khiCoSuKien('hoTro:yeuCauMoi', (data) => {
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (!this.laCheDoKhachHang() || Number(data?.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
+            }
+        });
+
+        window.socketClient.khiCoSuKien('thanhToan:yeuCau', (data) => {
+            if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
+                if (!this.laCheDoKhachHang() || Number(data?.banId) === Number(this.banIdHienTai)) {
+                    this.taiDuLieuVaVe();
+                }
+            }
+        });
+
         // Khi nhân viên tiếp nhận yêu cầu hỗ trợ (US-074)
         window.socketClient.khiCoSuKien('hoTro:tiepNhan', (data) => {
             if (window.ungDung && window.ungDung.tabHienTai === 'theoDoiDonMon') {
-                if (Number(data.banId) === Number(this.banIdHienTai)) {
+                if (!this.laCheDoKhachHang() || Number(data?.banId) === Number(this.banIdHienTai)) {
                     this.taiDuLieuVaVe();
                 }
             }
@@ -245,7 +267,17 @@ class TheoDoiDonMonModule {
                 thongKe: {}
             };
             const dsYeuCau = await window.api.layDanhSachYeuCauHoTro(this.banIdHienTai);
-            this.veGiaoDien(vungChua, this.duLieuDonBan, dsYeuCau || []);
+            this.dsYeuCauHienTai = dsYeuCau || [];
+            if (!this.laCheDoKhachHang()) {
+                const tatCaYeuCau = await window.api.layDanhSachYeuCauHoTro(null);
+                this.dsTatCaYeuCauCho = (tatCaYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY');
+            } else {
+                this.dsTatCaYeuCauCho = [];
+            }
+            if (window.hoTroTaiBan) {
+                window.hoTroTaiBan.datBanHienTai(this.banIdHienTai, this.duLieuDonBan?.soBan);
+            }
+            this.veGiaoDien(vungChua, this.duLieuDonBan, this.dsYeuCauHienTai, this.dsTatCaYeuCauCho);
         } catch (err) {
             console.error('Lỗi khi tải dữ liệu theo dõi đơn:', err);
             vungChua.innerHTML = `
@@ -261,7 +293,7 @@ class TheoDoiDonMonModule {
     /**
      * Render toàn bộ trang
      */
-    veGiaoDien(vungChua, data, dsYeuCau) {
+    veGiaoDien(vungChua, data, dsYeuCau, dsTatCaYeuCauCho = []) {
         const soBan = data?.soBan || (data?.ban?.tenBan || data?.ban?.maBan) || `Bàn ${this.banIdHienTai}`;
         const khuVucTen = data?.khuVucTen || 'Tầng 1';
         const danhSachDon = Array.isArray(data?.danhSachDon) ? data.danhSachDon : [];
@@ -286,6 +318,9 @@ class TheoDoiDonMonModule {
 
         const yeuCauDangCho = (dsYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY');
         const laKhach = this.laCheDoKhachHang();
+        const yeuCauBanKhac = !laKhach
+            ? (dsTatCaYeuCauCho || []).filter(y => Number(y.banId) !== Number(this.banIdHienTai) && y.trangThai !== 'DA_XU_LY')
+            : [];
 
         let soMonChoBungTheoBan = {};
         try {
@@ -397,11 +432,51 @@ class TheoDoiDonMonModule {
                 </div>
                 ` : ''}
 
+                <!-- CẢNH BÁO YÊU CẦU HỖ TRỢ / THANH TOÁN TỪ CÁC BÀN KHÁC (CHỈ DÀNH CHO NHÂN VIÊN) -->
+                ${(!laKhach && yeuCauBanKhac.length > 0) ? `
+                    <div style="background: #fff7ed; border: 1.5px solid #fb923c; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);">
+                        <strong style="color: #9a3412; display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 10px;">
+                            🚨 Có ${yeuCauBanKhac.length} yêu cầu hỗ trợ / tính tiền ở bàn khác đang chờ xử lý:
+                        </strong>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${yeuCauBanKhac.map(yc => `
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #ffffff; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 12px;">
+                                    <div style="font-size: 13px;">
+                                        <strong style="color: #c2410c;">[${yc.soBan || ('Bàn ' + yc.banId)}]</strong>
+                                        <strong>${yc.tenYeuCau}</strong>
+                                        <span style="color: var(--mau-chu-phu);">• ${yc.chiTiet || 'Không có ghi chú'} • ${this.dinhDangGioPhut(yc.thoiGian || yc.thoiGianTao)}</span>
+                                    </div>
+                                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                        ${yc.trangThai === 'CHO_TIEP_NHAN' ? `
+                                            <button type="button" class="nut nut-nho" style="background: #0284c7; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.tiepNhanYeuCau(${yc.id})">
+                                                ✅ Tiếp nhận
+                                            </button>
+                                        ` : `
+                                            <span class="badge badge-xanh-la">${yc.nguoiTiepNhan || 'NV'} đang tới</span>
+                                        `}
+                                        ${yc.loaiYeuCau === 'THANH_TOAN' ? `
+                                            <button type="button" class="nut nut-nho" style="background: #16a34a; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.moQuayThuNganChoBan(${yc.banId}, '${yc.phuongThuc || 'TIEN_MAT'}')">
+                                                💵 Quầy Thu Ngân
+                                            </button>
+                                            <button type="button" class="nut nut-nho" style="background: #059669; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.xacNhanThanhToanTuYeuCau(${yc.id}, ${yc.banId}, '${yc.phuongThuc || 'TIEN_MAT'}')">
+                                                ✔️ Đã thu & Đóng bàn
+                                            </button>
+                                        ` : ''}
+                                        <button type="button" class="nut nut-nho" style="background: #f97316; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.chuyenBanTheoDoi(${yc.banId})">
+                                            👉 Xem ${yc.soBan || ('Bàn ' + yc.banId)}
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
                 <!-- THÔNG BÁO YÊU CẦU HỖ TRỢ ĐANG CHỜ (US-074) -->
                 ${yeuCauDangCho.length > 0 ? `
                     <div class="khung-thong-bao-yeu-cau-ho-tro">
                         <div class="dau-thong-bao-yc">
-                            <span>🔔 <strong>Yêu cầu hỗ trợ tại bàn đang được xử lý (${yeuCauDangCho.length})</strong></span>
+                            <span>🔔 <strong>Yêu cầu hỗ trợ tại ${soBan} đang được xử lý (${yeuCauDangCho.length})</strong></span>
                         </div>
                         <div class="danh-sach-yc-item">
                             ${yeuCauDangCho.map(yc => `
@@ -411,10 +486,19 @@ class TheoDoiDonMonModule {
                                         <strong>${yc.tenYeuCau}</strong>
                                         <small>${yc.chiTiet || 'Không có ghi chú thêm'} • ${this.dinhDangGioPhut(yc.thoiGian || yc.thoiGianTao)}</small>
                                     </div>
-                                    <div class="trang-thai-yc-badge">
+                                    <div class="trang-thai-yc-badge" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                                         ${yc.trangThai === 'DA_TIEP_NHAN' 
                                              ? `<span class="badge badge-xanh-la">✅ ${yc.nguoiTiepNhan || 'Nhân viên'} đang tới!</span>` 
                                              : `<span class="badge badge-vang">⏳ Đang gửi tới nhân viên...</span>`}
+                                        ${!laKhach && yc.trangThai === 'CHO_TIEP_NHAN' ? `
+                                            <button type="button" class="nut nut-nho nut-chinh" onclick="window.theoDoiDonMonModule.tiepNhanYeuCau(${yc.id})">✅ Tiếp nhận</button>
+                                        ` : ''}
+                                        ${!laKhach && yc.loaiYeuCau === 'THANH_TOAN' ? `
+                                            <button type="button" class="nut nut-nho" style="background: #16a34a; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.moQuayThuNganChoBan(${yc.banId}, '${yc.phuongThuc || 'TIEN_MAT'}')">💵 Mở Quầy Thu Ngân</button>
+                                            <button type="button" class="nut nut-nho" style="background: #059669; color: #fff; border: none;" onclick="window.theoDoiDonMonModule.xacNhanThanhToanTuYeuCau(${yc.id}, ${yc.banId}, '${yc.phuongThuc || 'TIEN_MAT'}')">✔️ Đã thu & Đóng bàn</button>
+                                        ` : (!laKhach ? `
+                                            <button type="button" class="nut nut-nho nut-phu" onclick="window.theoDoiDonMonModule.hoanTatYeuCau(${yc.id})">✔️ Hoàn tất</button>
+                                        ` : '')}
                                     </div>
                                 </div>
                             `).join('')}
@@ -503,8 +587,8 @@ class TheoDoiDonMonModule {
                     </div>
                 </div>
 
-                <!-- BANNER BÁO MÓN NẤU XONG CHỜ BƯNG CHO PHỤC VỤ (US-066 / US-076) -->
-                ${thongKe.daXong > 0 ? `
+                <!-- BANNER BÁO MÓN NẤU XONG CHỜ BƯNG CHO PHỤC VỤ (CHỈ HIỂN THỊ CHO NHÂN VIÊN, KHÔNG HIỂN THỊ NÚT BƯNG MÓN CHO KHÁCH) -->
+                ${(!laKhach && thongKe.daXong > 0) ? `
                 <div class="banner-thong-bao-cho-bung" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 2px solid #10b981; border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); flex-wrap: wrap; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 14px;">
                         <span style="font-size: 32px; animation: rungChuong 1.2s infinite ease-in-out;">🔔</span>
@@ -520,6 +604,18 @@ class TheoDoiDonMonModule {
                     <button type="button" class="nut nut-chinh" onclick="window.theoDoiDonMonModule.bungTatCaMonDaXong(${this.banIdHienTai})" style="background: #059669; border-color: #059669; color: white; padding: 10px 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; border-radius: 8px; cursor: pointer; white-space: nowrap;">
                         🚶 Bưng tất cả món đã xong (${thongKe.daXong})
                     </button>
+                </div>
+                ` : (laKhach && thongKe.daXong > 0) ? `
+                <div class="banner-thong-bao-cho-bung-khach" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 1.5px solid #10b981; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 28px;">🔔</span>
+                    <div>
+                        <h4 style="margin: 0; color: #065f46; font-size: 15px; font-weight: 700;">
+                            Bếp đã nấu xong ${thongKe.daXong} món cho ${soBan}!
+                        </h4>
+                        <p style="margin: 4px 0 0; color: #047857; font-size: 13px;">
+                            Món ăn đã hoàn tất và đang được nhân viên phục vụ mang ra bàn cho quý khách.
+                        </p>
+                    </div>
                 </div>
                 ` : ''}
 
@@ -745,6 +841,7 @@ class TheoDoiDonMonModule {
      * Xác nhận nhân viên phục vụ đã bưng món lên bàn
      */
     async xacNhanDaBungMon(monId, tenMon, banId) {
+        if (this.laCheDoKhachHang()) return;
         try {
             banId = Number(banId || this.banIdHienTai);
             await window.api.capNhatTrangThaiMonAn(monId, banId, 'DA_LEN_MON');
@@ -761,6 +858,7 @@ class TheoDoiDonMonModule {
      * Phục vụ bưng tất cả các món đã nấu xong lên bàn
      */
     async bungTatCaMonDaXong(banId) {
+        if (this.laCheDoKhachHang()) return;
         banId = Number(banId || this.banIdHienTai);
         try {
             const monDaXong = [];
@@ -790,6 +888,113 @@ class TheoDoiDonMonModule {
             console.error('Lỗi khi bưng tất cả món:', e);
             if (window.thongBao) window.thongBao.loi('Lỗi', 'Không thể hoàn tất bưng món: ' + e.message);
         }
+    }
+
+    async tiepNhanYeuCau(idYeuCau) {
+        if (this.laCheDoKhachHang()) return;
+        const user = window.api ? window.api.layThongTinNguoiDung() : null;
+        const tenNv = user ? user.hoTen : 'Nhân viên phục vụ';
+        const kq = await window.api.tiepNhanYeuCauHoTro(idYeuCau, tenNv);
+        if (kq && kq.ok && window.thongBao) {
+            window.thongBao.thanhCong('Đã tiếp nhận yêu cầu', kq.msg);
+        }
+        await this.taiDuLieuVaVe();
+    }
+
+    async hoanTatYeuCau(idYeuCau) {
+        if (this.laCheDoKhachHang()) return;
+        const kq = await window.api.hoanTatYeuCauHoTro(idYeuCau);
+        if (kq && kq.ok && window.thongBao) {
+            window.thongBao.thanhCong('Đã hoàn tất', kq.msg);
+        }
+        await this.taiDuLieuVaVe();
+    }
+
+    moQuayThuNganChoBan(banId, phuongThuc = 'TIEN_MAT') {
+        if (this.laCheDoKhachHang()) return;
+        localStorage.setItem('quanmoc_pos_ban_thanh_toan_chon', String(banId));
+        localStorage.setItem(
+            'quanmoc_pos_phuong_thuc_chon',
+            phuongThuc === 'CHUYEN_KHOAN' ? 'CHUYEN_KHOAN_VIETQR' : 'TIEN_MAT'
+        );
+        if (window.ungDung) {
+            window.ungDung.chuyenTab('thanhToanPos');
+        } else {
+            window.location.hash = '#thanh-toan-pos';
+        }
+    }
+
+    async xacNhanThanhToanTuYeuCau(idYeuCau, banId, phuongThuc = 'TIEN_MAT') {
+        if (this.laCheDoKhachHang()) return;
+        banId = Number(banId || this.banIdHienTai);
+
+        const phanHoiDon = await window.api.layDanhSachDonTheoBan(banId);
+        const duLieuBan = phanHoiDon && phanHoiDon.ok ? phanHoiDon.data : null;
+        const soBan = duLieuBan?.soBan || `Bàn ${banId}`;
+        const tongTien = Number(duLieuBan?.tongTienLuyKe || 0);
+        const tenPt = phuongThuc === 'CHUYEN_KHOAN' ? 'Chuyển khoản VietQR' : 'Tiền mặt tại bàn';
+
+        if (!confirm(`Xác nhận đã thu đủ ${tongTien.toLocaleString('vi-VN')} đ (${tenPt}) cho ${soBan}, xuất hóa đơn và đóng bàn về Trống?`)) {
+            return;
+        }
+
+        // Lưu hóa đơn chính thức nếu bàn có phát sinh tiền món
+        const dsMon = [];
+        let thoiGianVao = new Date().toISOString();
+        (duLieuBan?.danhSachDon || []).forEach((don, idx) => {
+            if (idx === 0 && don.thoiGianTao) thoiGianVao = don.thoiGianTao;
+            (don.danhSachMon || []).forEach(m => {
+                if (m.trangThai !== 'DA_HUY' && m.trangThai !== 'TU_CHOI') {
+                    dsMon.push(m);
+                }
+            });
+        });
+
+        if (tongTien > 0 && window.thanhToanPos && typeof window.thanhToanPos.luuHoaDon === 'function') {
+            const dsBan = await window.api.layDanhSachBan();
+            const ban = (dsBan || []).find(b => Number(b.id) === banId) || { id: banId, soBan };
+            const user = window.api.layThongTinNguoiDung ? window.api.layThongTinNguoiDung() : null;
+            let caDangMo = null;
+            try {
+                if (window.api.layCaHienTai) caDangMo = await window.api.layCaHienTai();
+            } catch (e) {}
+
+            const maHoaDon = window.thanhToanPos.sinhMaHoaDon(ban);
+            window.thanhToanPos.luuHoaDon({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                maHoaDon,
+                soBan: ban.soBan || soBan,
+                banId,
+                maBan: ban.maBan || null,
+                caId: caDangMo ? caDangMo.id : null,
+                maCa: caDangMo ? caDangMo.maCa : null,
+                thoiDiemThanhToan: Date.now(),
+                thoiGianVao,
+                thoiGianThanhToan: new Date().toISOString(),
+                tongTienMon: tongTien,
+                giamGia: 0,
+                phuPhi: 0,
+                vat: 0,
+                tongThanhToan: tongTien,
+                phuongThuc: phuongThuc === 'CHUYEN_KHOAN' ? 'CHUYEN_KHOAN_VIETQR' : 'TIEN_MAT',
+                thuNgan: user ? user.hoTen : (caDangMo ? caDangMo.thuNganTen : 'Thu ngân'),
+                danhSachMon: dsMon
+            });
+        }
+
+        // Đóng toàn bộ đơn gọi món, yêu cầu hỗ trợ và trả bàn về TRONG trên cả Backend & LocalStorage
+        await window.api.dongPhienBanSauThanhToan(banId);
+        if (window.socketClient) {
+            window.socketClient.phatSuKien('hoTro:tiepNhan', { id: idYeuCau, banId, trangThai: 'DA_XU_LY' });
+        }
+
+        if (window.thongBao) {
+            window.thongBao.thanhCong(
+                'Đã thanh toán & đóng bàn!',
+                `${soBan} (${tongTien.toLocaleString('vi-VN')} đ) đã hoàn tất thanh toán và được chuyển về Bàn trống.`
+            );
+        }
+        await this.taiDuLieuVaVe();
     }
 
     /**
@@ -1316,16 +1521,25 @@ class TheoDoiDonMonModule {
             }
 
             try {
-                const phanHoi = await window.api.layDanhSachDonTheoBan(this.banIdHienTai);
-                if (phanHoi && phanHoi.ok && phanHoi.data) {
-                    const duLieuMoi = phanHoi.data;
-                    const jsonMoi = JSON.stringify(duLieuMoi);
-                    const jsonCu = JSON.stringify(this.duLieuDonBan);
-                    if (jsonMoi !== jsonCu) {
-                        this.duLieuDonBan = duLieuMoi;
-                        const dsYeuCau = await window.api.layDanhSachYeuCauHoTro(this.banIdHienTai);
-                        this.veGiaoDien(vungChua, this.duLieuDonBan, dsYeuCau || []);
-                    }
+                const [phanHoi, dsYeuCau, tatCaYeuCau] = await Promise.all([
+                    window.api.layDanhSachDonTheoBan(this.banIdHienTai),
+                    window.api.layDanhSachYeuCauHoTro(this.banIdHienTai),
+                    !this.laCheDoKhachHang() ? window.api.layDanhSachYeuCauHoTro(null) : Promise.resolve([])
+                ]);
+                const dsYeuCauBanCho = !this.laCheDoKhachHang()
+                    ? (tatCaYeuCau || []).filter(y => y.trangThai !== 'DA_XU_LY')
+                    : [];
+
+                const duLieuMoi = (phanHoi && phanHoi.ok && phanHoi.data) ? phanHoi.data : this.duLieuDonBan;
+                const thayDoiDon = JSON.stringify(duLieuMoi) !== JSON.stringify(this.duLieuDonBan);
+                const thayDoiYc = JSON.stringify(dsYeuCau || []) !== JSON.stringify(this.dsYeuCauHienTai || []);
+                const thayDoiYcAll = JSON.stringify(dsYeuCauBanCho) !== JSON.stringify(this.dsTatCaYeuCauCho || []);
+
+                if (thayDoiDon || thayDoiYc || thayDoiYcAll) {
+                    this.duLieuDonBan = duLieuMoi;
+                    this.dsYeuCauHienTai = dsYeuCau || [];
+                    this.dsTatCaYeuCauCho = dsYeuCauBanCho;
+                    this.veGiaoDien(vungChua, this.duLieuDonBan, this.dsYeuCauHienTai, this.dsTatCaYeuCauCho);
                 }
             } catch (e) {
                 // Background poll silent

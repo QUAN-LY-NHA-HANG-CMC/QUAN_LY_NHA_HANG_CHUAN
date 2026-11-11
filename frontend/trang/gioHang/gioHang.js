@@ -622,7 +622,7 @@ class GioHangManager {
 
                             <div style="display: flex; flex-direction: column; gap: 10px;">
                                 <button class="nut nut-chinh" style="padding: 12px; border-radius: 12px; font-size: 14px;"
-                                        onclick="window.gioHangManager.dongModal(); window.location.hash = '#theo-doi-don?ban=${encodeURIComponent(banId)}'">
+                                        onclick="window.gioHangManager.dongModal(); window.location.hash = '#theo-doi-don?banId=${encodeURIComponent(banId)}'">
                                     🔔 Xem tiến độ làm món (KDS)
                                 </button>
                                 <button class="nut nut-phu" style="padding: 11px; border-radius: 12px; font-size: 13.5px;"

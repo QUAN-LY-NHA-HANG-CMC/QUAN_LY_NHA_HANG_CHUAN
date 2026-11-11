@@ -54,9 +54,9 @@ class UngDungFrontend {
         this.ganSuKienDieuHuong();
 
         // Khởi tạo thành phần Hỗ trợ & Thanh toán tại bàn (Sprint 2 - Phong)
-        const banIdDau = searchParams.get('banId') || hashParams.get('banId') || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
+        const banIdDau = hashParams.get('banId') || searchParams.get('banId') || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
         if (window.hoTroTaiBan) {
-            window.hoTroTaiBan.khoiTao(Number(banIdDau));
+            window.hoTroTaiBan.khoiTao(Number(banIdDau) || 1);
         }
 
         const banDoTab = {
@@ -102,11 +102,12 @@ class UngDungFrontend {
         // Nạp trang mặc định
         this.chuyenTab(this.tabHienTai);
 
-        // Lắng nghe sự kiện hashchange để điều hướng mượt mà
+        // Lắng nghe sự kiện hashchange để điều hướng mượt mà (bao gồm cả trường hợp đổi tham số bàn trên cùng tab)
         window.addEventListener('hashchange', () => {
             const h = (window.location.hash || '').replace('#', '').trim().toLowerCase();
             const tabName = h.includes('?') ? h.split('?')[0] : h;
-            if (tabName && banDoTab[tabName] && banDoTab[tabName] !== this.tabHienTai) {
+            const coThamSo = h.includes('?');
+            if (tabName && banDoTab[tabName] && (banDoTab[tabName] !== this.tabHienTai || coThamSo)) {
                 this.chuyenTab(banDoTab[tabName]);
             }
         });

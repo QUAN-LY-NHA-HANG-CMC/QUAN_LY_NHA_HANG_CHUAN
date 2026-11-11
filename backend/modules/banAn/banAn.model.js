@@ -110,7 +110,13 @@ async function dongBoDanhSach(danhSachMoi) {
         sucChua: Number(b.sucChua) || 4,
         tokenBaoMat: b.qrToken || b.tokenBaoMat || `tok_b${b.id}`,
         qrToken: b.qrToken || b.tokenBaoMat || `tok_b${b.id}`,
-        trangThai: (b.trangThai === 'DANG_DUNG' || b.trangThai === 'DangDung' || b.trangThai === 'DangPhucVu') ? 'DangPhucVu' : (b.trangThai === 'TAM_KHOA' || b.trangThai === 'TamKhoa' ? 'TamKhoa' : (b.trangThai === 'CHO_THANH_TOAN' || b.trangThai === 'ChoThanhToan' ? 'ChoThanhToan' : 'Trong')),
+        trangThai: (b.trangThai === 'DANG_DUNG' || b.trangThai === 'DangDung' || b.trangThai === 'DangPhucVu')
+            ? 'DangPhucVu'
+            : (b.trangThai === 'TAM_KHOA' || b.trangThai === 'TamKhoa'
+                ? 'TamKhoa'
+                : (b.trangThai === 'CHO_THANH_TOAN' || b.trangThai === 'ChoThanhToan'
+                    ? 'ChoThanhToan'
+                    : (b.trangThai === 'CAN_HO_TRO' || b.trangThai === 'CanHoTro' ? 'CanHoTro' : 'Trong'))),
         daPhatSinhGiaoDich: Boolean(b.daPhatSinhGiaoDich),
         ghiChu: b.ghiChu || '',
         ngayTao: b.ngayTao ? new Date(b.ngayTao) : new Date(),

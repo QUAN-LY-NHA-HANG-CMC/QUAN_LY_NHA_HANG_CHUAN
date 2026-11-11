@@ -5,6 +5,7 @@ const donGoiMonValidation = require('./donGoiMon.validation');
 
 router.get('/', donGoiMonController.layDanhSach);
 router.get('/ban/:banId', donGoiMonController.layDonTheoBan);
+router.post('/ban/:banId/dong-phien', donGoiMonController.dongPhienBan);
 router.post('/', donGoiMonValidation.kiemTraTaoDon, donGoiMonController.taoDonMoi);
 router.patch('/mon-an/:itemId/trang-thai', donGoiMonController.capNhatTrangThaiMon);
 router.post('/mon-an/:itemId/huy', donGoiMonController.huyMon);

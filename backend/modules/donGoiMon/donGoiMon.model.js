@@ -156,10 +156,11 @@ async function huyMon(itemId, lyDo = '') {
 }
 
 async function dongDonCuaBan(banId) {
-    const cacDon = danhSachDonGoi.filter(d => Number(d.banId) === Number(banId));
+    const cacDon = danhSachDonGoi.filter(d => Number(d.banId) === Number(banId) && d.trangThai !== 'DA_HUY');
     cacDon.forEach(d => {
         d.trangThai = 'HOAN_THANH';
-        d.thoiGianHoanThanh = new Date();
+        d.daThanhToan = true;
+        d.thoiGianHoanThanh = new Date().toISOString();
     });
     luu();
     return cacDon.length;

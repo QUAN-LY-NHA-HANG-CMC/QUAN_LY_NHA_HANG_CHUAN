@@ -50,18 +50,17 @@ class ThucDonQrManager {
      * Nhận diện tham số banId & token từ URL (US-045, US-046, US-049)
      */
     nhanDienThamSoUrl(banIdChiDinh, tokenChiDinh) {
-        if (banIdChiDinh && tokenChiDinh) {
+        if (banIdChiDinh) {
             this.banId = banIdChiDinh;
-            this.token = tokenChiDinh;
+            if (tokenChiDinh) this.token = tokenChiDinh;
             return;
         }
 
-        // Đọc từ URL query string (?banId=1&token=... hoặc ?ban=B101&token=...)
+        // Đọc từ URL Hash (#e-menu?banId=1&token=...) trước, sau đó đến query string (?banId=1&token=...)
         const urlParams = new URLSearchParams(window.location.search);
         const banIdUrl = urlParams.get('banId') || urlParams.get('ban') || urlParams.get('maBan');
         const tokenUrl = urlParams.get('token');
 
-        // Hoặc đọc từ URL Hash (#e-menu?banId=1&token=...)
         let banIdHash = null, tokenHash = null;
         if (window.location.hash.includes('?')) {
             const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
@@ -69,8 +68,8 @@ class ThucDonQrManager {
             tokenHash = hashParams.get('token');
         }
 
-        this.banId = banIdUrl || banIdHash || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
-        this.token = tokenUrl || tokenHash || localStorage.getItem('quanmoc_token_hien_tai') || '';
+        this.banId = banIdHash || banIdUrl || localStorage.getItem('quanmoc_ban_id_hien_tai') || 1;
+        this.token = tokenHash || tokenUrl || localStorage.getItem('quanmoc_token_hien_tai') || '';
 
         // Lưu phiên bàn (US-049)
         localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
@@ -97,6 +96,9 @@ class ThucDonQrManager {
                     this.token = this.token || this.thongTinBan.tokenBaoMat || '';
                     localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
                     if (this.token) localStorage.setItem('quanmoc_token_hien_tai', this.token);
+                    if (window.hoTroTaiBan) {
+                        window.hoTroTaiBan.datBanHienTai(this.banId, this.thongTinBan.tenBan);
+                    }
                 }
 
                 // Đồng bộ bàn với Giỏ hàng
@@ -500,6 +502,8 @@ class ThucDonQrManager {
             return;
         }
         this.banId = banId;
+        this.token = '';
+        localStorage.setItem('quanmoc_ban_id_hien_tai', this.banId);
         await this.taiThongTinTrangChu();
         await this.taiDanhSachMonAn();
         this.veGiaoDien();
@@ -611,19 +615,43 @@ class ThucDonQrManager {
     async guiYeuCauGoiNhanVien() {
         const input = document.getElementById('input-ly-do-goi-nv');
         const lyDo = input ? input.value.trim() : 'Xin hỗ trợ';
+        const banIdGui = this.thongTinBan?.banId || this.thongTinBan?.id || this.banId;
+        const tenBan = this.thongTinBan?.tenBan || `Bàn ${banIdGui}`;
 
         try {
             const res = await window.api.guiYeuCauHoTro({
-                banId: this.banId,
+                banId: banIdGui,
                 token: this.token,
                 loaiYeuCau: 'GoiNhanVien',
                 lyDo: lyDo
             });
 
             this.dongModal();
-            if (window.thongBao) {
-                window.thongBao.thanhCong('Đã gửi yêu cầu phục vụ!', `Nhân viên sẽ đến bàn "${this.thongTinBan?.tenBan || 'bạn'}" ngay.`);
+            if (!res || !res.ok) {
+                if (window.thongBao) window.thongBao.thatBai('Không thể gửi yêu cầu', res ? res.msg : 'Vui lòng thử lại');
+                return;
             }
+
+            if (window.hoTroTaiBan) {
+                window.hoTroTaiBan.datBanHienTai(banIdGui, tenBan);
+            }
+            if (window.thongBao) {
+                window.thongBao.thanhCong('Đã gửi yêu cầu phục vụ!', `Nhân viên sẽ đến ${tenBan} ngay.`);
+            }
+            this.hienThiModalXacNhanHoTro({
+                tieuDe: 'ĐÃ GỬI YÊU CẦU PHỤC VỤ!',
+                icon: '🙋',
+                mauTieuDe: '#B45309',
+                nenBox: '#FFFBEB',
+                vienBox: '#FCD34D',
+                tenBan,
+                banId: banIdGui,
+                noiDungHtml: `
+                    <div>🔔 <strong>Yêu cầu:</strong> ${window.DinhDang.thoatHtml(lyDo || 'Gọi nhân viên hỗ trợ')}</div>
+                    <div>🪑 <strong>Bàn phục vụ:</strong> ${window.DinhDang.thoatHtml(tenBan)}</div>
+                    <div>📡 <strong>Trạng thái:</strong> <span style="color:#B45309; font-weight:700;">Đã chuyển tới nhân viên phục vụ</span></div>
+                `
+            });
         } catch (loi) {
             console.error(loi);
             if (window.thongBao) window.thongBao.loi('Không thể gửi yêu cầu');
@@ -633,10 +661,13 @@ class ThucDonQrManager {
     async guiYeuCauThanhToan() {
         const radio = document.querySelector('input[name="radio-pt-thanhtoan"]:checked');
         const phuongThuc = radio ? radio.value : 'ChuyenKhoan';
+        const banIdGui = this.thongTinBan?.banId || this.thongTinBan?.id || this.banId;
+        const tenBan = this.thongTinBan?.tenBan || `Bàn ${banIdGui}`;
+        const tenPhuongThuc = phuongThuc === 'ChuyenKhoan' ? 'Chuyển khoản VietQR' : 'Tiền mặt tại bàn';
 
         try {
             const res = await window.api.guiYeuCauHoTro({
-                banId: this.banId,
+                banId: banIdGui,
                 token: this.token,
                 loaiYeuCau: 'YeuCauThanhToan',
                 phuongThucThanhToan: phuongThuc,
@@ -644,13 +675,66 @@ class ThucDonQrManager {
             });
 
             this.dongModal();
-            if (window.thongBao) {
-                window.thongBao.thanhCong('Đã báo thu ngân!', 'Thu ngân đang chuẩn bị hóa đơn thanh toán cho bàn của bạn.');
+            if (!res || !res.ok) {
+                if (window.thongBao) window.thongBao.thatBai('Không thể gửi yêu cầu thanh toán', res ? res.msg : 'Vui lòng thử lại');
+                return;
             }
+
+            if (window.hoTroTaiBan) {
+                window.hoTroTaiBan.datBanHienTai(banIdGui, tenBan);
+            }
+            const tongTamTinh = Number(res.data?.tongTamTinh || 0);
+            if (window.thongBao) {
+                window.thongBao.thanhCong('Đã báo thu ngân!', `${tenBan} đã chuyển sang trạng thái chờ thanh toán.`);
+            }
+            this.hienThiModalXacNhanHoTro({
+                tieuDe: 'ĐÃ GỬI YÊU CẦU TÍNH TIỀN!',
+                icon: '💳',
+                mauTieuDe: '#166534',
+                nenBox: '#F0FDF4',
+                vienBox: '#BBF7D0',
+                tenBan,
+                banId: banIdGui,
+                noiDungHtml: `
+                    <div>🪑 <strong>Bàn phục vụ:</strong> ${window.DinhDang.thoatHtml(tenBan)}</div>
+                    <div>💳 <strong>Hình thức:</strong> ${tenPhuongThuc}</div>
+                    <div>💰 <strong>Tạm tính:</strong> <span style="color:#DC2626; font-weight:700;">${tongTamTinh.toLocaleString('vi-VN')} đ</span></div>
+                    <div>📡 <strong>Trạng thái:</strong> <span style="color:#15803D; font-weight:700;">Đã đẩy lên Quầy Thu Ngân & Phục vụ</span></div>
+                `
+            });
         } catch (loi) {
             console.error(loi);
             if (window.thongBao) window.thongBao.loi('Không thể gửi yêu cầu');
         }
+    }
+
+    hienThiModalXacNhanHoTro({ tieuDe, icon, mauTieuDe, nenBox, vienBox, banId, noiDungHtml }) {
+        const khungModal = document.getElementById('khung-modal-toan-cuc');
+        if (!khungModal) return;
+
+        khungModal.innerHTML = `
+            <div class="hop-modal-lop-phu" onclick="if(event.target === this) window.thucDonQr.dongModal()">
+                <div class="hop-modal-noi-dung" style="background:#FFF; max-width:420px; width:100%; border-radius:20px; padding:26px 22px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+                    <div style="font-size: 50px; margin-bottom: 10px;">${icon}</div>
+                    <h3 style="font-size: 18px; font-weight: 800; color: ${mauTieuDe}; margin: 0 0 8px;">${tieuDe}</h3>
+                    <div style="background: ${nenBox}; border: 1px solid ${vienBox}; border-radius: 12px; padding: 14px; margin: 14px 0 18px; text-align: left; font-size: 13px; line-height: 1.8;">
+                        ${noiDungHtml}
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button type="button" class="nut nut-chinh" style="padding: 12px; border-radius: 12px; font-size: 14px;"
+                                onclick="window.thucDonQr.dongModal(); window.location.hash = '#theo-doi-don?banId=${encodeURIComponent(banId)}'">
+                            ⏱️ Theo dõi đơn & Trạng thái yêu cầu
+                        </button>
+                        <button type="button" class="nut nut-phu" style="padding: 10px; border-radius: 12px; font-size: 13.5px;"
+                                onclick="window.thucDonQr.dongModal()">
+                            📖 Quay lại thực đơn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        khungModal.classList.add('mo');
+        khungModal.classList.remove('co-bottom-sheet');
     }
 
     dongModal() {

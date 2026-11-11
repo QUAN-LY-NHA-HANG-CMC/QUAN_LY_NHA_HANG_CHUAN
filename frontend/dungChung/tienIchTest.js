@@ -144,6 +144,8 @@ class TienIchTestModule {
         // 2. Làm sạch LocalStorage
         localStorage.setItem('quanmoc_pos_phien_ban', JSON.stringify({}));
         localStorage.setItem('quanmoc_ds_don_goi', JSON.stringify([]));
+        localStorage.setItem('quanmoc_ds_yeu_cau_ho_tro', JSON.stringify([]));
+        localStorage.setItem('quanmoc_yeu_cau_ho_tro', JSON.stringify([]));
         localStorage.setItem('quanmoc_pos_lich_su_hoa_don', JSON.stringify([]));
         localStorage.setItem('quanmoc_ds_hoa_don', JSON.stringify([]));
         localStorage.setItem('quanmoc_ls_ket_ca', JSON.stringify([]));
@@ -201,6 +203,8 @@ class TienIchTestModule {
 
         await this.goiApiResetServer('BAN');
         localStorage.setItem('quanmoc_pos_phien_ban', JSON.stringify({}));
+        localStorage.setItem('quanmoc_ds_yeu_cau_ho_tro', JSON.stringify([]));
+        localStorage.setItem('quanmoc_yeu_cau_ho_tro', JSON.stringify([]));
 
         // Đánh dấu hoặc xóa các đơn gọi món của các bàn
         try {
